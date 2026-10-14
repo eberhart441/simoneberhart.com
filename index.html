@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simon Eberhart</title>
+<meta name="description" content="Simon Eberhart, engineering student at Olin College of Engineering.">
+<meta name="theme-color" content="#f6f5f1">
+<meta property="og:title" content="Simon Eberhart">
+<meta property="og:description" content="Engineering student at Olin College of Engineering. Robot hardware.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Decide liquid glass before the first paint, so the card never shows the CSS or Hyalite glass first (liquid.mjs
+     confirms it, and undoes this if WebGL2 turns out to be unavailable). -->
+<script>
+  if (matchMedia('(min-width: 1040px)').matches && !matchMedia('(prefers-reduced-transparency: reduce)').matches && 'WebGL2RenderingContext' in window)
+    document.documentElement.classList.add('liquid');
+</script>
+</head>
+<body>
+<div class="visuals" data-scenes="4" aria-hidden="true">
+  <video class="study-motion" muted playsinline preload="none" hidden aria-hidden="true"></video>
+  <img class="study-still" src="studies/assets/pendulum-poster.png" alt="" loading="lazy" aria-hidden="true">
+</div>
+<main>
+<div class="view"><div class="content">
+  <header>
+    <h1>Simon Eberhart</h1>
+    <p>Engineering student at Olin College of Engineering, class of 2030. Most of what I make is robot hardware.
+      Right now that is a six-axis arm driven by a single motor, and the electronics for Olin's Baja SAE car.</p>
+    <p class="contact"><a href="mailto:seberhart@olin.edu">seberhart@olin.edu</a><a href="https://github.com/eberhart441">GitHub</a><a href="https://www.linkedin.com/in/simon-eberhart">LinkedIn</a></p>
+  </header>
+
+  <section aria-labelledby="projects">
+    <h2 id="projects">Projects</h2>
+    <article data-item="arm">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Single-motor robot arm</button> <span>since 2024</span></h3>
+      <p>Six joints, one motor. Electromagnetic clutches in the base pick which joint the motor drives, and cables
+        carry the motion up the arm. Four provisional patents. <a href="https://www.youtube.com/watch?v=OJFuRm17yMc">Transmission video</a></p>
+    </article>
+    <article data-item="baja-sensor">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Baja SAE fuel sensor</button> <span>2026</span></h3>
+      <p>Measures fuel level from shifts in the tank's resonant frequency. Custom PCB and FFT firmware.</p>
+    </article>
+    <article data-item="recycler">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Filament recycler</button></h3>
+      <p>Turns failed 3D prints back into filament, using hall-effect feedback to hold the diameter.</p>
+    </article>
+    <article data-item="foundry">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Backyard foundry</button> <span>since 2024</span></h3>
+      <p>A furnace built from an oil drum that reaches 1200&nbsp;°C, for aluminium and copper castings.</p>
+    </article>
+    <article data-item="quant">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Statistical arbitrage model</button> <span>2022–2024</span></h3>
+      <p>A trading model running on a 20-node cluster I built from old computers. Traded live for three months.
+        <a href="https://github.com/eberhart441/BuyIn-Build/tree/main/build-dayTrade">Code</a>, <a href="https://www.youtube.com/watch?v=cE_erRPIcsw">demo</a></p>
+    </article>
+  </section>
+
+  <section aria-labelledby="experience">
+    <h2 id="experience">Experience</h2>
+    <article data-item="hygrade">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Hygrade Precision Technologies</button> <span>2025–2026</span></h3>
+      <p>Engineering intern, then junior engineering technician. Machined aerospace parts for SpaceX, Lockheed
+        Martin, Boeing and GE to micron tolerances.</p>
+    </article>
+    <article data-item="baja">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Olin Baja SAE</button> <span>since 2026</span></h3>
+      <p>Electrical engineer.</p>
+    </article>
+    <article data-item="da-design">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">D.A. Design LLC</button> <span>since 2025</span></h3>
+      <p>Founder. A small company that holds my robotics and manufacturing projects and their patents.</p>
+    </article>
+    <article data-item="dragonfly">
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Dragonfly Engineering</button> <span>2024</span></h3>
+      <p>Robotics intern. Programmed KUKA industrial arms, reverse engineered robots from Google X, and converted a
+        manual mill to CNC.</p>
+    </article>
+  </section>
+
+  <footer>
+    <span>Simon Eberhart, 2026</span>
+    <a href="mailto:seberhart@olin.edu">seberhart@olin.edu</a>
+  </footer>
+</div></div>
+</main>
+
+<aside id="bubble" class="bubble" role="dialog" aria-labelledby="bubble-title" hidden>
+  <button class="bubble-close" type="button" aria-label="Close">×</button>
+  <div class="bubble-body">
+    <p class="bubble-kind"></p>
+    <h2 id="bubble-title" tabindex="-1"></h2>
+    <p class="bubble-meta"></p>
+    <figure class="gallery" hidden>
+      <div class="gallery-frame">
+        <img alt="" decoding="async">
+        <button class="gallery-prev" type="button" aria-label="Previous photo">←</button>
+        <button class="gallery-next" type="button" aria-label="Next photo">→</button>
+      </div>
+      <figcaption class="gallery-caption"></figcaption>
+      <div class="gallery-strip"><div class="gallery-thumbs"></div><span class="gallery-count"></span></div>
+    </figure>
+    <p class="bubble-summary"></p>
+    <ul class="bubble-points"></ul>
+    <p class="bubble-tools"></p>
+    <p class="bubble-links"></p>
+  </div>
+  <div class="bubble-bar" aria-hidden="true"><i></i></div>
+</aside>
+<!-- The static scene count lets the glass frame size scrolling before media loads. -->
+<script src="vendor/hyalite.js"></script>
+<script src="frame.js"></script>
+<script type="module" src="study-player.mjs"></script>
+<script type="module" src="liquid.mjs"></script>
+<script type="module" src="bubble.mjs"></script>
+<script>dispatchEvent(new Event('resize'))</script>
+</body>
+</html>

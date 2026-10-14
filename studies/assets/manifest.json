@@ -1,0 +1,196 @@
+[
+  {
+    "id": "pendulum",
+    "label": "Double pendulum",
+    "duration": 14,
+    "video": "studies/assets/pendulum.webm",
+    "opening": "studies/assets/pendulum-opening.png",
+    "mid": "studies/assets/pendulum-mid.png",
+    "poster": "studies/assets/pendulum-poster.png",
+    "style": {
+      "ink": "#161616",
+      "red": "#c8102e",
+      "mechanismGhostOpacity": 0.01,
+      "mechanismGhostWidth": 0.5,
+      "mechanismGhostIntervalSeconds": 0.26666666666666666,
+      "mechanismTraceOpacity": 0.2,
+      "mechanismFineTraceOpacity": 0.05,
+      "mechanismTraceWidth": 0.8,
+      "mechanismFineTraceWidth": 0.45,
+      "redThreadOpacity": 0.3,
+      "redThreadWidth": 1,
+      "pendulumSingleOpacity": 0.05,
+      "pendulumSharedOpacityMax": 0.24,
+      "pendulumInkWidth": 0.8
+    },
+    "parameters": {
+      "count": 192,
+      "gravity": 9.81,
+      "integration": "RK4",
+      "physicalTimeScale": 0.6,
+      "step": 0.0033333333333333335,
+      "releaseDelta": 0.00001,
+      "releaseSpread": 0.00191,
+      "linkLength": 130,
+      "strokes": {
+        "ink": "#161616",
+        "red": "#c8102e",
+        "single": 0.05,
+        "shared": 0.24,
+        "redWidth": 1,
+        "ghost": 0.01,
+        "ghostWidth": 0.5
+      }
+    }
+  },
+  {
+    "id": "strandbeest",
+    "label": "Theo Jansen’s Strandbeest",
+    "duration": 18,
+    "video": "studies/assets/strandbeest.webm",
+    "opening": "studies/assets/strandbeest-opening.png",
+    "mid": "studies/assets/strandbeest-mid.png",
+    "poster": "studies/assets/strandbeest-poster.png",
+    "style": {
+      "ink": "#161616",
+      "red": "#c8102e",
+      "mechanismGhostOpacity": 0.01,
+      "mechanismGhostWidth": 0.5,
+      "mechanismGhostIntervalSeconds": 0.26666666666666666,
+      "mechanismTraceOpacity": 0.2,
+      "mechanismFineTraceOpacity": 0.05,
+      "mechanismTraceWidth": 0.8,
+      "mechanismFineTraceWidth": 0.45,
+      "redThreadOpacity": 0.3,
+      "redThreadWidth": 1,
+      "pendulumSingleOpacity": 0.05,
+      "pendulumSharedOpacityMax": 0.24,
+      "pendulumInkWidth": 0.8
+    },
+    "parameters": {
+      "copies": 2,
+      "legs": 6,
+      "phaseSpacing": 2.0943951023931953,
+      "mirrored": true,
+      "crankRadius": 15,
+      "lengths": {
+        "l": 7.8,
+        "a": 38,
+        "b": 41.5,
+        "c": 39.3,
+        "d": 40.1,
+        "e": 55.8,
+        "f": 39.4,
+        "g": 36.7,
+        "h": 65.7,
+        "i": 49,
+        "j": 50,
+        "k": 61.9
+      },
+      "midpointFractions": [
+        0.3333333333333333,
+        0.6666666666666666
+      ],
+      "ghostInterval": 0.26666666666666666,
+      "strokes": {
+        "ink": "#161616",
+        "red": "#c8102e",
+        "trace": 0.2,
+        "fine": 0.05,
+        "ghost": 0.01,
+        "ghostWidth": 0.5
+      }
+    }
+  },
+  {
+    "id": "fivebar",
+    "label": "Five-bar linkage",
+    "duration": 18,
+    "video": "studies/assets/fivebar.webm",
+    "opening": "studies/assets/fivebar-opening.png",
+    "mid": "studies/assets/fivebar-mid.png",
+    "poster": "studies/assets/fivebar-poster.png",
+    "style": {
+      "ink": "#161616",
+      "red": "#c8102e",
+      "mechanismGhostOpacity": 0.01,
+      "mechanismGhostWidth": 0.5,
+      "mechanismGhostIntervalSeconds": 0.26666666666666666,
+      "mechanismTraceOpacity": 0.2,
+      "mechanismFineTraceOpacity": 0.05,
+      "mechanismTraceWidth": 0.8,
+      "mechanismFineTraceWidth": 0.45,
+      "redThreadOpacity": 0.3,
+      "redThreadWidth": 1,
+      "pendulumSingleOpacity": 0.05,
+      "pendulumSharedOpacityMax": 0.24,
+      "pendulumInkWidth": 0.8
+    },
+    "parameters": {
+      "copies": 3,
+      "families": 2,
+      "midpointSamplesPerBar": 8,
+      "mirrored": true,
+      "baseHalfWidth": 0.32,
+      "upperLink": 0.5,
+      "lowerLink": 0.78,
+      "motorRates": [
+        1,
+        1.37
+      ],
+      "ghostInterval": 0.267,
+      "strokes": {
+        "ink": "#161616",
+        "red": "#c8102e",
+        "trace": 0.2,
+        "fine": 0.05,
+        "ghost": 0.01,
+        "ghostWidth": 0.5
+      }
+    }
+  },
+  {
+    "id": "planar-arm",
+    "label": "Planar three-joint arm",
+    "duration": 18,
+    "video": "studies/assets/planar-arm.webm",
+    "opening": "studies/assets/planar-arm-opening.png",
+    "mid": "studies/assets/planar-arm-mid.png",
+    "poster": "studies/assets/planar-arm-poster.png",
+    "style": {
+      "ink": "#161616",
+      "red": "#c8102e",
+      "mechanismGhostOpacity": 0.01,
+      "mechanismGhostWidth": 0.5,
+      "mechanismGhostIntervalSeconds": 0.26666666666666666,
+      "mechanismTraceOpacity": 0.2,
+      "mechanismFineTraceOpacity": 0.05,
+      "mechanismTraceWidth": 0.8,
+      "mechanismFineTraceWidth": 0.45,
+      "redThreadOpacity": 0.3,
+      "redThreadWidth": 1,
+      "pendulumSingleOpacity": 0.05,
+      "pendulumSharedOpacityMax": 0.24,
+      "pendulumInkWidth": 0.8
+    },
+    "parameters": {
+      "copies": 3,
+      "families": 2,
+      "midpointSamplesPerBar": 8,
+      "links": [
+        0.34,
+        0.28,
+        0.2
+      ],
+      "ghostInterval": 0.267,
+      "strokes": {
+        "ink": "#161616",
+        "red": "#c8102e",
+        "trace": 0.2,
+        "fine": 0.05,
+        "ghost": 0.01,
+        "ghostWidth": 0.5
+      }
+    }
+  }
+]

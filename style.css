@@ -1,0 +1,336 @@
+:root {
+  /* spacing: one scale for the whole page */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
+  --pad: var(--s8);                 /* inside the card */
+
+  /* colour */
+  --paper: #f6f5f1;
+  --ink: #161616;
+  --muted: #6b6862;
+  --line: #16161614;                /* hairlines */
+  --underline: #16161640;
+  --accent: #c8102e;
+  --ink-alpha: 1;                   /* how strong the drawing's ink is (pendulums.js) */
+  --glass: linear-gradient(170deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .19) 45%, rgba(255, 255, 255, .25));
+  --glass-solid: rgba(250, 249, 246, .94);
+  --rim: rgba(255, 255, 255, .5);
+  --shadow: 0 12px 36px -20px rgba(30, 25, 15, .14);
+
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, monospace;   /* small data only: dates, tools, counts, labels */
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+/* Tiny pre-rendered paper grain; no live filters or extra animation layers. */
+html { background: var(--paper) url('paper-texture.png') repeat; }
+body {
+  margin: 0;
+  color: var(--ink);
+  font: 400 16px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, p { margin: 0; }
+/* no stranded words: balanced headings, paragraphs that avoid a lone last word */
+h1, h2, h3, .open { text-wrap: balance; }
+p { text-wrap: pretty; }
+::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Approved offline studies: their transparent edges pass behind the glass frame. */
+.visuals { position:fixed;z-index:0;top:50%;left:calc(66vw - 40px);width:min(68vw,108vh);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none; }
+.visuals .study-motion,.visuals .study-still { position:absolute;inset:0;width:100%;height:100%;object-fit:contain; }
+.visuals [hidden] { display:none !important; }
+/* the video and its still swap by visibility, not display: re-displaying an element restarts its CSS animations,
+   which replayed the entrance turn when a finished clip handed over to its final still */
+.visuals .study-motion[hidden],.visuals .study-still[hidden] { display:block !important; visibility:hidden; }
+/* Transitions between studies (study-player.mjs). The incoming drawing opens from the centre through a soft iris
+   while settling from a slight counter-rotation; the outgoing one (copied into .study-out) drains into the centre,
+   drifting, turning and blurring. They overlap, so one drawing swirls into the next. */
+@property --iris { syntax:'<percentage>'; inherits:true; initial-value:130%; }
+@property --drain { syntax:'<percentage>'; inherits:false; initial-value:130%; }
+.visuals .study-motion,.visuals .study-still {
+  -webkit-mask-image:radial-gradient(ellipse var(--iris) var(--iris) at 50% 50%, #000 78%, transparent 100%);
+  mask-image:radial-gradient(ellipse var(--iris) var(--iris) at 50% 50%, #000 78%, transparent 100%);
+}
+.visuals.entering { animation:study-iris 2.2s cubic-bezier(.3,.05,.3,1) .25s both; }
+.visuals.entering .study-motion,.visuals.entering .study-still { animation:study-settle 1.8s cubic-bezier(.2,.7,.2,1) .3s both; }
+@keyframes study-iris { from { --iris:4% } to { --iris:130% } }
+@keyframes study-settle { from { transform:rotate(-7deg) scale(.94); filter:blur(2px) } to { transform:none; filter:none } }
+.visuals .study-out {
+  position:absolute; inset:0; width:100%; height:100%; pointer-events:none; opacity:0;
+  -webkit-mask-image:radial-gradient(ellipse var(--drain) var(--drain) at 50% 50%, #000 70%, transparent 100%);
+  mask-image:radial-gradient(ellipse var(--drain) var(--drain) at 50% 50%, #000 70%, transparent 100%);
+}
+.visuals .study-out.leaving { animation:study-drain 1.25s cubic-bezier(.55,0,.75,.4) both; }
+@keyframes study-drain {
+  from { --drain:130%; opacity:1; transform:none; filter:none }
+  to { --drain:0%; opacity:0; transform:rotate(9deg) scale(1.06); filter:blur(6px) }
+}
+/* The scroll veil: while the page scrolls fast the drawings dim out of the way (no switching underneath), and fade
+   back up once it settles, the new drawing opening with the iris. */
+.visuals { transition: opacity .55s ease; }
+.visuals.veiled { opacity: .08; transition-duration: .16s; }
+@media(prefers-reduced-motion:reduce) {
+  .visuals.entering, .visuals.entering .study-motion, .visuals.entering .study-still, .visuals .study-out.leaving { animation:none }
+}
+
+/* too narrow for the drawing and the card side by side: no drawing */
+@media (max-width: 1039px) { .visuals { display: none; } }
+
+/* the content: a frosted glass card. On narrow screens it scrolls with the page; on wide ones (html.framed, set
+   by frame.js) it is a fixed frame in the left half and only the text inside scrolls. */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 660px;
+  margin: clamp(var(--s5), 8vh, var(--s8)) auto var(--s7);
+  border-radius: 22px;
+  background: var(--glass);
+  /* Hyalite.js writes --hyalite (the refracting filter) in Chromium; elsewhere this frosted blur is used */
+  -webkit-backdrop-filter: var(--hyalite, blur(6px));
+  backdrop-filter: var(--hyalite, blur(6px));
+  box-shadow: var(--shadow);
+}
+.content { padding: var(--pad) var(--pad) var(--s7); }
+/* Fixed glass lighting is rasterized once; only refraction follows live drawings. */
+main::after {content:'';position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;background-image:var(--hyalite-lighting,none);background-size:100% 100%;}
+/* the card's rim (Hyalite's edge, or a plain line without it) */
+main::before {content:'';position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;box-shadow:var(--hyalite-edge, inset 0 0 0 1px var(--rim));}
+.view {position:relative;z-index:1;}
+
+html.framed main {
+  /* the left half of the screen; the drawing has the right half (pendulums.js) */
+  --cw: min(640px, calc(50vw - 2 * clamp(var(--s5), 4vw, var(--s8))));
+  position: fixed;
+  top: clamp(var(--s5), 7vh, var(--s8)); bottom: clamp(var(--s5), 7vh, var(--s8));
+  left: calc((50vw - var(--cw)) / 2);
+  width: var(--cw); max-width: none;
+  margin: 0;
+}
+html.framed .view {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  /* text fades in and out at the frame's top and bottom edges */
+  -webkit-mask-image: linear-gradient(transparent, #000 var(--s6), #000 calc(100% - var(--s6)), transparent);
+  mask-image: linear-gradient(transparent, #000 var(--s6), #000 calc(100% - var(--s6)), transparent);
+}
+html.framed .content { will-change: transform; padding-bottom: var(--s8); }
+
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  main { background: var(--glass-solid); }
+}
+/* people who ask for less transparency get a solid card */
+@media (prefers-reduced-transparency: reduce) {
+  main { background: var(--glass-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  main::after {display:none;}
+}
+
+@media (max-width: 760px) {
+  :root { --pad: var(--s5); --s9: 72px; }
+  main { margin: var(--s3) var(--s3) var(--s3); }
+  .content { padding: var(--s6) var(--pad) var(--s5); }
+}
+
+h1 {
+  font: 400 clamp(44px, 7vw, 56px)/1 var(--serif);
+  letter-spacing: -.025em;
+  margin-bottom: var(--s5);
+}
+
+header p { color: var(--muted); max-width: 48ch; }
+
+.contact { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-top: var(--s5); }
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--underline);
+  transition: text-decoration-color .15s;
+}
+a:hover { text-decoration-color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px; }
+
+section { margin-top: var(--s9); }
+@media (min-width: 1040px) { section { margin-top: 80px; } }
+
+h2 {
+  font: 400 30px/1.1 var(--serif);
+  margin-bottom: var(--s5);
+}
+
+article + article { margin-top: 40px; }       /* rows read as blocks: more between than within */
+
+h3 {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: var(--s1);
+}
+h3 span {
+  font: 400 12px/1 var(--mono);
+  letter-spacing: .01em;
+  color: var(--muted);
+  margin-left: var(--s2);
+  white-space: nowrap;
+}
+
+@media (min-width: 1040px) {
+  h3 { display: flex; align-items: baseline; justify-content: space-between; column-gap: 12px; }
+  h3 span { flex-shrink: 0; margin-left: 0; }
+}
+
+article p { color: var(--muted); max-width: 48ch; }
+
+footer {
+  margin-top: var(--s9);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 400 12px/1.6 var(--mono);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s5);
+}
+
+/* liquid glass (liquid.mjs): a canvas between the drawings and the text draws all the glass; the card and the panel
+   become clear boxes for their text. Off on narrow screens and for reduced transparency, which keep the CSS glass. */
+.liquid-canvas { position: fixed; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity .45s ease; }
+.liquid-canvas.ready { opacity: 1; }
+html:not(.liquid) .liquid-canvas { display: none; }
+html.liquid main, html.liquid .bubble, html.liquid .bubble.moving {
+  background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+}
+html.liquid main::before, html.liquid main::after, html.liquid .bubble::after { display: none; }
+/* the pointer is a droplet of the glass; a crisp dot marks the exact point */
+html.liquid-cursor, html.liquid-cursor * { cursor: none !important; }
+.liquid-dot { position: fixed; z-index: 10; left: 0; top: 0; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
+  background: var(--ink); opacity: .85; pointer-events: none; transition: scale .2s; }
+.liquid-dot.over { scale: 1.6; }
+html:not(.liquid-cursor) .liquid-dot { display: none; }
+@media print { .liquid-canvas, .liquid-dot { display: none !important; } }
+
+/* first load: the name, then each line and row, rise into place one after another (--i is set by frame.js;
+   without it everything still appears, just together). Once only: the page does not reload these. */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: no-preference) {
+  .content > header > *, .content > section > h2, .content > section > article, .content > footer {
+    animation: rise .7s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: calc(120ms + var(--i, 0) * 40ms);
+  }
+}
+
+/* printing: just the text, black on white */
+@media print {
+  main::after {display:none;}
+  .visuals { display: none; }
+  html, body { background: #fff; color: #000; }
+  main, html.framed main { position: static; width: auto; margin: 0; background: none; box-shadow: none; backdrop-filter: none; }
+  html.framed .view { position: static; -webkit-mask-image: none; mask-image: none; }
+  .content { transform: none !important; padding: 0; }
+  a { color: #000; }
+  article { break-inside: avoid; }
+}
+
+
+/* ---- rows open bubbles (bubble.mjs) ----------------------------------------------------------------------------- */
+h3 .open {
+  font: inherit; color: inherit; text-align: left;
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px;
+  text-decoration-color: transparent; transition: text-decoration-color .15s;
+}
+h3 .open:hover, h3 .open:focus-visible { text-decoration-color: var(--accent); }
+h3 .open:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 2px; }
+article[data-item] { position: relative; }
+article[data-item]::before {                       /* the open row: a small red mark at its left edge */
+  content: ''; position: absolute; left: -18px; top: 7px; width: 3px; height: 14px; border-radius: 2px;
+  background: var(--accent); opacity: 0; transform: scaleY(.3); transition: opacity .25s, transform .25s;
+}
+article[data-item].active::before { opacity: 1; transform: none; }
+
+/* ---- the bubble: a second glass panel over the drawing ------------------------------------------------------------ */
+.bubble {
+  position: fixed; z-index: 2; box-sizing: border-box; overflow: hidden;
+  border-radius: 22px;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--hyalite, blur(6px));
+  backdrop-filter: var(--hyalite, blur(6px));
+  /* the drop shadow and the glass edge/lighting fade in once the panel has settled (.shadowed / .lit, bubble.mjs) */
+  box-shadow: inset 0 0 0 1px var(--rim), 0 24px 60px -28px rgba(30, 25, 15, 0);
+  transition: box-shadow .5s ease;
+}
+.bubble.shadowed { box-shadow: inset 0 0 0 1px var(--rim), 0 24px 60px -28px rgba(30, 25, 15, .28); }
+.bubble[hidden] { display: none; }
+.bubble.moving { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.bubble::after {content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-image:var(--hyalite-lighting,none);background-size:100% 100%;
+  box-shadow:var(--hyalite-edge,none);opacity:0;transition:opacity .6s ease;}
+.bubble.lit::after { opacity: 1; }
+.bubble-body {
+  position: relative; z-index: 1; height: 100%; overflow: auto; overscroll-behavior: contain;
+  padding: var(--pad);                               /* the card's padding, so both panels' text sits alike */
+  scrollbar-width: none;                            /* .bubble-bar replaces the native bar */
+  /* content softens into the edges it is scrolled past (bubble.mjs sets --fade-top/--fade-bottom) */
+  --fade-top: 0px; --fade-bottom: 0px;
+  -webkit-mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+  mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+}
+.bubble-body::-webkit-scrollbar { display: none; }
+/* a slim scroll indicator, inset clear of the rounded corners; only when the content overflows */
+.bubble-bar { position: absolute; z-index: 2; top: 64px; bottom: 28px; right: 7px; width: 3px; pointer-events: none;
+  opacity: 0; transition: opacity .4s; }
+.bubble-bar i { position: absolute; left: 0; right: 0; top: 0; border-radius: 2px; background: rgba(22, 22, 22, .22); }
+.bubble.scrollable:hover .bubble-bar, .bubble.scrolling .bubble-bar { opacity: 1; transition-duration: .15s; }
+.bubble-close {
+  position: absolute; z-index: 2; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 50%;
+  border: 0; cursor: pointer; font: 400 20px/1 var(--sans); color: var(--ink);
+  background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 1px var(--rim), 0 2px 8px -4px rgba(30, 25, 15, .3);
+}
+.bubble-close:hover { background: rgba(255, 255, 255, .8); }
+.bubble-close:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.bubble-kind { font: 400 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--s2); }
+.bubble h2 { font: 400 36px/1.05 var(--serif); letter-spacing: -.02em; margin: 0 var(--s5) var(--s2) 0; outline: none; }
+.bubble-meta { color: var(--muted); font-size: 14px; margin: 0; }
+.bubble-body > :last-child { margin-bottom: 0; }
+.gallery, .bubble-summary { margin: var(--s6) 0 0; }
+.bubble-summary + .bubble-points { margin-top: var(--s4); }
+.bubble-points { margin: var(--s6) 0 0; padding-left: 1.1em; color: var(--muted); }
+.bubble-tools, .bubble-links { margin-top: var(--s5); }
+.bubble-points li + li { margin-top: var(--s2); }
+.bubble-points li::marker { color: var(--accent); }
+.bubble-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0; }
+.bubble-tools span { font: 400 12px/1.6 var(--mono); padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px var(--line); }
+.bubble-links { display: flex; flex-wrap: wrap; gap: 4px var(--s5); }
+.bubble [hidden] { display: none !important; }
+
+/* gallery */
+.gallery-frame { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: rgba(22, 22, 22, .05); }
+.gallery-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-prev, .gallery-next {
+  position: absolute; top: 50%; translate: 0 -50%; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, .7); color: var(--ink); font-size: 16px; opacity: 0; transition: opacity .2s;
+}
+.gallery-prev { left: 10px; } .gallery-next { right: 10px; }
+.gallery-frame:hover button, .gallery-frame button:focus-visible { opacity: 1; }
+.gallery-caption { font-size: 13px; color: var(--muted); margin-top: var(--s2); }
+.gallery-caption:empty { display: none; }
+.gallery-strip { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s3); }
+.gallery-count { margin-left: auto; font: 400 12px/1 var(--mono); color: var(--muted); }
+.gallery-thumbs { display: flex; gap: 6px; padding: 3px; margin: -3px; overflow-x: auto; scrollbar-width: none; }
+.gallery-thumbs button { flex: none; width: 56px; height: 42px; padding: 0; border: 0; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: .6; outline-offset: 2px; }
+.gallery-thumbs button.on { opacity: 1; outline: 2px solid var(--ink); }
+.gallery-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+@media (max-width: 1039px) {
+  .bubble, .bubble.moving { border-radius: 22px 22px 0 0; background: var(--glass-solid); }   /* over text, not a drawing */
+  .bubble-body { padding: var(--s6) var(--s5) var(--s7); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bubble, .bubble.moving { background: var(--glass-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media print { .bubble { display: none !important; } }

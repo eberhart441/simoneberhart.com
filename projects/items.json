@@ -1,0 +1,133 @@
+[
+  {
+    "id": "arm",
+    "kind": "Project",
+    "title": "Single-motor robot arm",
+    "dates": "since 2024",
+    "summary": "Six joints driven by one motor. Electromagnetic clutches in the base pick which joint the motor drives, and cables carry the motion up the arm.",
+    "points": [
+      "Two years of research on a novel actuation technique for a six-axis arm.",
+      "Built custom solenoids, PCBs, enclosures and actuators.",
+      "Designed a universal tool changer for affordable robotics.",
+      "Wrote a custom software suite for programming and orchestrating the robot.",
+      "Four provisional patents."
+    ],
+    "tools": ["KiCad", "Fusion 360", "Onshape", "JavaScript"],
+    "links": [{"label": "Transmission video", "href": "https://www.youtube.com/watch?v=OJFuRm17yMc"}]
+  },
+  {
+    "id": "baja-sensor",
+    "kind": "Project",
+    "title": "Baja SAE fuel sensor",
+    "dates": "2026",
+    "summary": "Measures fuel level from shifts in the tank's resonant frequency.",
+    "points": [
+      "Designed a sensor suite that tracks resonant frequency deviations from the tank.",
+      "Designed a custom PCB and software that isolate the frequencies with fast Fourier transforms."
+    ],
+    "tools": ["PCB design", "FFT"],
+    "links": []
+  },
+  {
+    "id": "recycler",
+    "kind": "Project",
+    "title": "Filament recycler",
+    "dates": "",
+    "summary": "A low-cost machine that turns failed 3D prints back into usable filament.",
+    "points": [
+      "Uses hall-effect sensor readings to tune the extrusion line as it runs, holding the filament diameter.",
+      "Ran tests to check the quality of the plastic it produces."
+    ],
+    "tools": ["Fusion 360", "3D printing", "C++"],
+    "links": []
+  },
+  {
+    "id": "foundry",
+    "kind": "Project",
+    "title": "Backyard foundry",
+    "dates": "since 2024",
+    "summary": "A melting furnace built from an empty oil barrel, ceramic wool, refractory cement and a weed burner.",
+    "points": [
+      "Reaches 1200 °C, hot enough to melt aluminium and copper.",
+      "Castings made with a custom-built two-part mold, including jewelry and sculptures."
+    ],
+    "tools": ["Metal casting", "Mold making"],
+    "links": []
+  },
+  {
+    "id": "quant",
+    "kind": "Project",
+    "title": "Statistical arbitrage model",
+    "dates": "2022–2024",
+    "summary": "A statistical arbitrage model running on a compute cluster built from old computers.",
+    "points": [
+      "Developed the model around novel Euclidean-distance algorithms.",
+      "Built a homemade 20-node compute cluster with custom network protocols.",
+      "Traded live for three months."
+    ],
+    "tools": ["Python", "NumPy", "SQLite"],
+    "links": [
+      {"label": "Code", "href": "https://github.com/eberhart441/BuyIn-Build/tree/main/build-dayTrade"},
+      {"label": "Demo", "href": "https://www.youtube.com/watch?v=cE_erRPIcsw"}
+    ]
+  },
+  {
+    "id": "hygrade",
+    "kind": "Experience",
+    "title": "Hygrade Precision Technologies",
+    "dates": "2025–2026",
+    "role": "Engineering intern, then junior engineering technician · Plainville, CT",
+    "summary": "Aerospace manufacturing to micron-level tolerances.",
+    "points": [
+      "Manufactured parts for SpaceX, Lockheed Martin, Boeing and General Electric.",
+      "Metrology for thousands of precision parts with CMMs and height gauges.",
+      "Worked through manufacturing issues across the shop's CNC and grinding machines."
+    ],
+    "tools": ["CMM", "CNC", "Precision grinding"],
+    "links": []
+  },
+  {
+    "id": "baja",
+    "kind": "Experience",
+    "title": "Olin Baja SAE",
+    "dates": "since 2026",
+    "role": "Electrical engineer · Needham, MA",
+    "summary": "Electrical engineering for Olin's Baja SAE car.",
+    "points": [
+      "Designing the fuel-level sensor suite that tracks the tank's resonant frequency.",
+      "Custom PCB and FFT software to isolate the frequencies."
+    ],
+    "tools": ["PCB design", "FFT"],
+    "links": []
+  },
+  {
+    "id": "da-design",
+    "kind": "Experience",
+    "title": "D.A. Design LLC",
+    "dates": "since 2025",
+    "role": "Founder · Woodbridge, CT",
+    "summary": "A robotics and manufacturing research company that holds Simon's projects and their patents.",
+    "points": [
+      "Founded to eventually commercialize independent projects.",
+      "Four provisional patents filed."
+    ],
+    "tools": [],
+    "links": []
+  },
+  {
+    "id": "dragonfly",
+    "kind": "Experience",
+    "title": "Dragonfly Engineering",
+    "dates": "2024",
+    "role": "Robotics intern · Santa Clara, CA",
+    "summary": "Industrial robotics on a biotech injection-molding line.",
+    "points": [
+      "Reverse engineered six-axis robot arms with proprietary vision systems, bought from Google X.",
+      "Programmed industrial robots in KRL for the assembly line.",
+      "Converted a three-axis mill into a CNC with a homemade electronics assembly and custom milled brackets.",
+      "Designed products for customers with DFM in mind and worked with suppliers to source components."
+    ],
+    "tools": ["KUKA KRL", "CNC", "DFM"],
+    "links": []
+  }
+]
