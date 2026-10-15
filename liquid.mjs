@@ -400,7 +400,7 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // out when the page loads; each wanders a while, then drifts home and merges into the card, and the card buds a new one
 // (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
 // beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
-const COUNT = [6, 8], DROP_FROST = .16;
+const COUNT = [6, 8], DROP_FROST = .4;
 const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius px, small to large
 let nextDrop = 0, drops = [], target = 7, seeded = false, panelRect = null, panelFrom = null;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
