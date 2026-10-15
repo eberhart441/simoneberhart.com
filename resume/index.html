@@ -4,10 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Simon Eberhart – Résumé</title>
-<meta http-equiv="refresh" content="0; url=Simon_Eberhart_Resume.pdf">
-<script>location.replace('Simon_Eberhart_Resume.pdf')</script>
+<meta name="description" content="Résumé of Simon Eberhart, engineering student at Olin College of Engineering.">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f6f5f1; color: #1b1a17; font: 15px/1.5 'IBM Plex Sans', system-ui, sans-serif; }
+  nav { max-width: 880px; margin: 0 auto; padding: 24px 16px 16px; display: flex; justify-content: space-between; gap: 16px; }
+  nav a { color: inherit; text-decoration: underline; text-decoration-color: rgba(27, 26, 23, .3); text-underline-offset: 3px; }
+  nav a:hover { text-decoration-color: currentColor; }
+  main { max-width: 880px; margin: 0 auto; padding: 0 16px 48px; display: grid; gap: 24px; }
+  .page { position: relative; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 12px 36px -12px rgba(0, 0, 0, .14); overflow: hidden; }
+  .page img { display: block; width: 100%; height: auto; }
+  .page a { position: absolute; }          /* the clickable contact links over the page image */
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media print { nav { display: none; } body { background: #fff; } main { padding: 0; gap: 0; } .page { box-shadow: none; break-after: page; } }
+</style>
 </head>
 <body>
-<p><a href="Simon_Eberhart_Resume.pdf">Simon Eberhart – Résumé (PDF)</a></p>
+<nav><a href="/">← simoneberhart.com</a><a href="Simon_Eberhart_Resume.pdf" download>Download PDF</a></nav>
+<main>
+  <h1 class="sr">Simon Eberhart – Résumé</h1>
+  <div class="page">
+    <img src="page-1.png" width="2080" height="2692" alt="Résumé of Simon Eberhart: education, experience, projects and technical skills. The PDF has the same content as text.">
+    <a href="/" style="left:14.4%;top:8.3%;width:12.5%;height:1.5%" aria-label="simoneberhart.com"></a>
+    <a href="mailto:seberhart@olin.edu" style="left:28.9%;top:8.3%;width:12.9%;height:1.5%" aria-label="seberhart@olin.edu"></a>
+    <a href="https://www.linkedin.com/in/simon-eberhart" style="left:43.8%;top:8.3%;width:24.5%;height:1.5%" aria-label="LinkedIn"></a>
+    <a href="https://github.com/eberhart441" style="left:70.3%;top:8.3%;width:15.6%;height:1.5%" aria-label="GitHub"></a>
+  </div>
+  <div class="page">
+    <img src="page-2.webp" width="2080" height="2692" loading="lazy" alt="Gallery of project photos: a circuit schematic, a signal plot, robot arm CAD and hardware, a Baja SAE frame, a foundry pour and gear assemblies.">
+  </div>
+</main>
 </body>
 </html>
