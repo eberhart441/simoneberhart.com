@@ -12,6 +12,7 @@
 !/study-player.mjs
 !/liquid.mjs
 !/bubble.mjs
+!/palantir/
 !/vendor/
 /vendor/*
 !/vendor/hyalite.js

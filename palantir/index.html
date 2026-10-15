@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ja-JP">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>♡ Simon Eberhart ♡ ようこそ</title>
+<meta name="description" content="Simon Eberhart, engineering student at Olin College of Engineering. Robot hardware.">
+<meta name="theme-color" content="#ff8fc8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27 shape-rendering=%27crispEdges%27%3E%3Cpath fill=%27%23ff3fa0%27 d=%27M2 4h4v1H2zM10 4h4v1h-4zM1 5h6v1H1zM9 5h6v1H9zM1 6h14v3H1zM2 9h12v1H2zM3 10h10v1H3zM4 11h8v1H4zM5 12h6v1H5zM6 13h4v1H6zM7 14h2v1H7z%27/%3E%3C/svg%3E">
+</head>
+<body>
+<!-- pixel icons, drawn once and reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-bot" shape-rendering="crispEdges">
+      <rect x="15" y="2" width="2" height="5" fill="#4b2448"/><rect x="13" y="1" width="6" height="3" fill="#ff3fa0"/>
+      <rect x="6" y="7" width="20" height="14" fill="#4b2448"/><rect x="7" y="8" width="18" height="12" fill="#fff"/>
+      <rect x="9" y="10" width="14" height="8" fill="#5b3a6e"/><rect x="12" y="12" width="2" height="3" fill="#fff"/>
+      <rect x="18" y="12" width="2" height="3" fill="#fff"/><rect x="10" y="16" width="2" height="1" fill="#ff8fc8"/>
+      <rect x="20" y="16" width="2" height="1" fill="#ff8fc8"/><rect x="9" y="22" width="14" height="8" fill="#4b2448"/>
+      <rect x="10" y="23" width="12" height="6" fill="#ffd6ec"/><rect x="14" y="24" width="4" height="4" fill="#ff3fa0"/>
+    </g>
+    <g id="i-folder" shape-rendering="crispEdges">
+      <rect x="3" y="7" width="11" height="4" fill="#4b2448"/><rect x="4" y="8" width="9" height="3" fill="#ffe36e"/>
+      <rect x="2" y="10" width="28" height="18" fill="#4b2448"/><rect x="3" y="11" width="26" height="16" fill="#ffd36e"/>
+      <rect x="3" y="11" width="26" height="3" fill="#fff3b8"/><rect x="13" y="16" width="6" height="5" fill="#ff8fc8"/>
+    </g>
+    <g id="i-note" shape-rendering="crispEdges">
+      <rect x="6" y="3" width="20" height="26" fill="#4b2448"/><rect x="7" y="4" width="18" height="24" fill="#fff"/>
+      <rect x="7" y="4" width="18" height="4" fill="#c9b6ff"/><rect x="10" y="11" width="12" height="1" fill="#b98bff"/>
+      <rect x="10" y="14" width="12" height="1" fill="#b98bff"/><rect x="10" y="17" width="9" height="1" fill="#b98bff"/>
+      <rect x="10" y="20" width="12" height="1" fill="#b98bff"/><rect x="10" y="23" width="6" height="1" fill="#b98bff"/>
+    </g>
+    <g id="i-mail" shape-rendering="crispEdges">
+      <rect x="2" y="8" width="28" height="18" fill="#4b2448"/><rect x="3" y="9" width="26" height="16" fill="#fff"/>
+      <rect x="4" y="10" width="2" height="2" fill="#ff8fc8"/><rect x="6" y="12" width="2" height="2" fill="#ff8fc8"/>
+      <rect x="8" y="14" width="2" height="2" fill="#ff8fc8"/><rect x="10" y="16" width="12" height="2" fill="#ff8fc8"/>
+      <rect x="22" y="14" width="2" height="2" fill="#ff8fc8"/><rect x="24" y="12" width="2" height="2" fill="#ff8fc8"/>
+      <rect x="26" y="10" width="2" height="2" fill="#ff8fc8"/><rect x="14" y="19" width="4" height="3" fill="#ff3fa0"/>
+    </g>
+    <g id="i-bin" shape-rendering="crispEdges">
+      <rect x="7" y="5" width="18" height="3" fill="#4b2448"/><rect x="13" y="3" width="6" height="2" fill="#4b2448"/>
+      <rect x="8" y="8" width="16" height="21" fill="#4b2448"/><rect x="9" y="9" width="14" height="19" fill="#d6f0ff"/>
+      <rect x="11" y="11" width="2" height="15" fill="#9fd4f5"/><rect x="15" y="11" width="2" height="15" fill="#9fd4f5"/>
+      <rect x="19" y="11" width="2" height="15" fill="#9fd4f5"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="desktop wp-candy" id="desktop">
+  <canvas class="girl" aria-hidden="true"></canvas>
+  <span class="sticker new" style="right:4%;top:6%" aria-hidden="true">NEW!</span>
+  <span class="sticker spin" style="left:9%;top:66%" aria-hidden="true">★</span>
+  <span class="sticker spin" style="right:22%;bottom:30%" aria-hidden="true">✦</span>
+  <span class="sticker rainbow" style="left:2%;bottom:6%" aria-hidden="true">♡ kawaii ♡</span>
+  <span class="sticker smile" style="right:3%;top:38%" aria-hidden="true">(◕‿◕)</span>
+  <span class="sticker new" style="left:2%;top:74%;animation-delay:.35s" aria-hidden="true">ホット!</span>
+  <ul class="icons" aria-label="デスクトップ">
+    <li><button class="icon" data-open="about"><svg viewBox="0 0 32 32"><use href="#i-bot"/></svg><span>マイ ロボット</span></button></li>
+    <li><button class="icon" data-open="projects"><svg viewBox="0 0 32 32"><use href="#i-folder"/></svg><span>projects</span></button></li>
+    <li><button class="icon" data-open="experience"><svg viewBox="0 0 32 32"><use href="#i-note"/></svg><span>experience.txt</span></button></li>
+    <li><button class="icon" data-open="contact"><svg viewBox="0 0 32 32"><use href="#i-mail"/></svg><span>メール</span></button></li>
+    <li><button class="icon" data-open="badapple"><svg viewBox="0 0 32 32" shape-rendering="crispEdges"><rect x="3" y="3" width="26" height="26" fill="#3d1a38"/><rect x="4" y="4" width="24" height="24" fill="#fff"/><rect x="15" y="6" width="2" height="5" fill="#000"/><rect x="17" y="6" width="5" height="3" fill="#000"/><rect x="9" y="11" width="6" height="2" fill="#000"/><rect x="17" y="11" width="6" height="2" fill="#000"/><rect x="7" y="13" width="18" height="8" fill="#000"/><rect x="8" y="21" width="16" height="3" fill="#000"/><rect x="10" y="24" width="12" height="2" fill="#000"/></svg><span>bad_apple.avi</span></button></li>
+    <li><button class="icon" id="wallpaper" title="Change wallpaper"><svg viewBox="0 0 32 32" shape-rendering="crispEdges"><rect x="2" y="4" width="28" height="22" fill="#3d1a38"/><rect x="4" y="6" width="24" height="18" fill="#38f2ff"/><rect x="4" y="16" width="24" height="8" fill="#ff5fb4"/><rect x="18" y="8" width="5" height="5" fill="#ffe600"/><rect x="12" y="26" width="8" height="3" fill="#3d1a38"/></svg><span>壁紙</span></button></li>
+    <li><button class="icon" data-open="bin"><svg viewBox="0 0 32 32"><use href="#i-bin"/></svg><span>ごみ箱</span></button></li>
+  </ul>
+
+  <!-- about -->
+  <section class="win" id="about" aria-labelledby="t-about" data-pos="0,0.04" data-w="520">
+    <div class="titlebar"><svg viewBox="0 0 32 32" class="ti"><use href="#i-bot"/></svg><h2 id="t-about">about_me.exe — ようこそ！</h2>
+      <div class="ctl"><button data-act="min" aria-label="Minimize">_</button><button data-act="max" aria-label="Maximize">□</button><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>V</u>iew</span><span><u>H</u>elp</span></div>
+    <div class="body about">
+      <div class="hero">
+        <div>
+          <p class="blink">★ ★ ★ ようこそ！ welcome ★ ★ ★</p>
+          <h1 class="wordart" data-text="Simon Eberhart">Simon Eberhart</h1>
+          <p class="jp">ロボット ハードウェア ♡ エンジニア</p>
+        </div>
+        <svg class="bot" viewBox="0 0 220 260" role="img" aria-label="A small pink robot waving">
+          <defs>
+            <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#ffd1ea"/></linearGradient>
+            <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b3a6e"/><stop offset="1" stop-color="#3a2347"/></linearGradient>
+          </defs>
+          <line x1="110" y1="44" x2="110" y2="20" class="stroke"/>
+          <path class="heart beat" d="M110 22 C100 14 98 6 104 3 C107 1.5 109 3 110 5 C111 3 113 1.5 116 3 C122 6 120 14 110 22Z"/>
+          <rect x="50" y="44" width="120" height="96" rx="34" fill="url(#shell)" class="stroke"/>
+          <rect x="66" y="60" width="88" height="62" rx="22" fill="url(#screen)"/>
+          <g class="eyes"><ellipse cx="92" cy="90" rx="7" ry="9" fill="#fff"/><ellipse cx="128" cy="90" rx="7" ry="9" fill="#fff"/>
+            <circle cx="94" cy="87" r="2.2" fill="#3a2347"/><circle cx="130" cy="87" r="2.2" fill="#3a2347"/></g>
+          <path d="M103 104 Q110 110 117 104" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <ellipse cx="78" cy="108" rx="7" ry="4" fill="#ff8cc6" opacity=".8"/><ellipse cx="142" cy="108" rx="7" ry="4" fill="#ff8cc6" opacity=".8"/>
+          <rect x="66" y="148" width="88" height="76" rx="26" fill="url(#shell)" class="stroke"/>
+          <circle cx="110" cy="182" r="13" fill="#ffe36e" class="stroke"/>
+          <path d="M110 189 C104 184 103 180 106 178 C108 177 109.5 178 110 179.5 C110.5 178 112 177 114 178 C117 180 116 184 110 189Z" fill="#ff4fa6"/>
+          <path d="M66 172 Q44 186 48 208" fill="none" class="stroke limb"/><circle cx="48" cy="210" r="9" fill="url(#shell)" class="stroke"/>
+          <g class="arm"><line x1="154" y1="170" x2="182" y2="146" class="stroke limb"/>
+            <g class="forearm"><line x1="182" y1="146" x2="190" y2="112" class="stroke limb"/><circle cx="191" cy="106" r="10" fill="url(#shell)" class="stroke"/></g>
+            <circle cx="182" cy="146" r="6" fill="#c9b6ff" class="stroke"/></g>
+          <circle cx="154" cy="170" r="7" fill="#c9b6ff" class="stroke"/>
+          <rect x="76" y="224" width="26" height="16" rx="8" fill="#ffb3d9" class="stroke"/><rect x="118" y="224" width="26" height="16" rx="8" fill="#ffb3d9" class="stroke"/>
+        </svg>
+      </div>
+      <div class="field">
+        <p>Engineering student at Olin College of Engineering, class of 2030. Most of what I make is robot hardware.
+          Right now that is a six-axis arm driven by a single motor, and the electronics for Olin's Baja SAE car.</p>
+      </div>
+      <div class="row">
+        <a class="btn" href="mailto:seberhart@olin.edu">✉ Email</a>
+        <a class="btn" href="https://github.com/eberhart441">GitHub</a>
+        <a class="btn" href="https://www.linkedin.com/in/simon-eberhart">LinkedIn</a>
+      </div>
+      <div class="construction" aria-hidden="true"><span>工事中 ♡ UNDER CONSTRUCTION ♡ 工事中 ♡ UNDER CONSTRUCTION ♡ 工事中</span></div>
+    </div>
+    <div class="statusbar"><span>準備完了 Ready</span><span>♡ 1 object</span></div>
+  </section>
+
+  <!-- projects: an explorer window -->
+  <section class="win" id="projects" aria-labelledby="t-projects" data-pos="0.38,0.3" data-w="470" data-h="0.62">
+    <div class="titlebar"><svg viewBox="0 0 32 32" class="ti"><use href="#i-folder"/></svg><h2 id="t-projects">C:\Simon\projects</h2>
+      <div class="ctl"><button data-act="min" aria-label="Minimize">_</button><button data-act="max" aria-label="Maximize">□</button><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>V</u>iew</span><span><u>G</u>o</span><span>F<u>a</u>vorites</span><span><u>H</u>elp</span></div>
+    <div class="toolbar" aria-hidden="true"><span class="tb" aria-disabled="true">← 戻る</span><span class="tb" aria-disabled="true">進む →</span><span class="tb">↑ 上へ</span>
+      <span class="addr">アドレス <span class="field-in">C:\Simon\projects</span></span></div>
+    <div class="body list">
+      <article>
+        <svg viewBox="0 0 32 32" class="fi"><use href="#i-bot"/></svg>
+        <div><h3>single_motor_robot_arm <span class="date">since 2024</span><span class="newtag">NEW!</span></h3>
+          <p>Six joints, one motor. Electromagnetic clutches in the base pick which joint the motor drives, and cables
+            carry the motion up the arm. Four provisional patents. <a href="https://www.youtube.com/watch?v=OJFuRm17yMc">transmission_video.avi</a></p></div>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" class="fi"><use href="#i-folder"/></svg>
+        <div><h3>baja_sae_fuel_sensor <span class="date">2026</span><span class="newtag">NEW!</span></h3>
+          <p>Measures fuel level from shifts in the tank's resonant frequency. Custom PCB and FFT firmware.</p></div>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" class="fi"><use href="#i-folder"/></svg>
+        <div><h3>filament_recycler</h3>
+          <p>Turns failed 3D prints back into filament, using hall-effect feedback to hold the diameter.</p></div>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" class="fi"><use href="#i-folder"/></svg>
+        <div><h3>backyard_foundry <span class="date">since 2024</span></h3>
+          <p>A furnace built from an oil drum that reaches 1200&nbsp;°C, for aluminium and copper castings.</p></div>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" class="fi"><use href="#i-folder"/></svg>
+        <div><h3>statistical_arbitrage_model <span class="date">2022–2024</span></h3>
+          <p>A trading model running on a 20-node cluster I built from old computers. Traded live for three months.
+            <a href="https://github.com/eberhart441/BuyIn-Build/tree/main/build-dayTrade">code</a> · <a href="https://www.youtube.com/watch?v=cE_erRPIcsw">demo.avi</a></p></div>
+      </article>
+    </div>
+    <div class="statusbar"><span>5 個のオブジェクト</span><span>マイ コンピュータ</span></div>
+  </section>
+
+  <!-- experience: notepad -->
+  <section class="win" id="experience" aria-labelledby="t-exp" data-pos="0.1,0.64" data-w="470" data-h="0.33">
+    <div class="titlebar"><svg viewBox="0 0 32 32" class="ti"><use href="#i-note"/></svg><h2 id="t-exp">experience.txt - メモ帳</h2>
+      <div class="ctl"><button data-act="min" aria-label="Minimize">_</button><button data-act="max" aria-label="Maximize">□</button><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span>F<u>o</u>rmat</span><span><u>V</u>iew</span><span><u>H</u>elp</span></div>
+    <div class="body notepad">
+      <article><h3>Hygrade Precision Technologies <span class="date">2025–2026</span></h3>
+        <p>Engineering intern, then junior engineering technician. Machined aerospace parts for SpaceX, Lockheed Martin,
+          Boeing and GE to micron tolerances.</p></article>
+      <article><h3>Olin Baja SAE <span class="date">since 2026</span></h3><p>Electrical engineer.</p></article>
+      <article><h3>D.A. Design LLC <span class="date">since 2025</span></h3>
+        <p>Founder. A small company that holds my robotics and manufacturing projects and their patents.</p></article>
+      <article><h3>Dragonfly Engineering <span class="date">2024</span></h3>
+        <p>Robotics intern. Programmed KUKA industrial arms, reverse engineered robots from Google X, and converted a
+          manual mill to CNC.</p></article>
+      <p class="caret" aria-hidden="true">_</p>
+    </div>
+  </section>
+
+  <!-- contact: a dialog -->
+  <section class="win dialog" id="contact" aria-labelledby="t-contact" data-pos="0.5,0.7" data-w="320">
+    <div class="titlebar"><h2 id="t-contact">メール ♡ contact</h2>
+      <div class="ctl"><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="body">
+      <div class="msg"><svg viewBox="0 0 32 32" class="big"><use href="#i-mail"/></svg>
+        <p>Say hi! I'm looking for robotics hardware internships.<br><a href="mailto:seberhart@olin.edu">seberhart@olin.edu</a></p></div>
+      <div class="row center"><a class="btn default" href="mailto:seberhart@olin.edu">OK</a><button class="btn" data-act="close">キャンセル</button></div>
+    </div>
+  </section>
+
+  <!-- media player: bad_apple.avi (badapple.js) -->
+  <section class="win media" id="badapple" aria-labelledby="t-media" data-pos="0.69,0.02" data-w="300">
+    <div class="titlebar"><svg class="ti" viewBox="0 0 32 32" shape-rendering="crispEdges"><rect x="3" y="3" width="26" height="26" fill="#3d1a38"/><rect x="4" y="4" width="24" height="24" fill="#fff"/><rect x="15" y="6" width="2" height="5" fill="#000"/><rect x="17" y="6" width="5" height="3" fill="#000"/><rect x="9" y="11" width="6" height="2" fill="#000"/><rect x="17" y="11" width="6" height="2" fill="#000"/><rect x="7" y="13" width="18" height="8" fill="#000"/><rect x="8" y="21" width="16" height="3" fill="#000"/><rect x="10" y="24" width="12" height="2" fill="#000"/></svg><h2 id="t-media">bad_apple.avi - メディア プレーヤー</h2>
+      <div class="ctl"><button data-act="min" aria-label="Minimize">_</button><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>D</u>evice</span><span>S<u>c</u>ale</span><span><u>H</u>elp</span></div>
+    <div class="screen"><canvas role="img" aria-label="A black and white shadow animation: an apple falls, then a girl's silhouette turns"></canvas></div>
+    <div class="seek" aria-hidden="true"><i></i></div>
+    <div class="transport">
+      <button class="mbtn" data-media="play" aria-label="Play">▶</button>
+      <button class="mbtn" data-media="pause" aria-label="Pause">❚❚</button>
+      <button class="mbtn" data-media="stop" aria-label="Stop">■</button>
+      <span class="mtime">00:00 / 00:25</span>
+    </div>
+    <div class="statusbar"><span class="mstate">再生中 Playing</span><span><a href="https://www.youtube.com/results?search_query=Bad+Apple!!+feat.+nomico" target="_blank" rel="noopener">♪ 本家 original ↗</a></span></div>
+  </section>
+
+  <!-- tip of the day -->
+  <section class="win dialog tip" id="tip" aria-labelledby="t-tip" data-pos="0.4,0.02" data-w="340">
+    <div class="titlebar"><h2 id="t-tip">今日のヒント ✦ Tip of the Day</h2><div class="ctl"><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="body"><span class="bulb" aria-hidden="true">✦</span>
+      <div><h3>ご存知でしたか？ Did you know...</h3><p id="tiptext">Windows can be dragged by their title bars. Double-click a title bar to make it big!</p></div></div>
+    <div class="tip-foot"><span>♡ Simon95</span><span class="row"><button class="btn" id="nexttip">次のヒント</button><button class="btn default" data-act="close">閉じる</button></span></div>
+  </section>
+
+  <!-- recycle bin: closed until opened -->
+  <section class="win dialog" id="bin" aria-labelledby="t-bin" data-pos="0.36,0.3" data-w="300" hidden>
+    <div class="titlebar"><h2 id="t-bin">ごみ箱</h2><div class="ctl"><button data-act="close" aria-label="Close">×</button></div></div>
+    <div class="body"><div class="msg"><svg viewBox="0 0 32 32" class="big"><use href="#i-bin"/></svg><p>ごみ箱は空です ♡<br>The Recycle Bin is empty.</p></div>
+      <div class="row center"><button class="btn default" data-act="close">OK</button></div></div>
+  </section>
+
+  <!-- the corner of the desktop: 88x31 buttons and a hit counter -->
+  <aside class="corner" aria-label="Badges">
+    <div class="counter" title="Your visits to this page (stored in your browser)">訪問者 <span id="hits">000001</span></div>
+    <div class="badges" aria-hidden="true">
+      <span class="b88 b1">♡ HTML 4.01</span>
+      <span class="b88 b2">800×600<br>推奨</span>
+      <span class="b88 b3">ROBOT<br>POWERED</span>
+      <span class="b88 b4">NETSCAPE<br>♡ NOW!</span>
+    </div>
+  </aside>
+</div>
+
+<nav class="taskbar" aria-label="Taskbar">
+  <button class="start" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 32 32"><use href="#i-bot"/></svg>スタート</button>
+  <div class="tasks"></div>
+  <div class="tray"><span aria-hidden="true">♡ 🔊</span><time id="clock"></time></div>
+</nav>
+<div class="startmenu" hidden>
+  <div class="side" aria-hidden="true">Simon<b>95</b></div>
+  <ul>
+    <li><button data-open="about"><svg viewBox="0 0 32 32"><use href="#i-bot"/></svg>about_me.exe</button></li>
+    <li><button data-open="projects"><svg viewBox="0 0 32 32"><use href="#i-folder"/></svg>projects</button></li>
+    <li><button data-open="experience"><svg viewBox="0 0 32 32"><use href="#i-note"/></svg>experience.txt</button></li>
+    <li><button data-open="contact"><svg viewBox="0 0 32 32"><use href="#i-mail"/></svg>メール</button></li>
+    <li class="sep"></li>
+    <li><a href="https://github.com/eberhart441">GitHub ↗</a></li>
+    <li><a href="https://www.linkedin.com/in/simon-eberhart">LinkedIn ↗</a></li>
+  </ul>
+</div>
+<script src="win.js"></script>
+<script src="girl.js"></script>
+<script src="badapple.js"></script>
+</body>
+</html>
