@@ -206,7 +206,8 @@ class Body {
   }
   settled(tol = 2) { return ['x', 'y', 'w', 'h'].every(k => Math.abs(this.t[k] - this.c[k]) < tol) && Math.abs(this.v.w) < 5; }
 }
-const rectBody = (r, radius = 22) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
+const PANEL_R = 36;                                                      // the frosted panels' corner radius (style.css matches)
+const rectBody = (r, radius = PANEL_R) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
 
 // ---- the engine: created once, switched on and off with the conditions --------------------------------------------
 let gl = null, canvas = null, E = null;
@@ -255,7 +256,7 @@ function create() {
 // ---- state --------------------------------------------------------------------------------------------------------
 let W = 0, H = 0, DPR = 1, raf = 0, last = 0, dirty = true, sceneDirty = true;
 const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}};
-const card = new Body({x: 0, y: 0, w: 0, h: 0, r: 22}, {frost: 1, k: 300, z: 1});
+const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: 1, k: 300, z: 1});
 const bodies = new Set([card]);
 const cursor = new Body({x: -100, y: -100, w: 0, h: 0, r: 0}, {k: 420, z: .72});
 const bump = {x: 0, y: 0, a: 0, ta: 0, v: 0};
@@ -637,7 +638,7 @@ Liquid.bud = async (point, rect) => {
     const q = inOut(clamp01(t / .62)), inflate = inOut(clamp01((t - .36) / .64));
     const drop = 16 + 26 * out3(clamp01(t / .4));
     const w = mix(drop, R.w / 2, inflate), h = mix(drop, R.h / 2, inflate);
-    return {x: mix(point.x - 26, cx, q), y: mix(point.y, cy, q), w, h, r: Math.min(w, h, mix(drop, 22, inflate))};
+    return {x: mix(point.x - 26, cx, q), y: mix(point.y, cy, q), w, h, r: Math.min(w, h, mix(drop, PANEL_R, inflate))};
   });
   b.k = 200; b.z = .55;                                                 // looser at the end: it wobbles as it settles
   await until(() => b.settled(6));
