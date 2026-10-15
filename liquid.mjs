@@ -113,6 +113,7 @@ uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform float uRimFrost;   // the frosted panels' rim is as clear as the bubbles, frosting over toward the inside
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
+uniform float uKC;         // how far the card's edge reaches toward the other glass (wider than uK: it bulges out to meet them)
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
 float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.) / k; return min(a, b) - h * h * k * .25; }
@@ -122,12 +123,12 @@ float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.) / k; r
 #define FAR 140.
 bool round_(vec4 b, float r) { return r >= min(b.z, b.w) && abs(b.z - b.w) < .01; }
 float field(vec2 p, float widen) {
-  float d = 1e5;
+  float d = 1e5, dc = 1e5;
   for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
     vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w);
     float di = round_(b, uBp[i].x) ? length(pp) - rr : sdBox(pp, b.zw, min(uBp[i].x + widen, rr));
-    if (di < FAR) d = smin(d, di, uK); }
-  return d;
+    if (i == 0 && uCard == 1) dc = di; else if (di < FAR) d = smin(d, di, uK); }
+  return smin(d, dc, uKC);
 }
 // a rounded box's distance and its exact gradient (outward)
 float sdBoxG(vec2 p, vec2 b, float r, out vec2 g) {
@@ -142,20 +143,24 @@ float sdBoxG(vec2 p, vec2 b, float r, out vec2 g) {
 float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   if (uCard == 1) {                                                    // deep inside the card no other body can reach
     vec4 c = uB[0]; float dc = sdBox(p - c.xy, c.zw, min(uBp[0].x, min(c.z, c.w)));
-    if (dc < -(uBevel + uK + 4.)) { frost = uBp[0].y; bevel = uBevel; grad = vec2(0.); return dc; }
+    if (dc < -(uBevel + uKC + 4.)) { frost = uBp[0].y; bevel = uBevel; grad = vec2(0.); return dc; }
   }
-  float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0.; vec2 gw = vec2(0.), gi;
+  float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0., dC = 1e5, dwC = 1e5; vec2 gw = vec2(0.), gi, gC = vec2(0.);
   for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
     vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w), dwi;
     bool rnd = round_(b, uBp[i].x);
     float di = rnd ? length(pp) - rr : sdBox(pp, b.zw, min(uBp[i].x, rr));
     if (di > FAR) continue;
-    d = smin(d, di, uK);
     if (rnd) { dwi = di; gi = pp / max(di + rr, 1e-4); }                 // a circle's rounder twin is itself
     else dwi = sdBoxG(pp, b.zw, min(uBp[i].x + uBevel, rr), gi);
+    float w = exp(-max(di, 0.) * .05); ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, rr - 1.);
+    if (i == 0 && uCard == 1) { dC = di; dwC = dwi; gC = gi; continue; }  // the card joins last, with its own reach
+    d = smin(d, di, uK);
     float h = max(uK - abs(dw - dwi), 0.) / uK;
-    gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * uK * .25;
-    float w = exp(-max(di, 0.) * .05); ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, rr - 1.); }
+    gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * uK * .25; }
+  d = smin(d, dC, uKC);
+  float h = max(uKC - abs(dw - dwC), 0.) / uKC;
+  gw = mix(gw, gC, dwC < dw ? 1. - h * .5 : h * .5);
   frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4)); grad = gw;
   return d;
 }
@@ -313,6 +318,7 @@ function uploadInk() {
 // ---- render -------------------------------------------------------------------------------------------------------
 const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
 const REACH = 34;                                                       // px past a body's box: its shadow and its merging
+const CARD_REACH = 72;                                                  // the card's edge reaches farther (uKC)
 const useBuffer = buf => { gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); };
 function common(prog, w, h) {
   gl.useProgram(prog.p);
@@ -343,14 +349,15 @@ function render() {
     if (n >= MAX || b.c.w <= .3 || b.c.h <= .3) continue;
     const c = b.c, i = n * 4;
     Bv[i] = c.x; Bv[i + 1] = c.y; Bv[i + 2] = c.w; Bv[i + 3] = c.h; Bpv[i] = c.r; Bpv[i + 1] = b.frost;
-    const x0 = c.x - c.w - REACH, x1 = c.x + c.w + REACH, y0 = c.y - c.h - REACH, y1 = c.y + c.h + REACH + 12, q = n * 12;
+    const RE = b === card ? CARD_REACH + 12 : REACH;
+    const x0 = c.x - c.w - RE, x1 = c.x + c.w + RE, y0 = c.y - c.h - RE, y1 = c.y + c.h + RE + 12, q = n * 12;
     Q[q] = x0; Q[q + 1] = y0; Q[q + 2] = x1; Q[q + 3] = y0; Q[q + 4] = x0; Q[q + 5] = y1;
     Q[q + 6] = x0; Q[q + 7] = y1; Q[q + 8] = x1; Q[q + 9] = y0; Q[q + 10] = x1; Q[q + 11] = y1;
     n++;
   }
   gl.uniform4fv(u.uB, Bv); gl.uniform4fv(u.uBp, Bpv); gl.uniform1i(u.uN, n);
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
-  gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
+  gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
   gl.uniform2f(u.uTintY, L.card.y, L.card.h);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
@@ -466,7 +473,7 @@ function spot(R) {                                                      // a hom
   const edge = L.card.x + L.card.w, x0 = edge + R + 90, x1 = W - R - 110, y0 = R + 70, y1 = H - R - 70;
   let best = null, bestGap = -1;
   for (let i = 0; i < 16; i++) {
-    const c = {x: mix(x0, Math.max(x0, x1), Math.random()), y: mix(y0, Math.max(y0, y1), Math.random())};
+    const c = {x: mix(x0, Math.max(x0, x1), Math.pow(Math.random(), 1.8)), y: mix(y0, Math.max(y0, y1), Math.random())};   // nearer the card
     const gap = Math.min(...live().map(d => Math.hypot(d.out.x - c.x, d.out.y - c.y) - d.R), 1e9);
     if (gap > bestGap) { bestGap = gap; best = c; }
   }
@@ -564,13 +571,13 @@ function visits(list, t, edge) {
     if (!v.touched && d.p.x - d.R - edge < 1) v.touched = t;              // the stay is timed from the touch
     if ((v.touched && t > v.touched + v.hold) || t > v.deadline) { d.out = v.home; d.visit = null; d.leave = t + 4; }
   }
-  if (!nextVisit) nextVisit = t + 5;
-  if (t < nextVisit || list.some(d => d.visit)) return;
-  nextVisit = t + 9 + Math.random() * 9;
-  const c = L.card, ok = list.filter(d => d.p.y > c.y + d.R * .5 && d.p.y < c.y + c.h - d.R * .5 && (t * 1000 - d.born) / 1000 < d.life - 12);
+  if (!nextVisit) nextVisit = t + 2;
+  if (t < nextVisit || list.filter(d => d.visit).length >= 2) return;    // up to two at the card at once
+  nextVisit = t + 3 + Math.random() * 4;
+  const c = L.card, ok = list.filter(d => !d.visit && !(d.leave > t) && d.p.y > c.y + d.R * .5 && d.p.y < c.y + c.h - d.R * .5 && (t * 1000 - d.born) / 1000 < d.life - 10);
   if (!ok.length) return;
   const d = ok.reduce((a, b) => (a.p.x - a.R < b.p.x - b.R ? a : b));
-  d.visit = {hold: 5 + Math.random() * 3, deadline: t + 25, touched: 0, home: d.out};
+  d.visit = {hold: 4 + Math.random() * 4, deadline: t + 20, touched: 0, home: d.out};
   d.out = {x: edge + d.R - 7, y: d.p.y};
 }
 function float(list, t) {
