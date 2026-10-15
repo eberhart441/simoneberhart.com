@@ -113,6 +113,7 @@ uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform float uRimFrost;   // the frosted panels' rim is as clear as the bubbles, frosting over toward the inside
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
+uniform vec2 uRipple;      // the frosted panels' slight ripple: time (s), strength
 uniform vec2 uCardR;       // the card's text edge and right edge: past the text it turns to the bubbles' glass
 uniform float uKC;         // how far the card's edge reaches toward the other glass (wider than uK: it bulges out to meet them)
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
@@ -165,6 +166,11 @@ float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4)); grad = gw;
   return d;
 }
+// a few long, slow swells crossing in different directions: the surface slope (per unit of strength)
+vec2 ripple(vec2 p, float t) {
+  const vec2 k1 = vec2(.0210, .0080), k2 = vec2(-.0110, .0190), k3 = vec2(.0060, -.0250);
+  return k1 * cos(dot(k1, p) - t * .55) + k2 * cos(dot(k2, p) - t * .43 + 1.7) * .8 + k3 * cos(dot(k3, p) - t * .67 + 4.1) * .6;
+}
 vec2 prof(float s) { return texture(uProf, vec2((clamp(s, 0., uProfDepth) / uProfDepth * (uProfN - 1.) + .5) / uProfN, .5)).rg; }
 void main() {
   vec2 p = cssAt(gl_FragCoord.xy);
@@ -176,6 +182,7 @@ void main() {
     o = vec4(vec3(.118, .098, .059) * a, a); return;
   }
   float s = max(-d, 0.);
+  float panel = smoothstep(.9, .93, frost);                            // the frosted panels ripple, the bubbles do not
   if (frost > .5) frost = mix(uRimFrost, frost, smoothstep(4., uBevel * 1.15, s));
   float side = smoothstep(uCardR.x - 70., uCardR.y - 6., p.x) * (1. - smoothstep(uCardR.y + 60., uCardR.y + 90., p.x));
   frost = mix(frost, min(frost, .55), side);                           // the card's right margin is clear glass, like the bubbles
@@ -190,13 +197,16 @@ void main() {
   if (uBump.z > .001) {                                                // the cursor is over the card
     vec2 bd = p - uBump.xy; bg = exp(-dot(bd, bd) / 1800.); bgrad = -bd / 900. * bg * uBump.z;
   }
-  off += bgrad * 22.;                                                  // the cursor's swell: a soft lens of its own
+  vec2 rg = vec2(0.);
+  if (panel > 0. && uRipple.y > 0.) rg = ripple(p, uRipple.x) * uRipple.y * panel;
+  off += bgrad * 22. + rg * 50.;                                                  // the cursor's swell: a soft lens of its own
   vec2 ps = p + off;
   vec3 blurred = texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb;
   vec3 col = frost > .995 ? blurred : mix(sceneAt(ps), blurred, frost);   // fully frosted: the sharp backdrop never shows
   float ty = clamp((p.y - uTintY.x) / uTintY.y, 0., 1.);               // the card's --glass tint: .30 → .19 → .25
   float tint = ty < .45 ? mix(.30, .19, ty / .45) : mix(.19, .25, (ty - .45) / .55);
   col = mix(col, vec3(1.), tint * mix(.4, 1., frost) * (1. - .45 * side));
+  col += dot(rg, uLight) * .5;                                         // the swells catch the light faintly
   float e = pe.g, f = dot(g, uLight);                                  // Hyalite's edge light; only the lit half follows the light
   if (e > 0.) e *= max(0., f) * .78 + max(0., -f) * .30;
   col = e > 0. ? mix(col, vec3(1.), min(e, 1.)) : mix(col, vec3(0.), min(-e, 1.));
@@ -322,6 +332,8 @@ function uploadInk() {
 
 // ---- render -------------------------------------------------------------------------------------------------------
 let lastFrost = 0, frostOwed = false;
+// the frosted panels' ripple: very slight and slow, so it is redrawn at most 30 times a second; still for reduced motion
+const RIPPLE = 1; let rippleT = 0, lastRipple = 0;
 const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
 const REACH = 34;                                                       // px past a body's box: its shadow and its merging
 const CARD_REACH = 72;                                                  // the card's edge reaches farther (uKC)
@@ -370,7 +382,7 @@ function render() {
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
   gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
-  gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
+  gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uRipple, rippleT, RIPPLE); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
   const a = P.light * Math.PI / 180; gl.uniform2f(u.uLight, Math.sin(a), -Math.cos(a));
   gl.uniform3f(u.uBump, bump.x, bump.y, bump.a); gl.uniform1f(u.uRimFrost, DROP_FROST);
@@ -417,6 +429,7 @@ function tick(now) {
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
     moving = true;
   }
+  if (!reduceMotion.matches && now - lastRipple >= 33) { rippleT = now / 1000; lastRipple = now; dirty = true; }
   if (dirty || inkFresh || sceneDirty || frostOwed || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
   // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
