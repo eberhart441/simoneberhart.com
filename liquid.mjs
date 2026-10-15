@@ -116,10 +116,16 @@ uniform int uCard;         // 1 when body 0 is the card: its deep inside can ski
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
 float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.) / k; return min(a, b) - h * h * k * .25; }
 // widen: 0 = the outline; uBevel = a rounder twin used only for the bend direction (no creases at corners)
+// a body's distance: a round body (most of them) is a plain circle; a body farther than FAR px cannot change a pixel
+// (the merging reaches uK, the frost weighting fades to nothing by then), so the costlier work skips it
+#define FAR 140.
+bool round_(vec4 b, float r) { return r >= min(b.z, b.w) && abs(b.z - b.w) < .01; }
 float field(vec2 p, float widen) {
   float d = 1e5;
   for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
-    vec4 b = uB[i]; d = smin(d, sdBox(p - b.xy, b.zw, min(uBp[i].x + widen, min(b.z, b.w))), uK); }
+    vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w);
+    float di = round_(b, uBp[i].x) ? length(pp) - rr : sdBox(pp, b.zw, min(uBp[i].x + widen, rr));
+    if (di < FAR) d = smin(d, di, uK); }
   return d;
 }
 // a rounded box's distance and its exact gradient (outward)
@@ -139,10 +145,13 @@ float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   }
   float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0.; vec2 gw = vec2(0.), gi;
   for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
-    vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w);
-    float di = sdBox(pp, b.zw, min(uBp[i].x, rr));
+    vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w), dwi;
+    bool rnd = round_(b, uBp[i].x);
+    float di = rnd ? length(pp) - rr : sdBox(pp, b.zw, min(uBp[i].x, rr));
+    if (di > FAR) continue;
     d = smin(d, di, uK);
-    float dwi = sdBoxG(pp, b.zw, min(uBp[i].x + uBevel, rr), gi);
+    if (rnd) { dwi = di; gi = pp / max(di + rr, 1e-4); }                 // a circle's rounder twin is itself
+    else dwi = sdBoxG(pp, b.zw, min(uBp[i].x + uBevel, rr), gi);
     float h = max(uK - abs(dw - dwi), 0.) / uK;
     gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * uK * .25;
     float w = exp(-max(di, 0.) * .05); ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, rr - 1.); }
@@ -167,10 +176,14 @@ void main() {
     pe = prof(sProf);                                                  // r: inward displacement px, g: signed edge light
   }
   vec2 off = -g * pe.r;
-  vec2 bd = p - uBump.xy; float bg = exp(-dot(bd, bd) / 1800.); vec2 bgrad = -bd / 900. * bg * uBump.z;
+  float bg = 0.; vec2 bgrad = vec2(0.);
+  if (uBump.z > .001) {                                                // the cursor is over the card
+    vec2 bd = p - uBump.xy; bg = exp(-dot(bd, bd) / 1800.); bgrad = -bd / 900. * bg * uBump.z;
+  }
   off += bgrad * 22.;                                                  // the cursor's swell: a soft lens of its own
   vec2 ps = p + off;
-  vec3 col = mix(sceneAt(ps), texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb, frost);
+  vec3 blurred = texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb;
+  vec3 col = frost > .995 ? blurred : mix(sceneAt(ps), blurred, frost);   // fully frosted: the sharp backdrop never shows
   float ty = clamp((p.y - uTintY.x) / uTintY.y, 0., 1.);               // the card's --glass tint: .30 → .19 → .25
   float tint = ty < .45 ? mix(.30, .19, ty / .45) : mix(.19, .25, (ty - .45) / .55);
   col = mix(col, vec3(1.), tint * mix(.4, 1., frost));
@@ -179,7 +192,7 @@ void main() {
   col = e > 0. ? mix(col, vec3(1.), min(e, 1.)) : mix(col, vec3(0.), min(-e, 1.));
   col = mix(col, vec3(0.), .16 * uEdge * (1. - smoothstep(1.1, 1.9, s)));   // the card's CSS rim: dark hairline, white line
   col = mix(col, vec3(1.), .72 * uEdge * (1. - smoothstep(.2, .9, s)) + .55 * uEdge * max(0., f) * (1. - smoothstep(.6, 1.6, s)));
-  col += uBump.z * .16 * bg * pow(max(dot(normalize(vec3(bgrad * 14., 1.)), normalize(vec3(uLight, .9))), 0.), 40.);
+  if (uBump.z > .001) col += uBump.z * .16 * bg * pow(max(dot(normalize(vec3(bgrad * 14., 1.)), normalize(vec3(uLight, .9))), 0.), 40.);
   float a = smoothstep(.8, -.8, d);
   o = vec4(col * a, a);
 }`;
@@ -264,7 +277,7 @@ let dot = null, pointerAt = null, panelOpen = 0;
 
 function layout() {
   if (!Liquid.active) return;
-  W = root.clientWidth; H = innerHeight; DPR = Math.min(1.5, devicePixelRatio || 1);
+  W = root.clientWidth; H = innerHeight; DPR = Math.min(SCALES[quality], devicePixelRatio || 1);
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
   for (const b of [E.a, E.b]) {                                         // the frost is computed at half resolution
     b.w = Math.max(1, Math.round(W / 2)); b.h = Math.max(1, Math.round(H / 2));
@@ -349,9 +362,25 @@ function render() {
   gl.drawArrays(gl.TRIANGLES, 0, n * 6);
   if (!canvas.classList.contains('ready')) requestAnimationFrame(() => canvas.classList.add('ready'));   // fade in once drawn
 }
+// adaptive quality: if frames stay slow (under about 52 fps for some 3 s), the glass is drawn at a lower resolution, a
+// step at a time; it only ever steps down (no see-sawing), and a hidden tab's long gaps are ignored
+const SCALES = [1.5, 1.25, 1];
+let quality = 0, prevNow = 0, gapSum = 0; const gaps = [];
+function watchFrames(now) {
+  const gap = now - prevNow; prevNow = now;
+  if (gap <= 0 || gap > 1000 || document.hidden) return;                 // a hidden tab or a stall is not the glass
+  gaps.push(gap); gapSum += gap;
+  if (gapSum < 3000 || gaps.length < 12) return;                        // judged every 3 s
+  gaps.sort((a, b) => a - b); const median = gaps[gaps.length >> 1]; gaps.length = 0; gapSum = 0;
+  if (median > 19 && quality < SCALES.length - 1 && (devicePixelRatio || 1) > SCALES[quality + 1]) {
+    quality++; Liquid.quality = SCALES[quality]; layout();
+  }
+}
 function tick(now) {
   raf = 0;
   if (!Liquid.active) return;
+  watchFrames(now);
+  Liquid.ticks = (Liquid.ticks || 0) + 1;
   const dt = Math.min(1 / 30, (now - (last || now)) / 1000); last = now;
   ambient(now);
   let moving = false;
@@ -368,11 +397,30 @@ function tick(now) {
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
     moving = true;
   }
-  if (moving || dirty || inkFresh) { render(); dirty = false; }
+  if (dirty || inkFresh || sceneDirty || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
   // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
+  // exactly one loop: something during this tick (a bubble budding, a tween starting) may already have queued the next
+  // frame through poke(); queuing another here used to start a second loop each time, every one of them rendering
+  if (raf) return;
   if (moving || (drops.length && !reduceMotion.matches) || tweens.size || panelOpen || (!reduceMotion.matches && live().length < COUNT[0])) raf = requestAnimationFrame(tick);
   else last = 0;
+}
+// what the last frame drew: positions and sizes of every body, and the cursor's swell
+const SEEN = .3;                                                        // css px: below this a move cannot be seen
+let drawnIds = 0, drawnBump = 0;
+function visiblyChanged() {
+  let ids = 0;
+  for (const b of bodies) {
+    ids += b.id; const c = b.c, d = b.drawn;
+    if (!d || Math.abs(c.x - d.x) > SEEN || Math.abs(c.y - d.y) > SEEN || Math.abs(c.w - d.w) > SEEN || Math.abs(c.h - d.h) > SEEN || Math.abs(c.r - d.r) > SEEN) return true;
+  }
+  return ids !== drawnIds || Math.abs(bump.a - drawnBump) > .004;
+}
+function markDrawn() {
+  let ids = 0;
+  for (const b of bodies) { ids += b.id; const c = b.c, d = b.drawn || (b.drawn = {}); d.x = c.x; d.y = c.y; d.w = c.w; d.h = c.h; d.r = c.r; }
+  drawnIds = ids; drawnBump = bump.a;
 }
 const poke = () => { dirty = true; if (!raf && Liquid.active) raf = requestAnimationFrame(tick); };
 
@@ -649,14 +697,26 @@ Liquid.bud = async (point, rect) => {
 
 const px1 = new Uint8Array(4);
 // the cost of one full render of a fixed scene: the card and exactly `beads` beads (everything else set aside)
-Liquid.bench = (n = 60, beads = 8, frost = .5) => {
+// the GPU cost of one full render (the GPU's own timer where available, else wall time): of a fixed scene (the card
+// and exactly `beads` test bubbles), or with beads < 0 of the page as it is. frost: share of frames that redo the frost
+Liquid.bench = (n = 60, beads = -1, frost = .5) => {
   const was = Liquid.active; Liquid.active = false; if (raf) cancelAnimationFrame(raf); raf = 0;   // the page loop pauses
-  const kept = [...bodies]; bodies.clear(); bodies.add(card);
+  const kept = [...bodies];
+  if (beads >= 0) { bodies.clear(); bodies.add(card); }
   for (let i = 0; i < beads; i++) { const r = 18 + (i % 4) * 16; bodies.add(new Body({x: L.card.x + L.card.w + 140 + (i % 3) * 190, y: 110 + i * 85, w: r, h: r, r}, {frost: .35})); }
   render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1);
-  const t0 = performance.now();
-  for (let i = 0; i < n; i++) { sceneDirty = frost >= 1 || (frost > 0 && i % 2 === 0); render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1); }
-  const ms = (performance.now() - t0) / n;
+  const tq = gl.getExtension('EXT_disjoint_timer_query_webgl2'), qs = [], t0 = performance.now();
+  for (let i = 0; i < n; i++) {
+    sceneDirty = frost >= 1 || (frost > 0 && i % Math.round(1 / frost) === 0);
+    const q = tq && gl.createQuery(); if (q) gl.beginQuery(tq.TIME_ELAPSED_EXT, q);
+    render();
+    if (q) { gl.endQuery(tq.TIME_ELAPSED_EXT); qs.push(q); }
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1);
+  }
+  let ms = (performance.now() - t0) / n;
+  const gpu = qs.filter(q => gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)).map(q => gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6).sort((x, y) => x - y);
+  qs.forEach(q => gl.deleteQuery(q));
+  if (tq && gpu.length > n / 2 && !gl.getParameter(tq.GPU_DISJOINT_EXT)) ms = gpu[gpu.length >> 1];
   bodies.clear(); kept.forEach(b => bodies.add(b)); Liquid.active = was; poke();
   return ms;
 };
