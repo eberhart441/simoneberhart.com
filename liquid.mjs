@@ -470,10 +470,11 @@ function pickSize() {                                                   // mostl
   return {size, R: SIZES[size][0] + Math.random() * (SIZES[size][1] - SIZES[size][0])};
 }
 function spot(R) {                                                      // a home for its wander, away from the others
-  const edge = L.card.x + L.card.w, x0 = edge + R + 90, x1 = W - R - 110, y0 = R + 70, y1 = H - R - 70;
+  // close to the card: from just off its edge to a few hundred px out, the nearest the likeliest
+  const edge = L.card.x + L.card.w, x0 = edge + R + 30, x1 = Math.min(W - R - 110, edge + R + 200), y0 = L.card.y + R * .5, y1 = L.card.y + L.card.h - R * .5;
   let best = null, bestGap = -1;
   for (let i = 0; i < 16; i++) {
-    const c = {x: mix(x0, Math.max(x0, x1), Math.pow(Math.random(), 1.8)), y: mix(y0, Math.max(y0, y1), Math.random())};   // nearer the card
+    const c = {x: mix(x0, Math.max(x0, x1), Math.pow(Math.random(), 2.2)), y: mix(y0, Math.max(y0, y1), Math.random())};
     const gap = Math.min(...live().map(d => Math.hypot(d.out.x - c.x, d.out.y - c.y) - d.R), 1e9);
     if (gap > bestGap) { bestGap = gap; best = c; }
   }
@@ -504,14 +505,15 @@ function seed(now) {                                                    // the p
 const TUCK = 80;                                                        // how far inside the edge a tucked-in bubble sits
 function budDrop(now) {
   const c = L.card, edge = c.x + c.w, d = makeDrop(0);
-  const R = d.R, y = Math.min(c.y + c.h - R * .7, Math.max(c.y + R * .7, c.y + c.h * (.18 + Math.random() * .64))), out = d.out; d.y = y;
+  const R = d.R, y = Math.min(c.y + c.h - R - TUCK, Math.max(c.y + R + TUCK, c.y + c.h * (.18 + Math.random() * .64))), out = d.out; d.y = y;
   const x0 = edge - R - TUCK;
   d.b = new Body({x: x0, y, w: R, h: R, r: R}, {frost: DROP_FROST, k: 70, z: .7});
   drops.push(d); bodies.add(d.b);
   // farther out takes longer (an even pace), and the travel eases gently (a sine: no rush in the middle)
   tween(d.b, BIRTH + Math.hypot(out.x - x0, out.y - y) * 9, t => {
-    const p = sine(t);
-    return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: R, h: R, r: R};
+    // straight out sideways first; it turns toward its home only once clear of the card's edge (so it never cuts a corner)
+    const x = mix(x0, out.x, sine(t)), turn = inOut(clamp01((x - edge - R * .2) / Math.max(1, out.x - edge - R * .2)));
+    return {x, y: mix(y, out.y, turn), w: R, h: R, r: R};
   }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
 }
 function ambient(now) {
@@ -586,8 +588,8 @@ function float(list, t) {
   for (const d of list) {
     const mass = Math.pow(d.R / 40, 1.5), speed = 10 * Math.pow(40 / d.R, .45);
     const c = current(d.p.x, d.p.y, t), drag = .55 / Math.sqrt(mass);
-    let ax = (c.x * speed - d.v.x) * drag + (d.out.x - d.p.x) * .010;
-    let ay = (c.y * speed - d.v.y) * drag + (d.out.y - d.p.y) * .010;
+    let ax = (c.x * speed - d.v.x) * drag + (d.out.x - d.p.x) * .028;
+    let ay = (c.y * speed - d.v.y) * drag + (d.out.y - d.p.y) * .016;
     const wall = (v, lo, hi) => (v < lo ? (lo - v) * .9 : 0) - (v > hi ? (v - hi) * .9 : 0);
     // only a visiting bubble may touch the card; the others keep their distance
     ax += wall(d.p.x, edge + d.R + (d.visit ? -10 : 26), W - d.R - 18); ay += wall(d.p.y, d.R + 14, H - d.R - 14);
@@ -666,10 +668,12 @@ function goHome(d) {
   stopTweens(d.b);
   d.home = true;
   const b = d.b, from = {...b.c}, R = d.R, c = L.card, edge = c.x + c.w;
-  const ty = Math.min(c.y + c.h - R * .7, Math.max(c.y + R * .7, from.y)), tx = edge - R - TUCK;   // back in beside where it is
+  const ty = Math.min(c.y + c.h - R - TUCK, Math.max(c.y + R + TUCK, from.y)), tx = edge - R - TUCK;   // back in beside where it is
   tween(b, panelOpen ? RETURN_FAST : RETURN + Math.hypot(from.x - tx, from.y - ty) * 9, t => {
-    const p = sine(t), r = mix(from.w, R, clamp01(t * 4));              // (a merged pair settles back to its own size)
-    return {x: mix(from.x, tx, p), y: mix(from.y, ty, p), w: r, h: r, r};
+    const r = mix(from.w, R, clamp01(t * 4));                           // (a merged pair settles back to its own size)
+    // level with where it goes in first, then straight in sideways
+    const x = mix(from.x, tx, sine(t)), level = inOut(clamp01((from.x - x) / Math.max(1, from.x - edge - R * .2)));
+    return {x, y: mix(from.y, ty, level), w: r, h: r, r};
   }).then(() => {
     bodies.delete(b); drops.splice(drops.indexOf(d), 1);
   });
