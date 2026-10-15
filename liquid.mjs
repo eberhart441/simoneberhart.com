@@ -168,8 +168,8 @@ float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
 }
 // a few long, slow swells crossing in different directions: the surface slope (per unit of strength)
 vec2 ripple(vec2 p, float t) {
-  const vec2 k1 = vec2(.0210, .0080), k2 = vec2(-.0110, .0190), k3 = vec2(.0060, -.0250);
-  return k1 * cos(dot(k1, p) - t * .55) + k2 * cos(dot(k2, p) - t * .43 + 1.7) * .8 + k3 * cos(dot(k3, p) - t * .67 + 4.1) * .6;
+  const vec2 k1 = vec2(.0290, .0110), k2 = vec2(-.0150, .0260), k3 = vec2(.0085, -.0340);
+  return k1 * cos(dot(k1, p) - t * 1.1) + k2 * cos(dot(k2, p) - t * .9 + 1.7) * .8 + k3 * cos(dot(k3, p) - t * 1.3 + 4.1) * .6;
 }
 vec2 prof(float s) { return texture(uProf, vec2((clamp(s, 0., uProfDepth) / uProfDepth * (uProfN - 1.) + .5) / uProfN, .5)).rg; }
 void main() {
@@ -199,14 +199,14 @@ void main() {
   }
   vec2 rg = vec2(0.);
   if (panel > 0. && uRipple.y > 0.) rg = ripple(p, uRipple.x) * uRipple.y * panel;
-  off += bgrad * 22. + rg * 50.;                                                  // the cursor's swell: a soft lens of its own
+  off += bgrad * 22. + rg * 80.;                                                  // the cursor's swell: a soft lens of its own
   vec2 ps = p + off;
   vec3 blurred = texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb;
   vec3 col = frost > .995 ? blurred : mix(sceneAt(ps), blurred, frost);   // fully frosted: the sharp backdrop never shows
   float ty = clamp((p.y - uTintY.x) / uTintY.y, 0., 1.);               // the card's --glass tint: .30 → .19 → .25
   float tint = ty < .45 ? mix(.30, .19, ty / .45) : mix(.19, .25, (ty - .45) / .55);
   col = mix(col, vec3(1.), tint * mix(.4, 1., frost) * (1. - .45 * side));
-  col += dot(rg, uLight) * .5;                                         // the swells catch the light faintly
+  col += dot(rg, uLight) * 1.1;                                         // the swells catch the light faintly
   float e = pe.g, f = dot(g, uLight);                                  // Hyalite's edge light; only the lit half follows the light
   if (e > 0.) e *= max(0., f) * .78 + max(0., -f) * .30;
   col = e > 0. ? mix(col, vec3(1.), min(e, 1.)) : mix(col, vec3(0.), min(-e, 1.));
