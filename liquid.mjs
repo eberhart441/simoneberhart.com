@@ -30,7 +30,7 @@ const visuals = document.querySelector('.visuals');
 
 // the card's glass (frame.js GLASS, with the Hyalite defaults it relies on)
 const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 6, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
-const MAX = 12;
+const MAX = 16;
 
 const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id}))};
 
@@ -86,6 +86,11 @@ vec3 sceneAt(vec2 p) {
 }
 out vec4 o;
 `;
+// the glass is drawn as one quad per body (its box plus the reach of the shadow and the merging), not a full-screen
+// pass: most of the screen has no glass, and those pixels now cost nothing
+const VERT_QUADS = `#version 300 es
+in vec2 a; uniform vec2 uView;
+void main() { gl_Position = vec4(a.x / uView.x * 2. - 1., 1. - a.y / uView.y * 2., 0., 1.); }`;
 const SCENE = COMMON + `void main() { o = vec4(sceneAt(cssAt(gl_FragCoord.xy)), 1.); }`;
 const BLUR = `#version 300 es
 precision highp float;
@@ -106,6 +111,7 @@ uniform float uK, uBevel, uProfN, uProfDepth, uEdge;
 uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
+uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
 float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.) / k; return min(a, b) - h * h * k * .25; }
 // widen: 0 = the outline; uBevel = a rounder twin used only for the bend direction (no creases at corners)
@@ -115,28 +121,50 @@ float field(vec2 p, float widen) {
     vec4 b = uB[i]; d = smin(d, sdBox(p - b.xy, b.zw, min(uBp[i].x + widen, min(b.z, b.w))), uK); }
   return d;
 }
-void bodyMix(vec2 p, out float frost, out float bevel) {               // frosted bodies stay frosted where they merge
-  float ws = 0., wf = 0., wb = 0.;
+// a rounded box's distance and its exact gradient (outward)
+float sdBoxG(vec2 p, vec2 b, float r, out vec2 g) {
+  vec2 q = abs(p) - b + r, m = max(q, 0.); float l = length(m);
+  vec2 sp = vec2(p.x < 0. ? -1. : 1., p.y < 0. ? -1. : 1.);
+  g = l > 0. ? m / l * sp : (q.x > q.y ? vec2(sp.x, 0.) : vec2(0., sp.y));
+  return l + min(max(q.x, q.y), 0.) - r;
+}
+// the outline, the frost and bevel of the bodies near p (frosted bodies stay frosted where they merge), and the bend's
+// direction: the gradient of a rounder twin of the outline (no creases at corners). The smooth minimum's gradient is a
+// blend of the two gradients it joins, so it comes out of the same pass with no extra samples.
+float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
+  if (uCard == 1) {                                                    // deep inside the card no other body can reach
+    vec4 c = uB[0]; float dc = sdBox(p - c.xy, c.zw, min(uBp[0].x, min(c.z, c.w)));
+    if (dc < -(uBevel + uK + 4.)) { frost = uBp[0].y; bevel = uBevel; grad = vec2(0.); return dc; }
+  }
+  float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0.; vec2 gw = vec2(0.), gi;
   for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
-    vec4 b = uB[i]; float w = exp(-max(sdBox(p - b.xy, b.zw, min(uBp[i].x, min(b.z, b.w))), 0.) * .05);
-    ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, min(b.z, b.w) - 1.); }
-  frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4));
+    vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w);
+    float di = sdBox(pp, b.zw, min(uBp[i].x, rr));
+    d = smin(d, di, uK);
+    float dwi = sdBoxG(pp, b.zw, min(uBp[i].x + uBevel, rr), gi);
+    float h = max(uK - abs(dw - dwi), 0.) / uK;
+    gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * uK * .25;
+    float w = exp(-max(di, 0.) * .05); ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, rr - 1.); }
+  frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4)); grad = gw;
+  return d;
 }
 vec2 prof(float s) { return texture(uProf, vec2((clamp(s, 0., uProfDepth) / uProfDepth * (uProfN - 1.) + .5) / uProfN, .5)).rg; }
 void main() {
   vec2 p = cssAt(gl_FragCoord.xy);
-  float d = field(p, 0.);
+  float frost, bevel; vec2 gw;
+  float d = scan(p, frost, bevel, gw);
   if (d > .8) {                                                        // outside: only the drop shadow (0 12px 36px -20px)
     float a = 0.;
-    if (d < 90.) a = .07 * (1. - smoothstep(-36., 36., field(p - vec2(0., 12.), 0.) + 20.));
+    if (d < 46.) a = .07 * (1. - smoothstep(-36., 36., field(p - vec2(0., 12.), 0.) + 20.));
     o = vec4(vec3(.118, .098, .059) * a, a); return;
   }
-  float frost, bevel; bodyMix(p, frost, bevel);
   float s = max(-d, 0.);
   float sProf = s * uBevel / bevel;                                    // small drops use the whole profile across their radius
-  vec2 g = vec2(field(p + vec2(1., 0.), uBevel) - field(p - vec2(1., 0.), uBevel), field(p + vec2(0., 1.), uBevel) - field(p - vec2(0., 1.), uBevel));
-  g = g / max(length(g), 1e-4);                                        // outward
-  vec2 pe = prof(sProf);                                               // r: inward displacement px, g: signed edge light
+  vec2 g = vec2(0.), pe = vec2(0.);
+  if (sProf < uProfDepth + 1.) {                                       // the bevel bends and lights; the flat inside does not
+    g = gw / max(length(gw), 1e-4);                                    // outward
+    pe = prof(sProf);                                                  // r: inward displacement px, g: signed edge light
+  }
   vec2 off = -g * pe.r;
   vec2 bd = p - uBump.xy; float bg = exp(-dot(bd, bd) / 1800.); vec2 bgrad = -bd / 900. * bg * uBump.z;
   off += bgrad * 22.;                                                  // the cursor's swell: a soft lens of its own
@@ -186,9 +214,9 @@ function create() {
   canvas.className = 'liquid-canvas'; canvas.setAttribute('aria-hidden', 'true');
   gl = canvas.getContext('webgl2', {antialias: false, alpha: true, premultipliedAlpha: true, depth: false, stencil: false, powerPreference: 'high-performance'});
   if (!gl) return false;
-  const program = fs => {
+  const program = (fs, vs = VERT) => {
     const p = gl.createProgram();
-    for (const [type, src] of [[gl.VERTEX_SHADER, VERT], [gl.FRAGMENT_SHADER, fs]]) {
+    for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
       const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
       gl.attachShader(p, s);
@@ -208,11 +236,13 @@ function create() {
   };
   const target = () => { const t = texture(); const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return {t, f, w: 1, h: 1}; };
-  E = {scene: program(SCENE), blur: program(BLUR), glass: program(GLASS), paper: texture(gl.REPEAT), ink: texture(), prof: texture(),
+  E = {scene: program(SCENE), blur: program(BLUR), glass: program(GLASS, VERT_QUADS), paper: texture(gl.REPEAT), ink: texture(), prof: texture(),
        a: target(), b: target()};
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  E.full = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, E.full);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  E.quads = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, E.quads);
+  gl.bufferData(gl.ARRAY_BUFFER, MAX * 12 * 4, gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0);
   E.PROF = profileTable();
   gl.bindTexture(gl.TEXTURE_2D, E.prof); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, E.PROF.n, 1, 0, gl.RG, gl.FLOAT, E.PROF.data);
   const paper = new Image(); paper.src = 'paper-texture.png';
@@ -264,7 +294,9 @@ function uploadInk() {
 }
 
 // ---- render -------------------------------------------------------------------------------------------------------
-const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4);
+const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
+const REACH = 34;                                                       // px past a body's box: its shadow and its merging
+const useBuffer = buf => { gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); };
 function common(prog, w, h) {
   gl.useProgram(prog.p);
   gl.uniform2f(prog.u.uView, W, H); gl.uniform2f(prog.u.uRes, w, h); gl.uniform4f(prog.u.uInkRect, L.ink.x, L.ink.y, L.ink.w, L.ink.h);
@@ -275,7 +307,7 @@ function render() {
   uploadInk();
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, E.ink);
   if (sceneDirty) {                                                     // the frost: the background, blurred (6px)
-    gl.disable(gl.BLEND);
+    gl.disable(gl.BLEND); useBuffer(E.full);
     common(E.scene, E.a.w, E.a.h);
     gl.bindFramebuffer(gl.FRAMEBUFFER, E.a.f); gl.viewport(0, 0, E.a.w, E.a.h); gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.useProgram(E.blur.p); gl.uniform1i(E.blur.u.uSrc, 2); gl.activeTexture(gl.TEXTURE2);
@@ -292,18 +324,27 @@ function render() {
   const u = E.glass.u; let n = 0;
   for (const b of bodies) {
     if (n >= MAX || b.c.w <= .3 || b.c.h <= .3) continue;
-    Bv.set([b.c.x, b.c.y, b.c.w, b.c.h], n * 4); Bpv.set([b.c.r, b.frost, 0, 0], n * 4); n++;
+    const c = b.c, i = n * 4;
+    Bv[i] = c.x; Bv[i + 1] = c.y; Bv[i + 2] = c.w; Bv[i + 3] = c.h; Bpv[i] = c.r; Bpv[i + 1] = b.frost;
+    const x0 = c.x - c.w - REACH, x1 = c.x + c.w + REACH, y0 = c.y - c.h - REACH, y1 = c.y + c.h + REACH + 12, q = n * 12;
+    Q[q] = x0; Q[q + 1] = y0; Q[q + 2] = x1; Q[q + 3] = y0; Q[q + 4] = x0; Q[q + 5] = y1;
+    Q[q + 6] = x0; Q[q + 7] = y1; Q[q + 8] = x1; Q[q + 9] = y0; Q[q + 10] = x1; Q[q + 11] = y1;
+    n++;
   }
   gl.uniform4fv(u.uB, Bv); gl.uniform4fv(u.uBp, Bpv); gl.uniform1i(u.uN, n);
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
   gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
   gl.uniform2f(u.uTintY, L.card.y, L.card.h);
+  gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
   const a = P.light * Math.PI / 180; gl.uniform2f(u.uLight, Math.sin(a), -Math.cos(a));
   gl.uniform3f(u.uBump, bump.x, bump.y, bump.a);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  // overlapping quads compute the same value twice and simply overwrite it (no blending)
+  gl.bindBuffer(gl.ARRAY_BUFFER, E.quads); gl.bufferSubData(gl.ARRAY_BUFFER, 0, Q, 0, n * 12);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, n * 6);
   if (!canvas.classList.contains('ready')) requestAnimationFrame(() => canvas.classList.add('ready'));   // fade in once drawn
 }
 function tick(now) {
@@ -327,7 +368,8 @@ function tick(now) {
   }
   if (moving || dirty || inkFresh) { render(); dirty = false; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
-  if (moving || drops.length || tweens.size || panelOpen && [...bodies].some(b => b.frost && b !== card && !b.settled(1))) raf = requestAnimationFrame(tick);
+  // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
+  if (moving || (drops.length && !reduceMotion.matches) || tweens.size || panelOpen || (!reduceMotion.matches && live().length < COUNT[0])) raf = requestAnimationFrame(tick);
   else last = 0;
 }
 const poke = () => { dirty = true; if (!raf && Liquid.active) raf = requestAnimationFrame(tick); };
@@ -353,47 +395,96 @@ const onPointerMove = e => {
 const onScrollAim = () => { if (pointerAt) aim(pointerAt.x, pointerAt.y, document.elementFromPoint(pointerAt.x, pointerAt.y)); };
 const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 
-// ---- ambient droplets: beads of the card's glass bud off one after another (up to three at once), drift over the
-// ink a while at different heights, and come home and merge back in. A panel opening calls them home.
-const DROPS = 3;
-let nextDrop = 0, drops = [];
-// birth and return are slow, eased paths (tweens) the bead follows: it swells as a bulge on the card's edge, still
-// joined by a neck, before it pulls away and grows to full size; coming home it drifts back until it touches the edge
-// and is drawn in, shrinking as it merges
-const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900;
-function ambient(now) {
-  if (reduceMotion.matches) return;
-  if (!nextDrop) nextDrop = now + 3500;
-  const c = L.card, edge = c.x + c.w;
-  if (!panelOpen && drops.length < DROPS && now > nextDrop && !document.hidden) {
-    const used = drops.map(d => d.band), free = [0, 1, 2].filter(i => !used.includes(i));
-    const band = free[Math.floor(Math.random() * free.length)];
-    // sizes vary: small, medium or large (radius px), a class no other bead out now is using
-    const SIZES = [[22, 34], [36, 54], [58, 84]], usedSize = drops.map(d => d.size);
-    const freeSize = [0, 1, 2].filter(i => !usedSize.includes(i)), size = freeSize[Math.floor(Math.random() * freeSize.length)];
-    const R = SIZES[size][0] + Math.random() * (SIZES[size][1] - SIZES[size][0]);
-    const y = c.y + c.h * (.22 + band * .28 + Math.random() * .1);
-    const out = {x: edge + 110 + R * 1.2 + Math.random() * 190, y: y + (Math.random() - .5) * 120};
-    const b = new Body({x: edge - 30, y, w: 10, h: 10, r: 10}, {frost: 0, k: 70, z: .7});
-    const d = {b, band, size, y, R, out, ph: Math.random() * 6.28, born: 0, life: 13 + Math.random() * 5, home: false};
-    drops.push(d); bodies.add(b);
-    tween(b, BIRTH, t => {
-      const bud = inOut(clamp01(t / .45)), p = inOut(clamp01((t - .32) / .68));
-      const r = mix(mix(10, R * .62, bud), R, p);                          // a bulge first, then full size as it travels
-      const x0 = mix(edge - 30, edge + R * .15, bud);                       // the bulge sits on the edge: the neck holds it
-      return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: r, h: r, r};
-    }).then(() => { d.born = performance.now(); });
-    nextDrop = now + (drops.length < DROPS ? 1800 + Math.random() * 2400 : 9000 + Math.random() * 6000);
+// ---- beads: there are always 6–8 beads of the glass drifting over the drawing, in a range of sizes. Some are already
+// out when the page loads; each wanders a while, then drifts home and merges into the card, and the card buds a new one
+// (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
+// beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
+const COUNT = [6, 8], DROP_FROST = .16;
+const SIZES = [[13, 20], [22, 34], [36, 54], [58, 82]];                 // radius px, small to large
+let nextDrop = 0, drops = [], target = 7, seeded = false, panelRect = null, panelFrom = null;
+const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
+const live = () => drops.filter(d => !d.home);
+function pickSize() {                                                   // the size class fewest beads have (two large at most)
+  const n = [0, 0, 0, 0]; for (const d of live()) n[d.size]++;
+  const ok = [0, 1, 2, 3].filter(i => i < 3 || n[3] < 2), min = Math.min(...ok.map(i => n[i]));
+  const pick = ok.filter(i => n[i] === min), size = pick[Math.floor(Math.random() * pick.length)];
+  return {size, R: SIZES[size][0] + Math.random() * (SIZES[size][1] - SIZES[size][0])};
+}
+function spot(R) {                                                      // a home for its wander, away from the others
+  const edge = L.card.x + L.card.w, x0 = edge + R + 90, x1 = W - R - 110, y0 = R + 70, y1 = H - R - 70;
+  let best = null, bestGap = -1;
+  for (let i = 0; i < 16; i++) {
+    const c = {x: mix(x0, Math.max(x0, x1), Math.random()), y: mix(y0, Math.max(y0, y1), Math.random())};
+    const gap = Math.min(...live().map(d => Math.hypot(d.out.x - c.x, d.out.y - c.y) - d.R), 1e9);
+    if (gap > bestGap) { bestGap = gap; best = c; }
   }
-  for (const d of [...drops]) {
-    if (!d.born || d.home) continue;
-    if (panelOpen) { goHome(d); continue; }
-    if (d.pair) continue;                                               // meeting, merged or parting: its tweens drive it
+  return best;
+}
+function makeDrop(born) {
+  const {size, R} = pickSize(), out = spot(R);
+  const d = {b: null, size, R, out, y: out.y, ph: Math.random() * 6.28, born, life: 20 + Math.random() * 16, home: false};
+  return d;
+}
+function seed(now) {                                                    // the page opens with beads already out
+  seeded = true;
+  const n = COUNT[0] + Math.floor(Math.random() * 2);
+  for (let i = 0; i < n; i++) {
+    const d = makeDrop(now - Math.random() * 14000);                    // part-way through their wander, so they leave at different times
+    d.y = L.card.y + L.card.h * (.2 + Math.random() * .6);
+    d.b = new Body({...wanderAt(d, (now - d.born) / 1000), w: d.R, h: d.R, r: d.R}, {frost: DROP_FROST, k: 24, z: .62});
+    drops.push(d); bodies.add(d.b);
+  }
+  nextDrop = now + 2500;
+}
+function budDrop(now) {
+  const c = L.card, edge = c.x + c.w, d = makeDrop(0);
+  const y = c.y + c.h * (.18 + Math.random() * .64), R = d.R, out = d.out; d.y = y;
+  d.b = new Body({x: edge - 30, y, w: 10, h: 10, r: 10}, {frost: DROP_FROST, k: 70, z: .7});
+  drops.push(d); bodies.add(d.b);
+  tween(d.b, BIRTH, t => {
+    const bud = inOut(clamp01(t / .45)), p = inOut(clamp01((t - .32) / .68));
+    const r = mix(mix(10, Math.min(R, 34) * .62, bud), R, p);           // a bulge first, then full size as it travels
+    const x0 = mix(edge - 30, edge + Math.min(R, 34) * .15, bud);       // the bulge sits on the edge: the neck holds it
+    return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: r, h: r, r};
+  }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; } });
+}
+function ambient(now) {
+  if (!seeded) seed(now);
+  if (reduceMotion.matches) return;                                     // reduced motion: the beads stay put
+  if (panelOpen) {
+    for (const d of live()) {
+      const p = d.b.c, r = panelRect, m = d.R + 30;
+      const inPanel = r && p.x > r.x - m && p.x < r.x + r.w + m && p.y > r.y - m && p.y < r.y + r.h + m;
+      // the panel travels from the card's edge at its row to its centre: beads near that line are in its way too
+      const onRoute = r && panelFrom && distToSegment(p, panelFrom, {x: r.x + r.w / 2, y: r.y + r.h / 2}) < m + 40;
+      if (inPanel || onRoute) absorb(d); else goHome(d);
+    }
+    return;
+  }
+  const n = live().length;
+  if (n < target && now > nextDrop && !document.hidden) {
+    budDrop(now);
+    nextDrop = now + (n + 1 < COUNT[0] ? 700 + Math.random() * 700 : 2500 + Math.random() * 3000);
+    target = COUNT[0] + Math.floor(Math.random() * (COUNT[1] - COUNT[0] + 1));
+  }
+  for (const d of live()) {
+    if (!d.born || d.pair) continue;                                    // budding, or meeting another: tweens drive it
     const age = (now - d.born) / 1000;
     if (age > d.life) { goHome(d); continue; }
     d.b.set(wanderAt(d, age));
   }
   maybePair(now);
+}
+function distToSegment(p, a, b) {
+  const vx = b.x - a.x, vy = b.y - a.y, t = clamp01(((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy || 1));
+  return Math.hypot(p.x - a.x - vx * t, p.y - a.y - vy * t);
+}
+function absorb(d) {                                                    // taken into the panel opening over it
+  if (d.pair) unpair(d);
+  d.home = true; stopTweens(d.b);
+  const from = {...d.b.c};
+  tween(d.b, ABSORB_MS, t => { const r = mix(from.w, 0, inOut(t)); return {x: from.x, y: from.y, w: r, h: r, r}; })
+    .then(() => { bodies.delete(d.b); drops.splice(drops.indexOf(d), 1); });
 }
 const wanderAt = (d, age) => ({x: d.out.x + Math.sin(age * .4 + d.ph) * 80, y: d.out.y + Math.sin(age * .27 + d.ph * 2) * 60});
 const stopTweens = body => tweens.forEach(tw => tw.body === body && tweens.delete(tw));
@@ -405,11 +496,11 @@ const rebase = d => { const w = wanderAt(d, (performance.now() - d.born) / 1000)
 let nextPair = 0;
 const MEET = 3400, HOLD = 4200, PART = 3000;
 async function maybePair(now) {
-  if (!nextPair) nextPair = now + 9000;
+  if (!nextPair) nextPair = now + 12000;
   if (panelOpen || now < nextPair || drops.some(d => d.pair)) return;
-  const free = drops.filter(d => d.born && !d.home && (now - d.born) / 1000 < d.life - 4);
+  const free = drops.filter(d => d.born && !d.home && !d.pair && (now - d.born) / 1000 < d.life - 14);
   if (free.length < 2) return;
-  nextPair = now + 18000 + Math.random() * 14000;
+  nextPair = now + 24000 + Math.random() * 16000;
   let A = null, B = null, best = Infinity;
   for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
     const dist = Math.hypot(free[i].b.c.x - free[j].b.c.x, free[i].b.c.y - free[j].b.c.y);
@@ -442,12 +533,15 @@ async function maybePair(now) {
   for (const d of [A, B]) { d.pair = null; rebase(d); }
 }
 
+function unpair(d) {                                                    // leaving mid-meeting: the other carries on alone
+  const other = d.pair.A === d ? d.pair.B : d.pair.A;
+  d.pair = null; stopTweens(d.b);
+  if (!other.home) { other.pair = null; stopTweens(other.b); rebase(other); other.b.set({w: other.R, h: other.R, r: other.R}); }
+}
 function goHome(d) {
-  if (d.pair) {                                                         // leaving mid-meeting: the other carries on alone
-    const other = d.pair.A === d ? d.pair.B : d.pair.A;
-    d.pair = null; stopTweens(d.b);
-    if (!other.home) { other.pair = null; stopTweens(other.b); rebase(other); other.b.set({w: other.R, h: other.R, r: other.R}); }
-  }
+  if (d.home) return;
+  if (d.pair) unpair(d);
+  stopTweens(d.b);
   d.home = true;
   const b = d.b, from = {...b.c}, R = from.w, edge = L.card.x + L.card.w;
   tween(b, panelOpen ? RETURN_FAST : RETURN, t => {
@@ -457,11 +551,9 @@ function goHome(d) {
     return {x, y: mix(from.y, d.y, p), w: r, h: r, r};
   }).then(() => {
     bodies.delete(b); drops.splice(drops.indexOf(d), 1);
-    if (!drops.length && nextDrop < performance.now() + 6000) nextDrop = performance.now() + 6000 + Math.random() * 4000;
   });
 }
-// a bead is due while the page is idle: wake for it (the loop otherwise sleeps)
-setInterval(() => { if (Liquid.active && !panelOpen && drops.length < DROPS && performance.now() > nextDrop) poke(); }, 1000);
+
 
 // ---- the project panel: a blob of the card's glass that buds off, travels and grows; closing reverses it ----------
 const until = (test, timeout = 1600) => new Promise(resolve => {
@@ -479,7 +571,7 @@ const mix = (a, b, t) => a + (b - a) * t;
 Liquid.bud = async (point, rect) => {
   const R = {x: rect.left, y: rect.top, w: rect.width, h: rect.height}, cx = R.x + R.w / 2, cy = R.y + R.h / 2;
   const b = new Body({x: point.x - 26, y: point.y, w: 16, h: 16, r: 16}, {frost: 1, k: 420, z: .6});
-  bodies.add(b); panelOpen++;
+  bodies.add(b); panelOpen++; panelRect = R; panelFrom = point;
   let closed = false;
   const handle = {
     place(r) { b.set(rectBody({x: r.left, y: r.top, w: r.width, h: r.height})); poke(); },
@@ -495,13 +587,13 @@ Liquid.bud = async (point, rect) => {
         return {x: mix(from.x, to.x - 28, p), y: mix(from.y, to.y, p), w, h, r: Math.min(w, h, mix(from.r, 28, g))};
       });
       await until(() => b.c.w < 11, 400);
-      bodies.delete(b); panelOpen--; poke();
+      bodies.delete(b); panelOpen--; panelRect = panelFrom = null; nextDrop = performance.now() + 500; poke();
     },
   };
   // one path: bud out of the edge, pinch off and travel, inflate into the panel — each phase flowing into the next
-  await tween(b, 760, t => {
-    const p = inOut(t), q = clamp01(p / .8), inflate = inOut(clamp01((p - .42) / .58));
-    const drop = 16 + 26 * out3(clamp01(p / .5));
+  await tween(b, 900, t => {
+    const q = inOut(clamp01(t / .62)), inflate = inOut(clamp01((t - .36) / .64));
+    const drop = 16 + 26 * out3(clamp01(t / .4));
     const w = mix(drop, R.w / 2, inflate), h = mix(drop, R.h / 2, inflate);
     return {x: mix(point.x - 26, cx, q), y: mix(point.y, cy, q), w, h, r: Math.min(w, h, mix(drop, 22, inflate))};
   });
@@ -510,6 +602,21 @@ Liquid.bud = async (point, rect) => {
   return handle;
 };
 
+
+
+const px1 = new Uint8Array(4);
+// the cost of one full render of a fixed scene: the card and exactly `beads` beads (everything else set aside)
+Liquid.bench = (n = 60, beads = 8, frost = .5) => {
+  const was = Liquid.active; Liquid.active = false; if (raf) cancelAnimationFrame(raf); raf = 0;   // the page loop pauses
+  const kept = [...bodies]; bodies.clear(); bodies.add(card);
+  for (let i = 0; i < beads; i++) { const r = 18 + (i % 4) * 16; bodies.add(new Body({x: L.card.x + L.card.w + 140 + (i % 3) * 190, y: 110 + i * 85, w: r, h: r, r}, {frost: .35})); }
+  render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1);
+  const t0 = performance.now();
+  for (let i = 0; i < n; i++) { sceneDirty = frost >= 1 || (frost > 0 && i % 2 === 0); render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1); }
+  const ms = (performance.now() - t0) / n;
+  bodies.clear(); kept.forEach(b => bodies.add(b)); Liquid.active = was; poke();
+  return ms;
+};
 // ---- on and off ------------------------------------------------------------------------------------------------------
 function wanted() { return wideQuery.matches && !reduceTransparency.matches && (gl || create()); }
 function update() {
@@ -532,7 +639,7 @@ function update() {
     root.classList.remove('liquid-cursor'); bodies.delete(cursor);
     removeEventListener('pointermove', onPointerMove); removeEventListener('scroll', onScrollAim); root.removeEventListener('pointerleave', onLeave);
     for (const b of [...bodies]) if (b !== card) bodies.delete(b);
-    drops = []; panelOpen = 0;
+    drops = []; panelOpen = 0; seeded = false;
     if (raf) cancelAnimationFrame(raf); raf = 0;
     dispatchEvent(new Event('resize'));                                // frame.js puts its Hyalite glass back
   }
