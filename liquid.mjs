@@ -33,7 +33,7 @@ const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 6, shade: .368, rim: 1.2,
 const MAX = 16;
 
 const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
-  drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, tween: [...tweens].some(t => t.body === d.b)}))};
+  drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, visit: !!d.visit, tween: [...tweens].some(t => t.body === d.b)}))};
 
 // ---- Hyalite's refraction profile, as a table by depth from the rim (px) --------------------------------------------
 const N_GLASS = 1.5, ABSORB = .5 / .46, GLOW = .4 / 1.76, SHARP = 44, STEP = .25;
@@ -111,6 +111,7 @@ uniform int uN;
 uniform float uK, uBevel, uProfN, uProfDepth, uEdge;
 uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
+uniform float uRimFrost;   // the frosted panels' rim is as clear as the bubbles, frosting over toward the inside
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
@@ -169,6 +170,7 @@ void main() {
     o = vec4(vec3(.118, .098, .059) * a, a); return;
   }
   float s = max(-d, 0.);
+  if (frost > .5) frost = mix(uRimFrost, frost, smoothstep(4., uBevel * 1.15, s));
   float sProf = s * uBevel / bevel;                                    // small drops use the whole profile across their radius
   vec2 g = vec2(0.), pe = vec2(0.);
   if (sProf < uProfDepth + 1.) {                                       // the bevel bends and lights; the flat inside does not
@@ -353,7 +355,7 @@ function render() {
   gl.uniform2f(u.uTintY, L.card.y, L.card.h);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
   const a = P.light * Math.PI / 180; gl.uniform2f(u.uLight, Math.sin(a), -Math.cos(a));
-  gl.uniform3f(u.uBump, bump.x, bump.y, bump.a);
+  gl.uniform3f(u.uBump, bump.x, bump.y, bump.a); gl.uniform1f(u.uRimFrost, DROP_FROST);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
   // overlapping quads compute the same value twice and simply overwrite it (no blending)
@@ -554,16 +556,40 @@ const current = (x, y, t) => ({
   y: Math.cos(x * .0038 - t * .09) + .6 * Math.cos((x - y) * .0027 + t * .05 + 2.1) + .35 * Math.cos(y * .0049 - t * .06),
 });
 let lastFloat = 0;
+// visits: every so often the bubble nearest the card drifts over, touches it for a few seconds, and pulls away
+let nextVisit = 0;
+function visits(list, t, edge) {
+  for (const d of list) {
+    const v = d.visit; if (!v) continue;
+    if (!v.touched && d.p.x - d.R - edge < 1) v.touched = t;              // the stay is timed from the touch
+    if ((v.touched && t > v.touched + v.hold) || t > v.deadline) { d.out = v.home; d.visit = null; d.leave = t + 4; }
+  }
+  if (!nextVisit) nextVisit = t + 5;
+  if (t < nextVisit || list.some(d => d.visit)) return;
+  nextVisit = t + 9 + Math.random() * 9;
+  const c = L.card, ok = list.filter(d => d.p.y > c.y + d.R * .5 && d.p.y < c.y + c.h - d.R * .5 && (t * 1000 - d.born) / 1000 < d.life - 12);
+  if (!ok.length) return;
+  const d = ok.reduce((a, b) => (a.p.x - a.R < b.p.x - b.R ? a : b));
+  d.visit = {hold: 5 + Math.random() * 3, deadline: t + 25, touched: 0, home: d.out};
+  d.out = {x: edge + d.R - 7, y: d.p.y};
+}
 function float(list, t) {
   const dt = Math.min(1 / 20, lastFloat ? t - lastFloat : 1 / 60); lastFloat = t;
   const edge = L.card.x + L.card.w;
+  visits(list, t, edge);
   for (const d of list) {
     const mass = Math.pow(d.R / 40, 1.5), speed = 10 * Math.pow(40 / d.R, .45);
     const c = current(d.p.x, d.p.y, t), drag = .55 / Math.sqrt(mass);
     let ax = (c.x * speed - d.v.x) * drag + (d.out.x - d.p.x) * .010;
     let ay = (c.y * speed - d.v.y) * drag + (d.out.y - d.p.y) * .010;
     const wall = (v, lo, hi) => (v < lo ? (lo - v) * .9 : 0) - (v > hi ? (v - hi) * .9 : 0);
-    ax += wall(d.p.x, edge + d.R + 26, W - d.R - 18); ay += wall(d.p.y, d.R + 14, H - d.R - 14);
+    // only a visiting bubble may touch the card; the others keep their distance
+    ax += wall(d.p.x, edge + d.R + (d.visit ? -10 : 26), W - d.R - 18); ay += wall(d.p.y, d.R + 14, H - d.R - 14);
+    const gap = d.p.x - d.R - edge;
+    // a visit: drawn in until it touches, the card's edge reaching out to it in a liquid neck. Leaving, it is eased
+    // away for a few seconds, so the neck stretches thin and snaps
+    if (d.visit) ax += (d.out.x - d.p.x) * .04 - (gap > 0 ? 3 : 0), ay += (d.out.y - d.p.y) * .02;
+    else if (d.leave && t < d.leave) ax += 4;
     for (const e of list) {                                             // room for each other
       if (e === d) continue;
       const dx = d.p.x - e.p.x, dy = d.p.y - e.p.y, dist = Math.hypot(dx, dy) || 1, room = d.R + e.R + 34;
