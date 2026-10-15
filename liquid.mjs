@@ -32,7 +32,8 @@ const visuals = document.querySelector('.visuals');
 const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 6, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
 const MAX = 16;
 
-const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id}))};
+const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
+  drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, tween: [...tweens].some(t => t.body === d.b)}))};
 
 // ---- Hyalite's refraction profile, as a table by depth from the rim (px) --------------------------------------------
 const N_GLASS = 1.5, ABSORB = .5 / .46, GLOW = .4 / 1.76, SHARP = 44, STEP = .25;
@@ -400,7 +401,7 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
 // beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
 const COUNT = [6, 8], DROP_FROST = .16;
-const SIZES = [[22, 32], [34, 50], [54, 76], [82, 110]];               // radius px, small to large
+const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius px, small to large
 let nextDrop = 0, drops = [], target = 7, seeded = false, panelRect = null, panelFrom = null;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
 const live = () => drops.filter(d => !d.home);
@@ -431,7 +432,10 @@ function seed(now) {                                                    // the p
   for (let i = 0; i < n; i++) {
     const d = makeDrop(now - Math.random() * 14000);                    // part-way through their wander, so they leave at different times
     d.y = L.card.y + L.card.h * (.2 + Math.random() * .6);
-    d.b = new Body({...wanderAt(d, (now - d.born) / 1000), w: d.R, h: d.R, r: d.R}, {frost: DROP_FROST, k: 24, z: .62});
+    // at its own spot (spots are spaced apart), already riding the current: no scramble on load
+    const c0 = current(d.out.x, d.out.y, now / 1000), s0 = 10 * Math.pow(40 / d.R, .45);
+    d.p = {x: d.out.x, y: d.out.y}; d.v = {x: c0.x * s0, y: c0.y * s0};
+    d.b = new Body({...d.p, w: d.R, h: d.R, r: d.R}, {frost: DROP_FROST, k: 24, z: .62});
     drops.push(d); bodies.add(d.b);
   }
   nextDrop = now + 2500;
@@ -441,12 +445,17 @@ function budDrop(now) {
   const y = c.y + c.h * (.18 + Math.random() * .64), R = d.R, out = d.out; d.y = y;
   d.b = new Body({x: edge - 30, y, w: 10, h: 10, r: 10}, {frost: DROP_FROST, k: 70, z: .7});
   drops.push(d); bodies.add(d.b);
-  tween(d.b, BIRTH, t => {
-    const bud = inOut(clamp01(t / .45)), p = inOut(clamp01((t - .32) / .68));
-    const r = mix(mix(10, Math.min(R, 34) * .62, bud), R, p);           // a bulge first, then full size as it travels
-    const x0 = mix(edge - 30, edge + Math.min(R, 34) * .15, bud);       // the bulge sits on the edge: the neck holds it
-    return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: r, h: r, r};
-  }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; } });
+  const r0 = Math.min(R, 30);                                            // the droplet that buds off
+  // farther out takes longer (an even pace), and the travel eases gently (a sine: no rush in the middle)
+  tween(d.b, BIRTH + Math.hypot(out.x - edge, out.y - y) * 10, t => {
+    const bud = inOut(clamp01(t / .4)), p = sine(clamp01((t - .28) / .72));
+    const x0 = mix(edge - 26, edge + r0 * .2, bud);                       // the bulge sits on the edge: the neck holds it
+    const x = mix(x0, out.x, p);
+    // full size only where it can no longer touch the card
+    const room = clamp01((x - edge - r0 - 14) / Math.max(1, out.x - edge - r0 - 14));
+    const r = mix(mix(10, r0 * .62, bud), r0, p) + (R - r0) * inOut(room);
+    return {x, y: mix(y, out.y, p), w: r, h: r, r};
+  }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
 }
 function ambient(now) {
   if (!seeded) seed(now);
@@ -467,12 +476,13 @@ function ambient(now) {
     nextDrop = now + (n + 1 < COUNT[0] ? 700 + Math.random() * 700 : 2500 + Math.random() * 3000);
     target = COUNT[0] + Math.floor(Math.random() * (COUNT[1] - COUNT[0] + 1));
   }
+  const moving = [];
   for (const d of live()) {
     if (!d.born || d.pair) continue;                                    // budding, or meeting another: tweens drive it
-    const age = (now - d.born) / 1000;
-    if (age > d.life) { goHome(d); continue; }
-    d.b.set(wanderAt(d, age));
+    if ((now - d.born) / 1000 > d.life) { goHome(d); continue; }
+    moving.push(d);
   }
+  float(moving, now / 1000);
   maybePair(now);
 }
 function distToSegment(p, a, b) {
@@ -486,10 +496,41 @@ function absorb(d) {                                                    // taken
   tween(d.b, ABSORB_MS, t => { const r = mix(from.w, 0, inOut(t)); return {x: from.x, y: from.y, w: r, h: r, r}; })
     .then(() => { bodies.delete(d.b); drops.splice(drops.indexOf(d), 1); });
 }
-const wanderAt = (d, age) => ({x: d.out.x + Math.sin(age * .4 + d.ph) * 80, y: d.out.y + Math.sin(age * .27 + d.ph * 2) * 60});
+// ---- how the bubbles float: like things on slow water, not on fixed paths. They all ride one shared current that
+// drifts and turns over time (so neighbours move together), with momentum and drag (bigger ones are heavier and
+// slower), a weak pull back toward their own area, soft walls clear of the card and the window's edges, and a gentle
+// push apart when two get close (unless they are meeting on purpose). Each also breathes very slightly.
+const current = (x, y, t) => ({
+  x: Math.sin(y * .0042 + t * .11) + .6 * Math.sin((x + y) * .0031 - t * .07 + 1.3) + .35 * Math.sin(x * .0057 + t * .05),
+  y: Math.cos(x * .0038 - t * .09) + .6 * Math.cos((x - y) * .0027 + t * .05 + 2.1) + .35 * Math.cos(y * .0049 - t * .06),
+});
+let lastFloat = 0;
+function float(list, t) {
+  const dt = Math.min(1 / 20, lastFloat ? t - lastFloat : 1 / 60); lastFloat = t;
+  const edge = L.card.x + L.card.w;
+  for (const d of list) {
+    const mass = Math.pow(d.R / 40, 1.5), speed = 10 * Math.pow(40 / d.R, .45);
+    const c = current(d.p.x, d.p.y, t), drag = .55 / Math.sqrt(mass);
+    let ax = (c.x * speed - d.v.x) * drag + (d.out.x - d.p.x) * .010;
+    let ay = (c.y * speed - d.v.y) * drag + (d.out.y - d.p.y) * .010;
+    const wall = (v, lo, hi) => (v < lo ? (lo - v) * .9 : 0) - (v > hi ? (v - hi) * .9 : 0);
+    ax += wall(d.p.x, edge + d.R + 26, W - d.R - 18); ay += wall(d.p.y, d.R + 14, H - d.R - 14);
+    for (const e of list) {                                             // room for each other
+      if (e === d) continue;
+      const dx = d.p.x - e.p.x, dy = d.p.y - e.p.y, dist = Math.hypot(dx, dy) || 1, room = d.R + e.R + 34;
+      if (dist < room) { const f = (room - dist) * 1.4 / mass; ax += dx / dist * f; ay += dy / dist * f; }
+    }
+    d.v.x += ax * dt; d.v.y += ay * dt;
+    const v = Math.hypot(d.v.x, d.v.y), vmax = speed * 2.2;                // never more than a gentle drift
+    if (v > vmax) { d.v.x *= vmax / v; d.v.y *= vmax / v; }
+    d.p.x += d.v.x * dt; d.p.y += d.v.y * dt;
+    const rr = d.R * (1 + .015 * Math.sin(t * .6 + d.ph));
+    d.b.set({x: d.p.x, y: d.p.y, w: rr, h: rr, r: rr});
+  }
+}
 const stopTweens = body => tweens.forEach(tw => tw.body === body && tweens.delete(tw));
-// carry on wandering from wherever the bead is now (the wander path is re-anchored, so nothing jumps)
-const rebase = d => { const w = wanderAt(d, (performance.now() - d.born) / 1000); d.out = {x: d.out.x + d.b.c.x - w.x, y: d.out.y + d.b.c.y - w.y}; };
+// carry on floating from wherever the bead is now (nothing jumps)
+const rebase = d => { d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; };
 
 // ---- beads meet and part: now and then the two closest beads drift together and merge into one bigger bead (the
 // material does the merging: their outlines blend), wander as one for a while, then stretch apart and split in two
@@ -510,7 +551,7 @@ async function maybePair(now) {
   const span = (MEET + HOLD + PART) / 1000 + 4;
   for (const d of [A, B]) d.life = Math.max(d.life, (now - d.born) / 1000 + span);
   const edge = L.card.x + L.card.w, rA = A.b.c.w, rB = B.b.c.w;
-  const rM = Math.min(96, Math.sqrt(rA * rA + rB * rB));                 // about the two beads' area together
+  const rM = Math.min(170, Math.sqrt(rA * rA + rB * rB));                // about the two beads' area together
   const fA = {...A.b.c}, fB = {...B.b.c}, ph = Math.random() * 6.28;
   const meet = {x: Math.max(edge + rM + 110, (fA.x + fB.x) / 2), y: (fA.y + fB.y) / 2};
   const drift = t => ({x: meet.x + Math.sin(t * 1.3 + ph) * 30, y: meet.y + Math.sin(t * .9 + ph) * 22});
@@ -544,10 +585,10 @@ function goHome(d) {
   stopTweens(d.b);
   d.home = true;
   const b = d.b, from = {...b.c}, R = from.w, edge = L.card.x + L.card.w;
-  tween(b, panelOpen ? RETURN_FAST : RETURN, t => {
-    const p = inOut(clamp01(t / .58)), sink = inOut(clamp01((t - .48) / .52));
-    const r = mix(R, 6, sink);
-    const x = mix(mix(from.x, edge + R * .55, p), edge - 28, sink);       // drift back to touch the edge, then drawn in
+  tween(b, panelOpen ? RETURN_FAST : RETURN + Math.hypot(from.x - edge, from.y - d.y) * 12, t => {
+    const p = sine(clamp01(t / .58)), sink = inOut(clamp01((t - .48) / .52)), r1 = Math.min(R, 26);
+    const r = mix(mix(R, r1, inOut(clamp01(t / .5))), 6, sink);
+    const x = mix(mix(from.x, edge + r1 * .55, p), edge - 28, sink);      // drift back, a droplet, to touch the edge; drawn in
     return {x, y: mix(from.y, d.y, p), w: r, h: r, r};
   }).then(() => {
     bodies.delete(b); drops.splice(drops.indexOf(d), 1);
@@ -567,6 +608,7 @@ const tween = (body, dur, fn) => new Promise(done => { tweens.add({body, start: 
 const clamp01 = v => Math.min(1, Math.max(0, v));
 const inOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const out3 = t => 1 - Math.pow(1 - t, 3);
+const sine = t => .5 - .5 * Math.cos(Math.PI * t);                      // gentle in and out (peak speed 1.6x the average)
 const mix = (a, b, t) => a + (b - a) * t;
 Liquid.bud = async (point, rect) => {
   const R = {x: rect.left, y: rect.top, w: rect.width, h: rect.height}, cx = R.x + R.w / 2, cy = R.y + R.h / 2;
