@@ -13,6 +13,7 @@
 !/liquid.mjs
 !/bubble.mjs
 !/palantir/
+!/resume/
 !/vendor/
 /vendor/*
 !/vendor/hyalite.js
