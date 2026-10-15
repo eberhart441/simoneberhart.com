@@ -135,7 +135,7 @@ float shadowField(vec2 p) {                                             // the f
 float field(vec2 p, float widen) {
   float d = 1e5;
   for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; int i = ids[k];
-    vec4 b = bodyB(i); float kk = min(uK, max(2., min(b.z, b.w) * .7));
+    vec4 b = bodyB(i); float kk = min(uK, max(2., min(b.z, b.w) * bodyP(i).z));
     d = smin(d, sdBox(p - b.xy, b.zw, min(bodyP(i).x + widen, min(b.z, b.w))), kk); }
   return d;
 }
@@ -158,7 +158,7 @@ float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0.; vec2 gw = vec2(0.), gi;
   for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; int i = ids[k];
     vec4 b = bodyB(i), bp = bodyP(i); vec2 pp = p - b.xy; float rr = min(b.z, b.w);
-    float kk = min(uK, max(2., rr * .7));                               // merging scales with the smaller body
+    float kk = min(uK, max(2., rr * bp.z));                             // merging scales with the body (its own strength)
     float di, dwi;
     if (bp.x >= rr && abs(b.z - b.w) < .01) {                          // a round droplet (most bodies): one cheap step
       float l = length(pp); di = dwi = l - rr; gi = pp / max(l, 1e-4);
@@ -215,7 +215,8 @@ void main() {
 // liquid wobbles before it settles)
 class Body {
   static n = 0;
-  constructor(state, {frost = 0, k = 160, z = .6} = {}) {
+  constructor(state, {frost = 0, k = 160, z = .6, merge = .7} = {}) {
+    this.merge = merge;                                                 // how far it merges, as a share of its size
     this.id = ++Body.n;
     this.c = {...state}; this.t = {...state}; this.v = {x: 0, y: 0, w: 0, h: 0, r: 0}; this.frost = frost; this.k = k; this.z = z;
   }
@@ -338,7 +339,7 @@ function uploadInk() {
 const BD = new Float32Array(MAX * 8), Bpo = MAX * 4;                   // the body texture: row 0, then row 1
 // how far a body can matter: its shadow (16px past its outline, cast from 12px above, plus a margin) and how far it
 // merges (the smooth minimum's k, which scales with the body's size)
-const reachOf = (c, frost) => (frost >= .5 ? 30 : 3) + Math.min(P.smooth, Math.max(2, Math.min(c.w, c.h) * .7));
+const reachOf = (c, frost, merge) => (frost >= .5 ? 30 : 3) + Math.min(P.smooth, Math.max(2, Math.min(c.w, c.h) * merge));
 const useBuffer = buf => { gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); };
 function common(prog, w, h) {
   gl.useProgram(prog.p);
@@ -370,9 +371,9 @@ function render() {
   for (const b of bodies) {
     if (n >= MAX || b.c.w <= .3 || b.c.h <= .3) continue;
     const c = b.c, i = n * 4;
-    BD[i] = c.x; BD[i + 1] = c.y; BD[i + 2] = c.w; BD[i + 3] = c.h; BD[Bpo + i] = c.r; BD[Bpo + i + 1] = b.frost;
+    BD[i] = c.x; BD[i + 1] = c.y; BD[i + 2] = c.w; BD[i + 3] = c.h; BD[Bpo + i] = c.r; BD[Bpo + i + 1] = b.frost; BD[Bpo + i + 2] = b.merge;
     // every tile this body can matter to lists it
-    const R = reachOf(c, b.frost);
+    const R = reachOf(c, b.frost, b.merge);
     const tx0 = Math.max(0, Math.floor((c.x - c.w - R) / TILE)), tx1 = Math.min(cols - 1, Math.floor((c.x + c.w + R) / TILE));
     const ty0 = Math.max(0, Math.floor((c.y - c.h - R) / TILE)), ty1 = Math.min(rows - 1, Math.floor((c.y + c.h + R + 12) / TILE));
     for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
@@ -464,27 +465,32 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // dots then taper column by column down to the size of the cursor's droplet. Each dot only breathes and drifts a pixel
 // or two. A project panel takes in the dots where it opens and on its way there; when it closes they grow back, in a
 // ripple running outward from the card.
-const FRIT = {pitch: 46, cols: 9, d0: 44, d1: 16, frost: .14, wobble: 1.6};
+// spacing follows size, like a halftone gradient: each column sits about a ball's width from the last, and its balls
+// stack about a ball apart (alternate columns offset by half), so big balls stay balls instead of fusing into a band
+const FRIT = {cols: 10, d0: 76, d1: 16, gap: 1.16, merge: .3, frost: .14, wobble: 1.6};
 let dots = [], panelRect = null, panelFrom = null, refill = false, fritT = 0;
 const rand = (a, b) => a + Math.random() * (b - a);
 function fritLayout() {
-  const edge = L.card.x + L.card.w, top = L.card.y + 14, bottom = L.card.y + L.card.h - 14;
-  const p = FRIT.pitch, rowH = p * Math.sqrt(3) / 2;                    // a staggered (hex) grid
-  const cols = Math.max(2, Math.min(FRIT.cols, Math.floor((W - edge - 40) / p)));
-  const rows = Math.floor((bottom - top) / rowH) + 1, y0 = top + ((bottom - top) - (rows - 1) * rowH) / 2;
+  const edge = L.card.x + L.card.w, top = L.card.y + 10, bottom = L.card.y + L.card.h - 10;
   const old = dots; dots = [];
   for (const d of old) bodies.delete(d.b);
-  for (let c = 0; c < cols; c++) {
-    const f = c / (cols - 1), dia = FRIT.d0 + (FRIT.d1 - FRIT.d0) * Math.pow(f, .85);
+  let x = 0, prev = 0;
+  for (let c = 0; c < FRIT.cols; c++) {
+    const f = c / (FRIT.cols - 1), dia = FRIT.d0 * Math.pow(FRIT.d1 / FRIT.d0, f);   // an even taper, ratio by ratio
+    x = c ? x + (prev + dia) / 2 * FRIT.gap : edge + dia * .3;
+    prev = dia;
+    if (x + dia / 2 > W - 8) break;
+    const pitch = dia * FRIT.gap, rows = Math.max(1, Math.floor((bottom - top - dia) / pitch) + 1);
+    const y0 = top + dia / 2 + ((bottom - top - dia) - (rows - 1) * pitch) / 2 + (c % 2 ? pitch / 2 : 0);
     for (let r = 0; r < rows; r++) {
       if (dots.length >= MAX - 8) break;
-      const x = edge + dia * .32 + c * p + (r % 2 ? p / 2 : 0), y = y0 + r * rowH;
-      if (x + dia / 2 > W - 8) continue;
+      const y = y0 + r * pitch;
+      if (y + dia / 2 > bottom + 4) continue;
       const d = {col: c, x, y, r0: dia / 2, s: 1, st: 1, at: 0, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)],
                  w: [rand(.25, .55), rand(.25, .55), rand(.3, .7)]};
       const was = old.find(o => o.col === c && Math.abs(o.y - y) < 2);
       if (was) { d.s = was.s; d.st = was.st; }                          // a resize keeps the panel's state
-      d.b = new Body({x, y, w: d.r0, h: d.r0, r: d.r0}, {frost: FRIT.frost});
+      d.b = new Body({x, y, w: d.r0, h: d.r0, r: d.r0}, {frost: FRIT.frost, merge: FRIT.merge});
       bodies.add(d.b); dots.push(d);
     }
   }
