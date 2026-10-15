@@ -316,6 +316,7 @@ function uploadInk() {
 }
 
 // ---- render -------------------------------------------------------------------------------------------------------
+let lastFrost = 0, frostOwed = false;
 const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
 const REACH = 34;                                                       // px past a body's box: its shadow and its merging
 const CARD_REACH = 72;                                                  // the card's edge reaches farther (uKC)
@@ -329,7 +330,12 @@ function render() {
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, E.paper);
   uploadInk();
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, E.ink);
-  if (sceneDirty) {                                                     // the frost: the background, blurred (6px)
+  // the frost: the background, blurred (6px). It is soft anyway, so with the drawing playing at 60 fps it is refreshed at
+  // most 30 times a second (the sharp drawing under clear glass still takes every frame)
+  const nowMs = performance.now();
+  if (sceneDirty && nowMs - lastFrost < 30) { sceneDirty = false; frostOwed = true; }
+  if (frostOwed && nowMs - lastFrost >= 30) { sceneDirty = true; frostOwed = false; }
+  if (sceneDirty) { lastFrost = nowMs;
     gl.disable(gl.BLEND); useBuffer(E.full);
     common(E.scene, E.a.w, E.a.h);
     gl.bindFramebuffer(gl.FRAMEBUFFER, E.a.f); gl.viewport(0, 0, E.a.w, E.a.h); gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -406,13 +412,13 @@ function tick(now) {
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
     moving = true;
   }
-  if (dirty || inkFresh || sceneDirty || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
+  if (dirty || inkFresh || sceneDirty || frostOwed || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
   // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
   // exactly one loop: something during this tick (a bubble budding, a tween starting) may already have queued the next
   // frame through poke(); queuing another here used to start a second loop each time, every one of them rendering
   if (raf) return;
-  if (moving || (drops.length && !reduceMotion.matches) || tweens.size || panelOpen || (!reduceMotion.matches && live().length < COUNT[0])) raf = requestAnimationFrame(tick);
+  if (moving || frostOwed || (drops.length && !reduceMotion.matches) || tweens.size || panelOpen || (!reduceMotion.matches && live().length < COUNT[0])) raf = requestAnimationFrame(tick);
   else last = 0;
 }
 // what the last frame drew: positions and sizes of every body, and the cursor's swell
