@@ -467,17 +467,20 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // ripple running outward from the card.
 // spacing follows size, like a halftone gradient: each column sits about a ball's width from the last, and its balls
 // stack about a ball apart (alternate columns offset by half), so big balls stay balls instead of fusing into a band
-const FRIT = {cols: 10, d0: 76, d1: 16, gap: 1.16, merge: .3, frost: .14, wobble: 1.6};
+// Spacing follows size, like a halftone gradient: each column's balls stack about a ball apart, and the columns pack
+// like a honeycomb (alternate columns offset by half, sitting into the hollows), which keeps the band narrow. Toward the
+// card's top and bottom the balls shrink, so the pattern softens off at its ends as a frit does round a window's corner.
+const FRIT = {cols: 8, d0: 72, d1: 16, gap: 1.16, pack: .93, ends: 1.6, merge: .3, frost: .14};
 let dots = [], panelRect = null, panelFrom = null, refill = false, fritT = 0;
 const rand = (a, b) => a + Math.random() * (b - a);
 function fritLayout() {
-  const edge = L.card.x + L.card.w, top = L.card.y + 10, bottom = L.card.y + L.card.h - 10;
+  const edge = L.card.x + L.card.w, top = L.card.y + 8, bottom = L.card.y + L.card.h - 8;
   const old = dots; dots = [];
   for (const d of old) bodies.delete(d.b);
   let x = 0, prev = 0;
   for (let c = 0; c < FRIT.cols; c++) {
-    const f = c / (FRIT.cols - 1), dia = FRIT.d0 * Math.pow(FRIT.d1 / FRIT.d0, f);   // an even taper, ratio by ratio
-    x = c ? x + (prev + dia) / 2 * FRIT.gap : edge + dia * .3;
+    const f = c / (FRIT.cols - 1), dia = FRIT.d0 * Math.pow(FRIT.d1 / FRIT.d0, f);    // an even taper, ratio by ratio
+    x = c ? x + (prev + dia) / 2 * FRIT.gap * FRIT.pack : edge + dia * .28;
     prev = dia;
     if (x + dia / 2 > W - 8) break;
     const pitch = dia * FRIT.gap, rows = Math.max(1, Math.floor((bottom - top - dia) / pitch) + 1);
@@ -486,8 +489,9 @@ function fritLayout() {
       if (dots.length >= MAX - 8) break;
       const y = y0 + r * pitch;
       if (y + dia / 2 > bottom + 4) continue;
-      const d = {col: c, x, y, r0: dia / 2, s: 1, st: 1, at: 0, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)],
-                 w: [rand(.25, .55), rand(.25, .55), rand(.3, .7)]};
+      // the ends: shrink within a ball and a half of the card's top and bottom
+      const end = Math.min(y - top, bottom - y) / (dia * FRIT.ends), k = .35 + .65 * smooth3(clamp01(end));
+      const d = {col: c, x, y, r0: dia / 2 * k, s: 1, st: 1, at: 0};
       const was = old.find(o => o.col === c && Math.abs(o.y - y) < 2);
       if (was) { d.s = was.s; d.st = was.st; }                          // a resize keeps the panel's state
       d.b = new Body({x, y, w: d.r0, h: d.r0, r: d.r0}, {frost: FRIT.frost, merge: FRIT.merge});
@@ -495,9 +499,10 @@ function fritLayout() {
     }
   }
 }
+const smooth3 = t => t * t * (3 - 2 * t);
 function frit(now, dt) {
   if (!reduceMotion.matches) fritT += dt;
-  const r = panelRect, t = fritT;
+  const r = panelRect, t = fritT, edge = L.card.x + L.card.w;
   for (const d of dots) {
     // the panel: dots where it opens, or on its way there, are taken in
     if (panelOpen && r && d.st === 1) {
@@ -508,10 +513,12 @@ function frit(now, dt) {
     if (refill && !panelOpen && d.st === 0) { d.st = 1; d.at = now + d.col * 70 + rand(0, 90); }   // the ripple back
     // out of the panel's way before it passes (its route) or arrives; back in more gently
     if (now >= d.at) d.s += (d.st - d.s) * Math.min(1, dt * (d.st ? 4.5 : d.fast ? 22 : 12));
-    const wob = FRIT.wobble * Math.min(1, d.r0 / 14);
-    const x = d.x + wob * Math.sin(t * d.w[0] + d.ph[0]), y = d.y + wob * Math.sin(t * d.w[1] + d.ph[1]);
-    const rr = d.r0 * d.s * (1 + .035 * Math.sin(t * d.w[2] + d.ph[2]));
-    d.b.set({x, y, w: rr, h: rr, r: rr}, true);
+    // one slow wave rolls out from the card through the whole pattern (rising and falling along the card too): each
+    // ball swells a little and leans outward as it passes, so the pattern breathes as one surface, not as jitter
+    const ph = (d.x - edge) * .022 - t * .55 + Math.sin(d.y * .006 + t * .13) * 1.6;
+    const wave = Math.sin(ph), lean = Math.min(1.6, d.r0 * .06);
+    const rr = d.r0 * d.s * (1 + .045 * wave);
+    d.b.set({x: d.x + lean * Math.cos(ph), y: d.y, w: rr, h: rr, r: rr}, true);
   }
   if (refill && !panelOpen) refill = false;
 }
