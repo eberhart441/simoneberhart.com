@@ -113,6 +113,7 @@ uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform float uRimFrost;   // the frosted panels' rim is as clear as the bubbles, frosting over toward the inside
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
+uniform vec2 uCardR;       // the card's text edge and right edge: past the text it turns to the bubbles' glass
 uniform float uKC;         // how far the card's edge reaches toward the other glass (wider than uK: it bulges out to meet them)
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
@@ -176,6 +177,8 @@ void main() {
   }
   float s = max(-d, 0.);
   if (frost > .5) frost = mix(uRimFrost, frost, smoothstep(4., uBevel * 1.15, s));
+  float side = smoothstep(uCardR.x - 70., uCardR.y - 6., p.x) * (1. - smoothstep(uCardR.y + 60., uCardR.y + 90., p.x));
+  frost = mix(frost, min(frost, .55), side);                           // the card's right margin is clear glass, like the bubbles
   float sProf = s * uBevel / bevel;                                    // small drops use the whole profile across their radius
   vec2 g = vec2(0.), pe = vec2(0.);
   if (sProf < uProfDepth + 1.) {                                       // the bevel bends and lights; the flat inside does not
@@ -193,7 +196,7 @@ void main() {
   vec3 col = frost > .995 ? blurred : mix(sceneAt(ps), blurred, frost);   // fully frosted: the sharp backdrop never shows
   float ty = clamp((p.y - uTintY.x) / uTintY.y, 0., 1.);               // the card's --glass tint: .30 → .19 → .25
   float tint = ty < .45 ? mix(.30, .19, ty / .45) : mix(.19, .25, (ty - .45) / .55);
-  col = mix(col, vec3(1.), tint * mix(.4, 1., frost));
+  col = mix(col, vec3(1.), tint * mix(.4, 1., frost) * (1. - .45 * side));
   float e = pe.g, f = dot(g, uLight);                                  // Hyalite's edge light; only the lit half follows the light
   if (e > 0.) e *= max(0., f) * .78 + max(0., -f) * .30;
   col = e > 0. ? mix(col, vec3(1.), min(e, 1.)) : mix(col, vec3(0.), min(-e, 1.));
@@ -226,6 +229,7 @@ class Body {
   }
   settled(tol = 2) { return ['x', 'y', 'w', 'h'].every(k => Math.abs(this.t[k] - this.c[k]) < tol) && Math.abs(this.v.w) < 5; }
 }
+const CARD_FROST = .94;                                                   // a touch of the drawing shows through, as in the bubbles
 const PANEL_R = 36;                                                      // the frosted panels' corner radius (style.css matches)
 const rectBody = (r, radius = PANEL_R) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
 
@@ -276,7 +280,7 @@ function create() {
 // ---- state --------------------------------------------------------------------------------------------------------
 let W = 0, H = 0, DPR = 1, raf = 0, last = 0, dirty = true, sceneDirty = true;
 const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}};
-const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: 1, k: 300, z: 1});
+const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: CARD_FROST, k: 300, z: 1});
 const bodies = new Set([card]);
 const cursor = new Body({x: -100, y: -100, w: 0, h: 0, r: 0}, {k: 420, z: .72});
 const bump = {x: 0, y: 0, a: 0, ta: 0, v: 0};
@@ -292,6 +296,7 @@ function layout() {
   }
   const c = cardEl.getBoundingClientRect(), v = visuals.getBoundingClientRect();
   L.card = {x: c.left, y: c.top, w: c.width, h: c.height};
+  L.textR = c.right - (parseFloat(getComputedStyle(cardEl.querySelector('.content') || cardEl).paddingRight) || 60);
   L.ink = {x: v.left, y: v.top, w: v.width || 1, h: v.height || 1};
   card.set(rectBody(L.card), true);
   sceneDirty = dirty = true;
@@ -365,7 +370,7 @@ function render() {
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
   gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
-  gl.uniform2f(u.uTintY, L.card.y, L.card.h);
+  gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
   const a = P.light * Math.PI / 180; gl.uniform2f(u.uLight, Math.sin(a), -Math.cos(a));
   gl.uniform3f(u.uBump, bump.x, bump.y, bump.a); gl.uniform1f(u.uRimFrost, DROP_FROST);
