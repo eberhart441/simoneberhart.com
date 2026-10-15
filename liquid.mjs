@@ -30,9 +30,10 @@ const visuals = document.querySelector('.visuals');
 
 // the card's glass (frame.js GLASS, with the Hyalite defaults it relies on)
 const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 6, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
-const MAX = 16;
+const MAX = 256;                   // glass bodies at most (the card, the panel, the cursor and the frit's dots)
+const TILE = 32, SLOTS = 24;       // the glass is drawn in TILE px tiles; each tile lists the (at most SLOTS) bodies near it
 
-const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id}))};
+const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})), tiles: () => [G.nt, G.cols * G.rows]};
 
 // ---- Hyalite's refraction profile, as a table by depth from the rim (px) --------------------------------------------
 const N_GLASS = 1.5, ABSORB = .5 / .46, GLOW = .4 / 1.76, SHARP = 44, STEP = .25;
@@ -86,11 +87,12 @@ vec3 sceneAt(vec2 p) {
 }
 out vec4 o;
 `;
-// the glass is drawn as one quad per body (its box plus the reach of the shadow and the merging), not a full-screen
-// pass: most of the screen has no glass, and those pixels now cost nothing
-const VERT_QUADS = `#version 300 es
-in vec2 a; uniform vec2 uView;
-void main() { gl_Position = vec4(a.x / uView.x * 2. - 1., 1. - a.y / uView.y * 2., 0., 1.); }`;
+// The glass is drawn in small square tiles, and only where some body is near. Each tile carries its index; the fragment
+// shader reads that tile's short list of nearby bodies and loops over those alone, so the cost per pixel stays small
+// however many bubbles there are, and no pixel is shaded twice.
+const VERT_TILES = `#version 300 es
+in vec3 a; uniform vec2 uView; flat out int vTile;
+void main() { vTile = int(a.z); gl_Position = vec4(a.x / uView.x * 2. - 1., 1. - a.y / uView.y * 2., 0., 1.); }`;
 const SCENE = COMMON + `void main() { o = vec4(sceneAt(cssAt(gl_FragCoord.xy)), 1.); }`;
 const BLUR = `#version 300 es
 precision highp float;
@@ -104,21 +106,37 @@ void main() {                                                          // 9-tap 
 }`;
 const GLASS = COMMON + `
 uniform sampler2D uBlur, uProf;
-uniform vec4 uB[${MAX}];   // body: centre x, y, half width, half height (css px)
-uniform vec4 uBp[${MAX}];  // body: corner radius, frost 0..1, -, -
-uniform int uN;
+uniform highp sampler2D uBodies;   // row 0: centre x, y, half width, half height (css px); row 1: corner radius, frost
+vec4 bodyB(int i) { return texelFetch(uBodies, ivec2(i, 0), 0); }
+vec4 bodyP(int i) { return texelFetch(uBodies, ivec2(i, 1), 0); }
 uniform float uK, uBevel, uProfN, uProfDepth, uEdge;
 uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
+uniform highp usampler2D uTiles;   // per tile: [count, body index, body index, …]
+flat in int vTile;
+int ids[${SLOTS}]; int nIds = -1;
+void loadIds() {
+  if (nIds >= 0) return;
+  nIds = int(texelFetch(uTiles, ivec2(0, vTile), 0).r);
+  for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; ids[k] = int(texelFetch(uTiles, ivec2(k + 1, vTile), 0).r); }
+}
 float sdBox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
 float smin(float a, float b, float k) { float h = max(k - abs(a - b), 0.) / k; return min(a, b) - h * h * k * .25; }
 // widen: 0 = the outline; uBevel = a rounder twin used only for the bend direction (no creases at corners)
+float shadowField(vec2 p) {                                             // the frosted panels' outline: they cast the shadow
+  float d = 1e5;
+  for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; int i = ids[k];
+    vec4 bp = bodyP(i); if (bp.y < .5) continue;
+    vec4 b = bodyB(i); d = smin(d, sdBox(p - b.xy, b.zw, min(bp.x, min(b.z, b.w))), uK); }
+  return d;
+}
 float field(vec2 p, float widen) {
   float d = 1e5;
-  for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
-    vec4 b = uB[i]; d = smin(d, sdBox(p - b.xy, b.zw, min(uBp[i].x + widen, min(b.z, b.w))), uK); }
+  for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; int i = ids[k];
+    vec4 b = bodyB(i); float kk = min(uK, max(2., min(b.z, b.w) * .7));
+    d = smin(d, sdBox(p - b.xy, b.zw, min(bodyP(i).x + widen, min(b.z, b.w))), kk); }
   return d;
 }
 // a rounded box's distance and its exact gradient (outward)
@@ -133,18 +151,26 @@ float sdBoxG(vec2 p, vec2 b, float r, out vec2 g) {
 // blend of the two gradients it joins, so it comes out of the same pass with no extra samples.
 float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   if (uCard == 1) {                                                    // deep inside the card no other body can reach
-    vec4 c = uB[0]; float dc = sdBox(p - c.xy, c.zw, min(uBp[0].x, min(c.z, c.w)));
-    if (dc < -(uBevel + uK + 4.)) { frost = uBp[0].y; bevel = uBevel; grad = vec2(0.); return dc; }
+    vec4 c = bodyB(0); float dc = sdBox(p - c.xy, c.zw, min(bodyP(0).x, min(c.z, c.w)));
+    if (dc < -(uBevel + uK + 4.)) { frost = bodyP(0).y; bevel = uBevel; grad = vec2(0.); return dc; }
   }
+  loadIds();
   float d = 1e5, dw = 1e5, ws = 0., wf = 0., wb = 0.; vec2 gw = vec2(0.), gi;
-  for (int i = 0; i < ${MAX}; i++) { if (i >= uN) break;
-    vec4 b = uB[i]; vec2 pp = p - b.xy; float rr = min(b.z, b.w);
-    float di = sdBox(pp, b.zw, min(uBp[i].x, rr));
-    d = smin(d, di, uK);
-    float dwi = sdBoxG(pp, b.zw, min(uBp[i].x + uBevel, rr), gi);
-    float h = max(uK - abs(dw - dwi), 0.) / uK;
-    gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * uK * .25;
-    float w = exp(-max(di, 0.) * .05); ws += w; wf += w * uBp[i].y; wb += w * min(uBevel, rr - 1.); }
+  for (int k = 0; k < ${SLOTS}; k++) { if (k >= nIds) break; int i = ids[k];
+    vec4 b = bodyB(i), bp = bodyP(i); vec2 pp = p - b.xy; float rr = min(b.z, b.w);
+    float kk = min(uK, max(2., rr * .7));                               // merging scales with the smaller body
+    float di, dwi;
+    if (bp.x >= rr && abs(b.z - b.w) < .01) {                          // a round droplet (most bodies): one cheap step
+      float l = length(pp); di = dwi = l - rr; gi = pp / max(l, 1e-4);
+    } else {
+      di = sdBox(pp, b.zw, min(bp.x, rr));
+      dwi = sdBoxG(pp, b.zw, min(bp.x + uBevel, rr), gi);
+    }
+    d = smin(d, di, kk);
+    float h = max(kk - abs(dw - dwi), 0.) / kk;
+    gw = mix(gw, gi, dwi < dw ? 1. - h * .5 : h * .5); dw = min(dw, dwi) - h * h * kk * .25;
+    float q = max(di, 0.) * .05, w = 1. / (1. + q + q * q);             // nearby bodies weigh more (a cheap falloff)
+    ws += w; wf += w * bp.y; wb += w * min(uBevel, rr - 1.); }
   frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4)); grad = gw;
   return d;
 }
@@ -155,7 +181,7 @@ void main() {
   float d = scan(p, frost, bevel, gw);
   if (d > .8) {                                                        // outside: only the drop shadow (0 12px 36px -20px)
     float a = 0.;
-    if (d < 46.) a = .07 * (1. - smoothstep(-36., 36., field(p - vec2(0., 12.), 0.) + 20.));
+    if (d < 30.) { loadIds(); a = .07 * (1. - smoothstep(-36., 36., shadowField(p - vec2(0., 12.)) + 20.)); }
     o = vec4(vec3(.118, .098, .059) * a, a); return;
   }
   float s = max(-d, 0.);
@@ -169,7 +195,8 @@ void main() {
   vec2 bd = p - uBump.xy; float bg = exp(-dot(bd, bd) / 1800.); vec2 bgrad = -bd / 900. * bg * uBump.z;
   off += bgrad * 22.;                                                  // the cursor's swell: a soft lens of its own
   vec2 ps = p + off;
-  vec3 col = mix(sceneAt(ps), texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb, frost);
+  vec3 blurred = texture(uBlur, vec2(ps.x / uView.x, 1. - ps.y / uView.y)).rgb;
+  vec3 col = frost > .995 ? blurred : mix(sceneAt(ps), blurred, frost);   // fully frosted glass never shows the sharp backdrop
   float ty = clamp((p.y - uTintY.x) / uTintY.y, 0., 1.);               // the card's --glass tint: .30 → .19 → .25
   float tint = ty < .45 ? mix(.30, .19, ty / .45) : mix(.19, .25, (ty - .45) / .55);
   col = mix(col, vec3(1.), tint * mix(.4, 1., frost));
@@ -236,12 +263,17 @@ function create() {
   };
   const target = () => { const t = texture(); const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return {t, f, w: 1, h: 1}; };
-  E = {scene: program(SCENE), blur: program(BLUR), glass: program(GLASS, VERT_QUADS), paper: texture(gl.REPEAT), ink: texture(), prof: texture(),
+  E = {scene: program(SCENE), blur: program(BLUR), glass: program(GLASS, VERT_TILES), paper: texture(gl.REPEAT), ink: texture(), prof: texture(),
        a: target(), b: target()};
   E.full = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, E.full);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  E.quads = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, E.quads);
-  gl.bufferData(gl.ARRAY_BUFFER, MAX * 12 * 4, gl.DYNAMIC_DRAW);
+  E.tiles = gl.createBuffer();                                          // sized in layout()
+  E.bodyTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, E.bodyTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, MAX, 2, 0, gl.RGBA, gl.FLOAT, null);
+  E.tileTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, E.tileTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.enableVertexAttribArray(0);
   E.PROF = profileTable();
   gl.bindTexture(gl.TEXTURE_2D, E.prof); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, E.PROF.n, 1, 0, gl.RG, gl.FLOAT, E.PROF.data);
@@ -272,8 +304,17 @@ function layout() {
   L.card = {x: c.left, y: c.top, w: c.width, h: c.height};
   L.ink = {x: v.left, y: v.top, w: v.width || 1, h: v.height || 1};
   card.set(rectBody(L.card), true);
+  G.cols = Math.ceil(W / TILE); G.rows = Math.ceil(H / TILE); const n = G.cols * G.rows;
+  if (!G.data || G.data.length < n * (SLOTS + 1)) {
+    G.data = new Uint8Array(n * (SLOTS + 1)); G.verts = new Float32Array(n * 18);
+    gl.bindBuffer(gl.ARRAY_BUFFER, E.tiles); gl.bufferData(gl.ARRAY_BUFFER, G.verts.byteLength, gl.DYNAMIC_DRAW);
+  }
+  gl.bindTexture(gl.TEXTURE_2D, E.tileTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, SLOTS + 1, n, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, null);
+  fritLayout();
   sceneDirty = dirty = true;
 }
+const G = {cols: 0, rows: 0, data: null, verts: null};
 
 // ---- the drawing under the glass: whatever the player shows (its video, or its still), at the layer's opacity ------
 let inkFresh = true, inkAlpha = 1, inkSrc = '', veilWatch = 0;
@@ -294,8 +335,10 @@ function uploadInk() {
 }
 
 // ---- render -------------------------------------------------------------------------------------------------------
-const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
-const REACH = 34;                                                       // px past a body's box: its shadow and its merging
+const BD = new Float32Array(MAX * 8), Bpo = MAX * 4;                   // the body texture: row 0, then row 1
+// how far a body can matter: its shadow (16px past its outline, cast from 12px above, plus a margin) and how far it
+// merges (the smooth minimum's k, which scales with the body's size)
+const reachOf = (c, frost) => (frost >= .5 ? 30 : 3) + Math.min(P.smooth, Math.max(2, Math.min(c.w, c.h) * .7));
 const useBuffer = buf => { gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); };
 function common(prog, w, h) {
   gl.useProgram(prog.p);
@@ -322,16 +365,39 @@ function render() {
   gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, E.prof);
   common(E.glass, canvas.width, canvas.height);
   const u = E.glass.u; let n = 0;
+  const S1 = SLOTS + 1, data = G.data, cols = G.cols, rows = G.rows, tiles = cols * rows;
+  for (let t = 0; t < tiles; t++) data[t * S1] = 0;
   for (const b of bodies) {
     if (n >= MAX || b.c.w <= .3 || b.c.h <= .3) continue;
     const c = b.c, i = n * 4;
-    Bv[i] = c.x; Bv[i + 1] = c.y; Bv[i + 2] = c.w; Bv[i + 3] = c.h; Bpv[i] = c.r; Bpv[i + 1] = b.frost;
-    const x0 = c.x - c.w - REACH, x1 = c.x + c.w + REACH, y0 = c.y - c.h - REACH, y1 = c.y + c.h + REACH + 12, q = n * 12;
-    Q[q] = x0; Q[q + 1] = y0; Q[q + 2] = x1; Q[q + 3] = y0; Q[q + 4] = x0; Q[q + 5] = y1;
-    Q[q + 6] = x0; Q[q + 7] = y1; Q[q + 8] = x1; Q[q + 9] = y0; Q[q + 10] = x1; Q[q + 11] = y1;
+    BD[i] = c.x; BD[i + 1] = c.y; BD[i + 2] = c.w; BD[i + 3] = c.h; BD[Bpo + i] = c.r; BD[Bpo + i + 1] = b.frost;
+    // every tile this body can matter to lists it
+    const R = reachOf(c, b.frost);
+    const tx0 = Math.max(0, Math.floor((c.x - c.w - R) / TILE)), tx1 = Math.min(cols - 1, Math.floor((c.x + c.w + R) / TILE));
+    const ty0 = Math.max(0, Math.floor((c.y - c.h - R) / TILE)), ty1 = Math.min(rows - 1, Math.floor((c.y + c.h + R + 12) / TILE));
+    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+      const o = (ty * cols + tx) * S1, k = data[o];
+      if (k < SLOTS) { data[o + 1 + k] = n; data[o] = k + 1; }
+    }
     n++;
   }
-  gl.uniform4fv(u.uB, Bv); gl.uniform4fv(u.uBp, Bpv); gl.uniform1i(u.uN, n);
+  let nt = 0; const V = G.verts;
+  for (let t = 0; t < tiles; t++) {
+    if (!data[t * S1]) continue;
+    const x0 = (t % cols) * TILE, y0 = Math.floor(t / cols) * TILE, x1 = x0 + TILE, y1 = y0 + TILE, v = nt * 18;
+    V[v] = x0; V[v + 1] = y0; V[v + 2] = t; V[v + 3] = x1; V[v + 4] = y0; V[v + 5] = t; V[v + 6] = x0; V[v + 7] = y1; V[v + 8] = t;
+    V[v + 9] = x0; V[v + 10] = y1; V[v + 11] = t; V[v + 12] = x1; V[v + 13] = y0; V[v + 14] = t; V[v + 15] = x1; V[v + 16] = y1; V[v + 17] = t;
+    nt++;
+  }
+  G.nt = nt;
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, E.tileTex);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, S1, tiles, gl.RED_INTEGER, gl.UNSIGNED_BYTE, data, 0);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  gl.uniform1i(u.uTiles, 4);
+  gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, E.bodyTex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, MAX, 2, gl.RGBA, gl.FLOAT, BD);
+  gl.uniform1i(u.uBodies, 5);
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
   gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
@@ -341,17 +407,16 @@ function render() {
   gl.uniform3f(u.uBump, bump.x, bump.y, bump.a);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-  // overlapping quads compute the same value twice and simply overwrite it (no blending)
-  gl.bindBuffer(gl.ARRAY_BUFFER, E.quads); gl.bufferSubData(gl.ARRAY_BUFFER, 0, Q, 0, n * 12);
-  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  gl.drawArrays(gl.TRIANGLES, 0, n * 6);
+  gl.bindBuffer(gl.ARRAY_BUFFER, E.tiles); gl.bufferSubData(gl.ARRAY_BUFFER, 0, G.verts, 0, nt * 18);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, nt * 6);
   if (!canvas.classList.contains('ready')) requestAnimationFrame(() => canvas.classList.add('ready'));   // fade in once drawn
 }
 function tick(now) {
   raf = 0;
   if (!Liquid.active) return;
   const dt = Math.min(1 / 30, (now - (last || now)) / 1000); last = now;
-  ambient(now);
+  frit(now, dt);
   let moving = false;
   for (const tw of tweens) {                                            // targets that slide along a path
     const t = tw.dur ? Math.min(1, (now - tw.start) / tw.dur) : 1;
@@ -367,9 +432,8 @@ function tick(now) {
     moving = true;
   }
   if (moving || dirty || inkFresh) { render(); dirty = false; }
-  // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
-  // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
-  if (moving || (drops.length && !reduceMotion.matches) || tweens.size || panelOpen || (!reduceMotion.matches && live().length < COUNT[0])) raf = requestAnimationFrame(tick);
+  // keep ticking while anything moves; the stream always flows (unless motion is reduced), so in practice it keeps going
+  if (moving || !reduceMotion.matches || tweens.size || panelOpen) raf = requestAnimationFrame(tick);
   else last = 0;
 }
 const poke = () => { dirty = true; if (!raf && Liquid.active) raf = requestAnimationFrame(tick); };
@@ -395,165 +459,60 @@ const onPointerMove = e => {
 const onScrollAim = () => { if (pointerAt) aim(pointerAt.x, pointerAt.y, document.elementFromPoint(pointerAt.x, pointerAt.y)); };
 const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 
-// ---- beads: there are always 6–8 beads of the glass drifting over the drawing, in a range of sizes. Some are already
-// out when the page loads; each wanders a while, then drifts home and merges into the card, and the card buds a new one
-// (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
-// beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
-const COUNT = [6, 8], DROP_FROST = .16;
-const SIZES = [[13, 20], [22, 34], [36, 54], [58, 82]];                 // radius px, small to large
-let nextDrop = 0, drops = [], target = 7, seeded = false, panelRect = null, panelFrom = null;
-const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
-const live = () => drops.filter(d => !d.home);
-function pickSize() {                                                   // the size class fewest beads have (two large at most)
-  const n = [0, 0, 0, 0]; for (const d of live()) n[d.size]++;
-  const ok = [0, 1, 2, 3].filter(i => i < 3 || n[3] < 2), min = Math.min(...ok.map(i => n[i]));
-  const pick = ok.filter(i => n[i] === min), size = pick[Math.floor(Math.random() * pick.length)];
-  return {size, R: SIZES[size][0] + Math.random() * (SIZES[size][1] - SIZES[size][0])};
-}
-function spot(R) {                                                      // a home for its wander, away from the others
-  const edge = L.card.x + L.card.w, x0 = edge + R + 90, x1 = W - R - 110, y0 = R + 70, y1 = H - R - 70;
-  let best = null, bestGap = -1;
-  for (let i = 0; i < 16; i++) {
-    const c = {x: mix(x0, Math.max(x0, x1), Math.random()), y: mix(y0, Math.max(y0, y1), Math.random())};
-    const gap = Math.min(...live().map(d => Math.hypot(d.out.x - c.x, d.out.y - c.y) - d.R), 1e9);
-    if (gap > bestGap) { bestGap = gap; best = c; }
-  }
-  return best;
-}
-function makeDrop(born) {
-  const {size, R} = pickSize(), out = spot(R);
-  const d = {b: null, size, R, out, y: out.y, ph: Math.random() * 6.28, born, life: 20 + Math.random() * 16, home: false};
-  return d;
-}
-function seed(now) {                                                    // the page opens with beads already out
-  seeded = true;
-  const n = COUNT[0] + Math.floor(Math.random() * 2);
-  for (let i = 0; i < n; i++) {
-    const d = makeDrop(now - Math.random() * 14000);                    // part-way through their wander, so they leave at different times
-    d.y = L.card.y + L.card.h * (.2 + Math.random() * .6);
-    d.b = new Body({...wanderAt(d, (now - d.born) / 1000), w: d.R, h: d.R, r: d.R}, {frost: DROP_FROST, k: 24, z: .62});
-    drops.push(d); bodies.add(d.b);
-  }
-  nextDrop = now + 2500;
-}
-function budDrop(now) {
-  const c = L.card, edge = c.x + c.w, d = makeDrop(0);
-  const y = c.y + c.h * (.18 + Math.random() * .64), R = d.R, out = d.out; d.y = y;
-  d.b = new Body({x: edge - 30, y, w: 10, h: 10, r: 10}, {frost: DROP_FROST, k: 70, z: .7});
-  drops.push(d); bodies.add(d.b);
-  tween(d.b, BIRTH, t => {
-    const bud = inOut(clamp01(t / .45)), p = inOut(clamp01((t - .32) / .68));
-    const r = mix(mix(10, Math.min(R, 34) * .62, bud), R, p);           // a bulge first, then full size as it travels
-    const x0 = mix(edge - 30, edge + Math.min(R, 34) * .15, bud);       // the bulge sits on the edge: the neck holds it
-    return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: r, h: r, r};
-  }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; } });
-}
-function ambient(now) {
-  if (!seeded) seed(now);
-  if (reduceMotion.matches) return;                                     // reduced motion: the beads stay put
-  if (panelOpen) {
-    for (const d of live()) {
-      const p = d.b.c, r = panelRect, m = d.R + 30;
-      const inPanel = r && p.x > r.x - m && p.x < r.x + r.w + m && p.y > r.y - m && p.y < r.y + r.h + m;
-      // the panel travels from the card's edge at its row to its centre: beads near that line are in its way too
-      const onRoute = r && panelFrom && distToSegment(p, panelFrom, {x: r.x + r.w / 2, y: r.y + r.h / 2}) < m + 40;
-      if (inPanel || onRoute) absorb(d); else goHome(d);
+// ---- the frit: like the dot band printed along a car window's edge, a staggered grid of glass dots runs along the
+// card's right edge. The first column is large and nearly touching, so it merges into the card like the solid band; the
+// dots then taper column by column down to the size of the cursor's droplet. Each dot only breathes and drifts a pixel
+// or two. A project panel takes in the dots where it opens and on its way there; when it closes they grow back, in a
+// ripple running outward from the card.
+const FRIT = {pitch: 46, cols: 9, d0: 44, d1: 16, frost: .14, wobble: 1.6};
+let dots = [], panelRect = null, panelFrom = null, refill = false, fritT = 0;
+const rand = (a, b) => a + Math.random() * (b - a);
+function fritLayout() {
+  const edge = L.card.x + L.card.w, top = L.card.y + 14, bottom = L.card.y + L.card.h - 14;
+  const p = FRIT.pitch, rowH = p * Math.sqrt(3) / 2;                    // a staggered (hex) grid
+  const cols = Math.max(2, Math.min(FRIT.cols, Math.floor((W - edge - 40) / p)));
+  const rows = Math.floor((bottom - top) / rowH) + 1, y0 = top + ((bottom - top) - (rows - 1) * rowH) / 2;
+  const old = dots; dots = [];
+  for (const d of old) bodies.delete(d.b);
+  for (let c = 0; c < cols; c++) {
+    const f = c / (cols - 1), dia = FRIT.d0 + (FRIT.d1 - FRIT.d0) * Math.pow(f, .85);
+    for (let r = 0; r < rows; r++) {
+      if (dots.length >= MAX - 8) break;
+      const x = edge + dia * .32 + c * p + (r % 2 ? p / 2 : 0), y = y0 + r * rowH;
+      if (x + dia / 2 > W - 8) continue;
+      const d = {col: c, x, y, r0: dia / 2, s: 1, st: 1, at: 0, ph: [rand(0, 6.28), rand(0, 6.28), rand(0, 6.28)],
+                 w: [rand(.25, .55), rand(.25, .55), rand(.3, .7)]};
+      const was = old.find(o => o.col === c && Math.abs(o.y - y) < 2);
+      if (was) { d.s = was.s; d.st = was.st; }                          // a resize keeps the panel's state
+      d.b = new Body({x, y, w: d.r0, h: d.r0, r: d.r0}, {frost: FRIT.frost});
+      bodies.add(d.b); dots.push(d);
     }
-    return;
   }
-  const n = live().length;
-  if (n < target && now > nextDrop && !document.hidden) {
-    budDrop(now);
-    nextDrop = now + (n + 1 < COUNT[0] ? 700 + Math.random() * 700 : 2500 + Math.random() * 3000);
-    target = COUNT[0] + Math.floor(Math.random() * (COUNT[1] - COUNT[0] + 1));
+}
+function frit(now, dt) {
+  if (!reduceMotion.matches) fritT += dt;
+  const r = panelRect, t = fritT;
+  for (const d of dots) {
+    // the panel: dots where it opens, or on its way there, are taken in
+    if (panelOpen && r && d.st === 1) {
+      const m = d.r0 + 26, inPanel = d.x > r.x - m && d.x < r.x + r.w + m && d.y > r.y - m && d.y < r.y + r.h + m;
+      const onRoute = panelFrom && distToSegment(d, panelFrom, {x: r.x + r.w / 2, y: r.y + r.h / 2}) < m + 46;
+      if (inPanel || onRoute) { d.st = 0; d.at = now; d.fast = onRoute; }
+    }
+    if (refill && !panelOpen && d.st === 0) { d.st = 1; d.at = now + d.col * 70 + rand(0, 90); }   // the ripple back
+    // out of the panel's way before it passes (its route) or arrives; back in more gently
+    if (now >= d.at) d.s += (d.st - d.s) * Math.min(1, dt * (d.st ? 4.5 : d.fast ? 22 : 12));
+    const wob = FRIT.wobble * Math.min(1, d.r0 / 14);
+    const x = d.x + wob * Math.sin(t * d.w[0] + d.ph[0]), y = d.y + wob * Math.sin(t * d.w[1] + d.ph[1]);
+    const rr = d.r0 * d.s * (1 + .035 * Math.sin(t * d.w[2] + d.ph[2]));
+    d.b.set({x, y, w: rr, h: rr, r: rr}, true);
   }
-  for (const d of live()) {
-    if (!d.born || d.pair) continue;                                    // budding, or meeting another: tweens drive it
-    const age = (now - d.born) / 1000;
-    if (age > d.life) { goHome(d); continue; }
-    d.b.set(wanderAt(d, age));
-  }
-  maybePair(now);
+  if (refill && !panelOpen) refill = false;
 }
 function distToSegment(p, a, b) {
   const vx = b.x - a.x, vy = b.y - a.y, t = clamp01(((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy || 1));
   return Math.hypot(p.x - a.x - vx * t, p.y - a.y - vy * t);
 }
-function absorb(d) {                                                    // taken into the panel opening over it
-  if (d.pair) unpair(d);
-  d.home = true; stopTweens(d.b);
-  const from = {...d.b.c};
-  tween(d.b, ABSORB_MS, t => { const r = mix(from.w, 0, inOut(t)); return {x: from.x, y: from.y, w: r, h: r, r}; })
-    .then(() => { bodies.delete(d.b); drops.splice(drops.indexOf(d), 1); });
-}
-const wanderAt = (d, age) => ({x: d.out.x + Math.sin(age * .4 + d.ph) * 80, y: d.out.y + Math.sin(age * .27 + d.ph * 2) * 60});
-const stopTweens = body => tweens.forEach(tw => tw.body === body && tweens.delete(tw));
-// carry on wandering from wherever the bead is now (the wander path is re-anchored, so nothing jumps)
-const rebase = d => { const w = wanderAt(d, (performance.now() - d.born) / 1000); d.out = {x: d.out.x + d.b.c.x - w.x, y: d.out.y + d.b.c.y - w.y}; };
-
-// ---- beads meet and part: now and then the two closest beads drift together and merge into one bigger bead (the
-// material does the merging: their outlines blend), wander as one for a while, then stretch apart and split in two
-let nextPair = 0;
-const MEET = 3400, HOLD = 4200, PART = 3000;
-async function maybePair(now) {
-  if (!nextPair) nextPair = now + 12000;
-  if (panelOpen || now < nextPair || drops.some(d => d.pair)) return;
-  const free = drops.filter(d => d.born && !d.home && !d.pair && (now - d.born) / 1000 < d.life - 14);
-  if (free.length < 2) return;
-  nextPair = now + 24000 + Math.random() * 16000;
-  let A = null, B = null, best = Infinity;
-  for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
-    const dist = Math.hypot(free[i].b.c.x - free[j].b.c.x, free[i].b.c.y - free[j].b.c.y);
-    if (dist < best) { best = dist; A = free[i]; B = free[j]; }
-  }
-  const pair = {A, B}; A.pair = B.pair = pair;
-  const span = (MEET + HOLD + PART) / 1000 + 4;
-  for (const d of [A, B]) d.life = Math.max(d.life, (now - d.born) / 1000 + span);
-  const edge = L.card.x + L.card.w, rA = A.b.c.w, rB = B.b.c.w;
-  const rM = Math.min(96, Math.sqrt(rA * rA + rB * rB));                 // about the two beads' area together
-  const fA = {...A.b.c}, fB = {...B.b.c}, ph = Math.random() * 6.28;
-  const meet = {x: Math.max(edge + rM + 110, (fA.x + fB.x) / 2), y: (fA.y + fB.y) / 2};
-  const drift = t => ({x: meet.x + Math.sin(t * 1.3 + ph) * 30, y: meet.y + Math.sin(t * .9 + ph) * 22});
-  const alive = () => A.pair === pair && B.pair === pair && !A.home && !B.home;
-  // meet: both slide to the meeting point (the neck forms as they near), then swell into one bead
-  await Promise.all([[A, fA, rA], [B, fB, rB]].map(([d, f, r]) => tween(d.b, MEET, t => {
-    const p = inOut(t), m = drift(0), rr = mix(r, rM, inOut(clamp01((t - .68) / .32)));
-    return {x: mix(f.x, m.x, p), y: mix(f.y, m.y, p), w: rr, h: rr, r: rr};
-  })));
-  if (!alive()) return;
-  await Promise.all([A, B].map(d => tween(d.b, HOLD, t => ({...drift(t), w: rM, h: rM, r: rM}))));   // as one
-  if (!alive()) return;
-  // part: stretch apart (mostly up and down, away from the card), each back to its own size; the neck thins and snaps
-  const ang = Math.PI / 2 + (Math.random() - .5) * 1.1, ux = Math.cos(ang), uy = Math.sin(ang), m1 = drift(1), sep = (rA + rB + 80) / 2;
-  await Promise.all([[A, rA, 1], [B, rB, -1]].map(([d, r, side]) => tween(d.b, PART, t => {
-    const p = inOut(t), rr = mix(rM, r, inOut(clamp01(t / .55)));
-    return {x: m1.x + ux * side * sep * p, y: m1.y + uy * side * sep * p, w: rr, h: rr, r: rr};
-  })));
-  if (!alive()) return;
-  for (const d of [A, B]) { d.pair = null; rebase(d); }
-}
-
-function unpair(d) {                                                    // leaving mid-meeting: the other carries on alone
-  const other = d.pair.A === d ? d.pair.B : d.pair.A;
-  d.pair = null; stopTweens(d.b);
-  if (!other.home) { other.pair = null; stopTweens(other.b); rebase(other); other.b.set({w: other.R, h: other.R, r: other.R}); }
-}
-function goHome(d) {
-  if (d.home) return;
-  if (d.pair) unpair(d);
-  stopTweens(d.b);
-  d.home = true;
-  const b = d.b, from = {...b.c}, R = from.w, edge = L.card.x + L.card.w;
-  tween(b, panelOpen ? RETURN_FAST : RETURN, t => {
-    const p = inOut(clamp01(t / .58)), sink = inOut(clamp01((t - .48) / .52));
-    const r = mix(R, 6, sink);
-    const x = mix(mix(from.x, edge + R * .55, p), edge - 28, sink);       // drift back to touch the edge, then drawn in
-    return {x, y: mix(from.y, d.y, p), w: r, h: r, r};
-  }).then(() => {
-    bodies.delete(b); drops.splice(drops.indexOf(d), 1);
-  });
-}
-
 
 // ---- the project panel: a blob of the card's glass that buds off, travels and grows; closing reverses it ----------
 const until = (test, timeout = 1600) => new Promise(resolve => {
@@ -587,7 +546,7 @@ Liquid.bud = async (point, rect) => {
         return {x: mix(from.x, to.x - 28, p), y: mix(from.y, to.y, p), w, h, r: Math.min(w, h, mix(from.r, 28, g))};
       });
       await until(() => b.c.w < 11, 400);
-      bodies.delete(b); panelOpen--; panelRect = panelFrom = null; nextDrop = performance.now() + 500; poke();
+      bodies.delete(b); panelOpen--; panelRect = panelFrom = null; refill = true; poke();
     },
   };
   // one path: bud out of the edge, pinch off and travel, inflate into the panel — each phase flowing into the next
@@ -605,15 +564,27 @@ Liquid.bud = async (point, rect) => {
 
 
 const px1 = new Uint8Array(4);
-// the cost of one full render of a fixed scene: the card and exactly `beads` beads (everything else set aside)
+// the cost of one full render: of a fixed scene (the card and exactly `beads` test bubbles), or with beads < 0 of the page as it is
 Liquid.bench = (n = 60, beads = 8, frost = .5) => {
   const was = Liquid.active; Liquid.active = false; if (raf) cancelAnimationFrame(raf); raf = 0;   // the page loop pauses
-  const kept = [...bodies]; bodies.clear(); bodies.add(card);
-  for (let i = 0; i < beads; i++) { const r = 18 + (i % 4) * 16; bodies.add(new Body({x: L.card.x + L.card.w + 140 + (i % 3) * 190, y: 110 + i * 85, w: r, h: r, r}, {frost: .35})); }
+  const kept = [...bodies];
+  if (beads >= 0) { bodies.clear(); bodies.add(card); }                 // beads < 0: measure the page as it is
+  for (let i = 0; i < beads; i++) { const r = 8 + (i % 5) * 9; bodies.add(new Body({x: L.card.x + L.card.w + 50 + (i % 6) * 105, y: 70 + Math.floor(i / 6) * 110, w: r, h: r, r}, {frost: FRIT.frost})); }
   render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1);
+  // the GPU's own timer where the browser offers it (exact, unaffected by how busy the CPU is); else wall time
+  const tq = gl.getExtension('EXT_disjoint_timer_query_webgl2'), qs = [];
   const t0 = performance.now();
-  for (let i = 0; i < n; i++) { sceneDirty = frost >= 1 || (frost > 0 && i % 2 === 0); render(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1); }
-  const ms = (performance.now() - t0) / n;
+  for (let i = 0; i < n; i++) {
+    sceneDirty = frost >= 1 || (frost > 0 && i % 2 === 0);
+    const q = tq && gl.createQuery(); if (q) gl.beginQuery(tq.TIME_ELAPSED_EXT, q);
+    render();
+    if (q) { gl.endQuery(tq.TIME_ELAPSED_EXT); qs.push(q); }
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px1);
+  }
+  let ms = (performance.now() - t0) / n;
+  const gpu = qs.filter(q => gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)).map(q => gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6).sort((x, y) => x - y);
+  qs.forEach(q => gl.deleteQuery(q));
+  if (gpu.length > n / 2 && !gl.getParameter(tq.GPU_DISJOINT_EXT)) ms = gpu[gpu.length >> 1];
   bodies.clear(); kept.forEach(b => bodies.add(b)); Liquid.active = was; poke();
   return ms;
 };
@@ -639,7 +610,7 @@ function update() {
     root.classList.remove('liquid-cursor'); bodies.delete(cursor);
     removeEventListener('pointermove', onPointerMove); removeEventListener('scroll', onScrollAim); root.removeEventListener('pointerleave', onLeave);
     for (const b of [...bodies]) if (b !== card) bodies.delete(b);
-    drops = []; panelOpen = 0; seeded = false;
+    dots = []; panelOpen = 0;
     if (raf) cancelAnimationFrame(raf); raf = 0;
     dispatchEvent(new Event('resize'));                                // frame.js puts its Hyalite glass back
   }
