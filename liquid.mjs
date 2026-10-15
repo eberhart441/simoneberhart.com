@@ -502,19 +502,33 @@ function seed(now) {                                                    // the p
 // A bubble keeps its size from leaving the card to going back in. It starts tucked inside the card's edge (part of the
 // card's glass, so unseen), slides out through the edge, which bulges and necks around it before it pinches off, and
 // coming home slides back in the same way and is gone into the glass.
-const TUCK = 80;                                                        // how far inside the edge a tucked-in bubble sits
+const TUCK = 80;
+// every trip a bubble takes keeps one calm pace: its length sets its duration, and it eases in and out on a sine (whose
+// peak is only 1.6x the average), along a path of straight legs taken as one smooth run
+const PACE = 34, PACE_FAST = 110;                                       // px/s on average (fast: clearing the way for a panel)
+function route(pts) {
+  const legs = []; let len = 0;
+  for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); legs.push(l); len += l; }
+  const at = u => {
+    let s = u * len;
+    for (let i = 0; i < legs.length; i++) {
+      if (s <= legs[i] || i === legs.length - 1) { const f = legs[i] ? clamp01(s / legs[i]) : 1; return {x: mix(pts[i].x, pts[i + 1].x, f), y: mix(pts[i].y, pts[i + 1].y, f)}; }
+      s -= legs[i];
+    }
+  };
+  return {len, at};
+}
+const tripMs = (len, pace = PACE) => Math.max(1500, len / pace * 1000);                                                        // how far inside the edge a tucked-in bubble sits
 function budDrop(now) {
   const c = L.card, edge = c.x + c.w, d = makeDrop(0);
   const R = d.R, y = Math.min(c.y + c.h - R - TUCK, Math.max(c.y + R + TUCK, c.y + c.h * (.18 + Math.random() * .64))), out = d.out; d.y = y;
   const x0 = edge - R - TUCK;
   d.b = new Body({x: x0, y, w: R, h: R, r: R}, {frost: DROP_FROST, k: 70, z: .7});
   drops.push(d); bodies.add(d.b);
-  // farther out takes longer (an even pace), and the travel eases gently (a sine: no rush in the middle)
-  tween(d.b, BIRTH + Math.hypot(out.x - x0, out.y - y) * 9, t => {
-    // straight out sideways first; it turns toward its home only once clear of the card's edge (so it never cuts a corner)
-    const x = mix(x0, out.x, sine(t)), turn = inOut(clamp01((x - edge - R * .2) / Math.max(1, out.x - edge - R * .2)));
-    return {x, y: mix(y, out.y, turn), w: R, h: R, r: R};
-  }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
+  // straight out sideways until clear of the card's edge (so it never cuts a corner), then on to its home
+  const path = route([{x: x0, y}, {x: Math.max(edge + R + 12, Math.min(out.x, edge + R + 12)), y}, out]);
+  tween(d.b, tripMs(path.len), t => ({...path.at(sine(t)), w: R, h: R, r: R}))
+    .then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
 }
 function ambient(now) {
   if (!seeded) seed(now);
@@ -637,11 +651,12 @@ async function maybePair(now) {
   const rM = Math.min(170, Math.sqrt(rA * rA + rB * rB));                // about the two beads' area together
   const fA = {...A.b.c}, fB = {...B.b.c}, ph = Math.random() * 6.28;
   const meet = {x: Math.max(edge + rM + 110, (fA.x + fB.x) / 2), y: (fA.y + fB.y) / 2};
-  const drift = t => ({x: meet.x + Math.sin(t * 1.3 + ph) * 30, y: meet.y + Math.sin(t * .9 + ph) * 22});
+  const drift = t => ({x: meet.x + Math.sin(t * .5 + ph) * 20, y: meet.y + Math.sin(t * .37 + ph) * 14});
   const alive = () => A.pair === pair && B.pair === pair && !A.home && !B.home;
   // meet: both slide to the meeting point (the neck forms as they near), then swell into one bead
-  await Promise.all([[A, fA, rA], [B, fB, rB]].map(([d, f, r]) => tween(d.b, MEET, t => {
-    const p = inOut(t), m = drift(0), rr = mix(r, rM, inOut(clamp01((t - .68) / .32)));
+  const meetMs = Math.max(MEET, tripMs(Math.max(Math.hypot(fA.x - meet.x, fA.y - meet.y), Math.hypot(fB.x - meet.x, fB.y - meet.y))));
+  await Promise.all([[A, fA, rA], [B, fB, rB]].map(([d, f, r]) => tween(d.b, meetMs, t => {
+    const p = sine(t), m = drift(0), rr = mix(r, rM, inOut(clamp01((t - .68) / .32)));
     return {x: mix(f.x, m.x, p), y: mix(f.y, m.y, p), w: rr, h: rr, r: rr};
   })));
   if (!alive()) return;
@@ -649,8 +664,8 @@ async function maybePair(now) {
   if (!alive()) return;
   // part: stretch apart (mostly up and down, away from the card), each back to its own size; the neck thins and snaps
   const ang = Math.PI / 2 + (Math.random() - .5) * 1.1, ux = Math.cos(ang), uy = Math.sin(ang), m1 = drift(1), sep = (rA + rB + 80) / 2;
-  await Promise.all([[A, rA, 1], [B, rB, -1]].map(([d, r, side]) => tween(d.b, PART, t => {
-    const p = inOut(t), rr = mix(rM, r, inOut(clamp01(t / .55)));
+  await Promise.all([[A, rA, 1], [B, rB, -1]].map(([d, r, side]) => tween(d.b, Math.max(PART, tripMs(sep)), t => {
+    const p = sine(t), rr = mix(rM, r, inOut(clamp01(t / .55)));
     return {x: m1.x + ux * side * sep * p, y: m1.y + uy * side * sep * p, w: rr, h: rr, r: rr};
   })));
   if (!alive()) return;
@@ -669,11 +684,11 @@ function goHome(d) {
   d.home = true;
   const b = d.b, from = {...b.c}, R = d.R, c = L.card, edge = c.x + c.w;
   const ty = Math.min(c.y + c.h - R - TUCK, Math.max(c.y + R + TUCK, from.y)), tx = edge - R - TUCK;   // back in beside where it is
-  tween(b, panelOpen ? RETURN_FAST : RETURN + Math.hypot(from.x - tx, from.y - ty) * 9, t => {
+  // level with where it goes in while still clear of the edge, then straight in sideways
+  const path = route([from, {x: Math.max(from.x, edge + R + 12), y: ty}, {x: tx, y: ty}]);
+  tween(b, tripMs(path.len, panelOpen ? PACE_FAST : PACE), t => {
     const r = mix(from.w, R, clamp01(t * 4));                           // (a merged pair settles back to its own size)
-    // level with where it goes in first, then straight in sideways
-    const x = mix(from.x, tx, sine(t)), level = inOut(clamp01((from.x - x) / Math.max(1, from.x - edge - R * .2)));
-    return {x, y: mix(from.y, ty, level), w: r, h: r, r};
+    return {...path.at(sine(t)), w: r, h: r, r};
   }).then(() => {
     bodies.delete(b); drops.splice(drops.indexOf(d), 1);
   });
