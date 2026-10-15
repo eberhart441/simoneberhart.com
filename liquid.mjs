@@ -498,21 +498,20 @@ function seed(now) {                                                    // the p
   }
   nextDrop = now + 2500;
 }
+// A bubble keeps its size from leaving the card to going back in. It starts tucked inside the card's edge (part of the
+// card's glass, so unseen), slides out through the edge, which bulges and necks around it before it pinches off, and
+// coming home slides back in the same way and is gone into the glass.
+const TUCK = 80;                                                        // how far inside the edge a tucked-in bubble sits
 function budDrop(now) {
   const c = L.card, edge = c.x + c.w, d = makeDrop(0);
-  const y = c.y + c.h * (.18 + Math.random() * .64), R = d.R, out = d.out; d.y = y;
-  d.b = new Body({x: edge - 30, y, w: 10, h: 10, r: 10}, {frost: DROP_FROST, k: 70, z: .7});
+  const R = d.R, y = Math.min(c.y + c.h - R * .7, Math.max(c.y + R * .7, c.y + c.h * (.18 + Math.random() * .64))), out = d.out; d.y = y;
+  const x0 = edge - R - TUCK;
+  d.b = new Body({x: x0, y, w: R, h: R, r: R}, {frost: DROP_FROST, k: 70, z: .7});
   drops.push(d); bodies.add(d.b);
-  const r0 = Math.min(R, 30);                                            // the droplet that buds off
   // farther out takes longer (an even pace), and the travel eases gently (a sine: no rush in the middle)
-  tween(d.b, BIRTH + Math.hypot(out.x - edge, out.y - y) * 10, t => {
-    const bud = inOut(clamp01(t / .4)), p = sine(clamp01((t - .28) / .72));
-    const x0 = mix(edge - 26, edge + r0 * .2, bud);                       // the bulge sits on the edge: the neck holds it
-    const x = mix(x0, out.x, p);
-    // full size only where it can no longer touch the card
-    const room = clamp01((x - edge - r0 - 14) / Math.max(1, out.x - edge - r0 - 14));
-    const r = mix(mix(10, r0 * .62, bud), r0, p) + (R - r0) * inOut(room);
-    return {x, y: mix(y, out.y, p), w: r, h: r, r};
+  tween(d.b, BIRTH + Math.hypot(out.x - x0, out.y - y) * 9, t => {
+    const p = sine(t);
+    return {x: mix(x0, out.x, p), y: mix(y, out.y, p), w: R, h: R, r: R};
   }).then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
 }
 function ambient(now) {
@@ -666,12 +665,11 @@ function goHome(d) {
   if (d.pair) unpair(d);
   stopTweens(d.b);
   d.home = true;
-  const b = d.b, from = {...b.c}, R = from.w, edge = L.card.x + L.card.w;
-  tween(b, panelOpen ? RETURN_FAST : RETURN + Math.hypot(from.x - edge, from.y - d.y) * 12, t => {
-    const p = sine(clamp01(t / .58)), sink = inOut(clamp01((t - .48) / .52)), r1 = Math.min(R, 26);
-    const r = mix(mix(R, r1, inOut(clamp01(t / .5))), 6, sink);
-    const x = mix(mix(from.x, edge + r1 * .55, p), edge - 28, sink);      // drift back, a droplet, to touch the edge; drawn in
-    return {x, y: mix(from.y, d.y, p), w: r, h: r, r};
+  const b = d.b, from = {...b.c}, R = d.R, c = L.card, edge = c.x + c.w;
+  const ty = Math.min(c.y + c.h - R * .7, Math.max(c.y + R * .7, from.y)), tx = edge - R - TUCK;   // back in beside where it is
+  tween(b, panelOpen ? RETURN_FAST : RETURN + Math.hypot(from.x - tx, from.y - ty) * 9, t => {
+    const p = sine(t), r = mix(from.w, R, clamp01(t * 4));              // (a merged pair settles back to its own size)
+    return {x: mix(from.x, tx, p), y: mix(from.y, ty, p), w: r, h: r, r};
   }).then(() => {
     bodies.delete(b); drops.splice(drops.indexOf(d), 1);
   });
