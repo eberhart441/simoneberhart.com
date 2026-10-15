@@ -451,14 +451,14 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // out when the page loads; each wanders a while, then drifts home and merges into the card, and the card buds a new one
 // (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
 // beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
-const COUNT = [6, 8], DROP_FROST = .4;
+const COUNT = [4, 5], DROP_FROST = .4;                                   // few enough that the drawing stays the subject
 const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius px, small to large
-let nextDrop = 0, drops = [], target = 7, seeded = false, panelRect = null, panelFrom = null;
+let nextDrop = 0, drops = [], target = 5, seeded = false, panelRect = null, panelFrom = null;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
 const live = () => drops.filter(d => !d.home);
-function pickSize() {                                                   // the size class fewest beads have (two large at most)
+function pickSize() {                                                   // mostly medium: one small and one large at most
   const n = [0, 0, 0, 0]; for (const d of live()) n[d.size]++;
-  const ok = [0, 1, 2, 3].filter(i => i < 3 || n[3] < 2), min = Math.min(...ok.map(i => n[i]));
+  const ok = [1, 2].concat(n[0] < 1 ? [0] : [], n[3] < 1 ? [3] : []), min = Math.min(...ok.map(i => n[i]));
   const pick = ok.filter(i => n[i] === min), size = pick[Math.floor(Math.random() * pick.length)];
   return {size, R: SIZES[size][0] + Math.random() * (SIZES[size][1] - SIZES[size][0])};
 }
@@ -521,7 +521,7 @@ function ambient(now) {
     }
     return;
   }
-  const n = live().length;
+  const n = drops.length;                                              // counting those still on their way home: never more than 5 in view
   if (n < target && now > nextDrop && !document.hidden) {
     budDrop(now);
     nextDrop = now + (n + 1 < COUNT[0] ? 700 + Math.random() * 700 : 2500 + Math.random() * 3000);
@@ -592,7 +592,7 @@ function float(list, t) {
     else if (d.leave && t < d.leave) ax += 4;
     for (const e of list) {                                             // room for each other
       if (e === d) continue;
-      const dx = d.p.x - e.p.x, dy = d.p.y - e.p.y, dist = Math.hypot(dx, dy) || 1, room = d.R + e.R + 34;
+      const dx = d.p.x - e.p.x, dy = d.p.y - e.p.y, dist = Math.hypot(dx, dy) || 1, room = d.R + e.R + 70;
       if (dist < room) { const f = (room - dist) * 1.4 / mass; ax += dx / dist * f; ay += dy / dist * f; }
     }
     d.v.x += ax * dt; d.v.y += ay * dt;
@@ -612,11 +612,11 @@ const rebase = d => { d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; };
 let nextPair = 0;
 const MEET = 3400, HOLD = 4200, PART = 3000;
 async function maybePair(now) {
-  if (!nextPair) nextPair = now + 12000;
+  if (!nextPair) nextPair = now + 25000;
   if (panelOpen || now < nextPair || drops.some(d => d.pair)) return;
   const free = drops.filter(d => d.born && !d.home && !d.pair && (now - d.born) / 1000 < d.life - 14);
   if (free.length < 2) return;
-  nextPair = now + 24000 + Math.random() * 16000;
+  nextPair = now + 45000 + Math.random() * 25000;                       // rare: a moment, not a habit
   let A = null, B = null, best = Infinity;
   for (let i = 0; i < free.length; i++) for (let j = i + 1; j < free.length; j++) {
     const dist = Math.hypot(free[i].b.c.x - free[j].b.c.x, free[i].b.c.y - free[j].b.c.y);
