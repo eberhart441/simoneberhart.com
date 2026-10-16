@@ -39,3 +39,6 @@
 !/studies/assets/*.png
 !/studies/assets/*.webp
 !/studies/assets/*.webm
+!/tools/
+!/package.json
+!/package-lock.json
