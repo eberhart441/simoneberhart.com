@@ -33,7 +33,7 @@ const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 9, shade: .368, rim: 1.2,
 const MAX = 16;
 
 const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
-  drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, visit: !!d.visit, tween: [...tweens].some(t => t.body === d.b)}))};
+  drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, visit: !!d.visit, gap: !!d.gap, tween: [...tweens].some(t => t.body === d.b)}))};
 
 // ---- Hyalite's refraction profile, as a table by depth from the rim (px) --------------------------------------------
 const N_GLASS = 1.5, ABSORB = .5 / .46, GLOW = .4 / 1.76, SHARP = 44, STEP = .25;
@@ -491,6 +491,10 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 const COUNT = [4, 5], DROP_FROST = .93;                                   // few enough that the drawing stays the subject
 const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius px, small to large
 let nextDrop = 0, drops = [], target = 5, seeded = false, panelRect = null, panelFrom = null;
+// While a panel is open, a few small beads float in the gap between it and the card (budded from the card's edge once the
+// panel has settled, and sent home as it closes): the narrow channel keeps them small and in a column.
+const GAP_ROOM = 70;                                                    // px: the narrowest gap that has beads in it
+let panelSettled = false, nextGap = 0;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
 const live = () => drops.filter(d => !d.home);
 const forget = d => { const i = drops.indexOf(d); if (i >= 0) drops.splice(i, 1); };   // (gone already if the glass was switched off)
@@ -561,16 +565,46 @@ function budDrop(now) {
   tween(d.b, tripMs(path.len), t => ({...path.at(sine(t)), w: R, h: R, r: R}))
     .then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
 }
+function budGapDrop(now, room) {
+  const c = L.card, edge = c.x + c.w, mid = edge + room / 2;
+  const R = 14 + Math.random() * Math.max(0, Math.min(34, room / 2 - 12) - 14);
+  const others = drops.filter(d => d.gap && !d.home);
+  let y = 0, best = -1;
+  for (let i = 0; i < 8; i++) {                                         // the emptiest height in the channel
+    const yy = c.y + R + TUCK + Math.random() * Math.max(0, c.h - 2 * (R + TUCK));
+    const clear = Math.min(...others.map(d => Math.abs(d.b.c.y - yy) - d.R), 1e9);
+    if (clear > best) { best = clear; y = yy; }
+  }
+  const d = {b: null, size: 1, R, out: {x: mid, y}, y, ph: Math.random() * 6.28, born: 0, life: 25 + Math.random() * 15, home: false, gap: true};
+  const x0 = edge - R - TUCK;
+  d.b = new Body({x: x0, y, w: R, h: R, r: R}, {frost: DROP_FROST, k: 70, z: .7});
+  drops.push(d); bodies.add(d.b);
+  const path = route([{x: x0, y}, {x: edge + R + 12, y}, d.out]);
+  tween(d.b, tripMs(path.len), t => ({...path.at(sine(t)), w: R, h: R, r: R}))
+    .then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
+}
 function ambient(now) {
   if (!seeded) seed(now);
   if (reduceMotion.matches) return;                                     // reduced motion: the beads stay put
   if (panelOpen) {
+    const channel = [];
     for (const d of live()) {
+      if (d.gap) {                                                      // a channel bead: drifts, ages, and is replaced
+        if (!d.born) continue;
+        if ((now - d.born) / 1000 > d.life) goHome(d); else channel.push(d);
+        continue;
+      }
       const p = d.b.c, r = panelRect, m = d.R + 30;
       const inPanel = r && p.x > r.x - m && p.x < r.x + r.w + m && p.y > r.y - m && p.y < r.y + r.h + m;
       // the panel travels from the card's edge at its row to its centre: beads near that line are in its way too
       const onRoute = r && panelFrom && distToSegment(p, panelFrom, {x: r.x + r.w / 2, y: r.y + r.h / 2}) < m + 40;
       if (inPanel || onRoute) absorb(d); else goHome(d);
+    }
+    if (panelSettled && panelRect) {
+      const room = panelRect.x - (L.card.x + L.card.w);
+      const want = room >= GAP_ROOM + 40 ? 3 : room >= GAP_ROOM ? 2 : 0;
+      if (drops.filter(d => d.gap && !d.home).length < want && now > nextGap && !document.hidden) { budGapDrop(now, room); nextGap = now + 2500 + Math.random() * 2500; }
+      float(channel, now / 1000);
     }
     return;
   }
@@ -620,7 +654,7 @@ function visits(list, t, edge) {
   if (!nextVisit) nextVisit = t + 2;
   if (t < nextVisit || list.filter(d => d.visit).length >= 2) return;    // up to two at the card at once
   nextVisit = t + 3 + Math.random() * 4;
-  const c = L.card, ok = list.filter(d => !d.visit && !(d.leave > t) && d.p.y > c.y + d.R * .5 && d.p.y < c.y + c.h - d.R * .5 && (t * 1000 - d.born) / 1000 < d.life - 10);
+  const c = L.card, ok = list.filter(d => !d.gap && !d.visit && !(d.leave > t) && d.p.y > c.y + d.R * .5 && d.p.y < c.y + c.h - d.R * .5 && (t * 1000 - d.born) / 1000 < d.life - 10);
   if (!ok.length) return;
   const d = ok.reduce((a, b) => (a.p.x - a.R < b.p.x - b.R ? a : b));
   d.visit = {hold: 4 + Math.random() * 4, deadline: t + 20, touched: 0, home: d.out};
@@ -638,7 +672,13 @@ function float(list, t) {
     const wall = (v, lo, hi) => (v < lo ? (lo - v) * .9 : 0) - (v > hi ? (v - hi) * .9 : 0);
     // only a visiting bubble may touch the card; the others keep their distance
     const B = L.box, m = BOX_IN + 8;                                     // soft walls just inside the box
-    ax += wall(d.p.x, edge + d.R + (d.visit ? -10 : 26), B.x1 - d.R - m); ay += wall(d.p.y, B.y0 + d.R + m, B.y1 - d.R - m);
+    let lo = edge + d.R + (d.visit ? -10 : 26), hi = B.x1 - d.R - m, ylo = B.y0 + d.R + m, yhi = B.y1 - d.R - m;
+    if (d.gap) {                                                         // between the card and the panel, along their height
+      lo = edge + d.R + 8; hi = panelRect.x - d.R - 8; if (hi < lo) lo = hi = (edge + panelRect.x) / 2;
+      ylo = L.card.y + d.R + 10; yhi = L.card.y + L.card.h - d.R - 10;
+      d.out.x = (edge + panelRect.x) / 2; ax += (d.out.x - d.p.x) * .03;
+    }
+    ax += wall(d.p.x, lo, hi); ay += wall(d.p.y, ylo, yhi);
     const gap = d.p.x - d.R - edge;
     // a visit: drawn in until it touches, the card's edge reaching out to it in a liquid neck. Leaving, it is eased
     // away for a few seconds, so the neck stretches thin and snaps
@@ -655,6 +695,7 @@ function float(list, t) {
     d.p.x += d.v.x * dt; d.p.y += d.v.y * dt;
     const rr = d.R * (1 + .015 * Math.sin(t * .6 + d.ph));
     const k = inBox(d.p.x, d.p.y, rr);                                 // and never past it
+    if (d.gap) { k.x = Math.min(hi, Math.max(lo, k.x)); k.y = Math.min(yhi, Math.max(ylo, k.y)); }
     if (k.x !== d.p.x) { d.p.x = k.x; d.v.x = 0; } if (k.y !== d.p.y) { d.p.y = k.y; d.v.y = 0; }
     d.b.set({x: d.p.x, y: d.p.y, w: rr, h: rr, r: rr});
   }
@@ -752,9 +793,11 @@ Liquid.bud = async (point, rect) => {
   bodies.add(b); panelOpen++; panelRect = R; panelFrom = point;
   let closed = false;
   const handle = {
-    place(r) { b.set(rectBody({x: r.left, y: r.top, w: r.width, h: r.height})); poke(); },
+    place(r) { b.set(rectBody({x: r.left, y: r.top, w: r.width, h: r.height})); if (panelRect) panelRect = {x: r.left, y: r.top, w: r.width, h: r.height}; poke(); },
     async close(to) {
       if (closed) return; closed = true;
+      panelSettled = false;
+      for (const d of live()) if (d.gap) goHome(d);                     // the channel's beads go back into the card first
       tweens.forEach(tw => tw.body === b && tweens.delete(tw));
       const from = {...b.c};
       // one sweep: deflate into a drop while already heading home, flow into the card's edge, the neck forming as it nears
@@ -778,6 +821,7 @@ Liquid.bud = async (point, rect) => {
   });
   b.k = 200; b.z = .55;                                                 // looser at the end: it wobbles as it settles
   await until(() => b.settled(6));
+  panelSettled = closed ? false : true; nextGap = performance.now() + 1200;
   return handle;
 };
 
@@ -833,7 +877,7 @@ function update() {
     for (const b of [...bodies]) if (b !== card) bodies.delete(b);
     // every animation in flight ends now (at its end state), so nothing waiting on one (a panel opening) is left hanging
     for (const tw of [...tweens]) { tweens.delete(tw); tw.done(); }
-    drops = []; panelOpen = 0; seeded = false;
+    drops = []; panelOpen = 0; seeded = false; panelSettled = false;
     if (raf) cancelAnimationFrame(raf); raf = 0;
     dispatchEvent(new Event('resize'));                                // frame.js puts its Hyalite glass back
   }
