@@ -8,25 +8,7 @@ import path from 'node:path';
 import {publish, ATTRIBUTION} from '../publish.mjs';
 import {waitForBuild, compareLive} from '../publish/deploy.mjs';
 
-const sh = (cwd, ...a) => execFileSync('git', a, {cwd, encoding: 'utf8'}).trim();
-const GITIGNORE = '/*\n!/.gitignore\n!/index.html\n!/img/\n/img/*\n!/img/*.png\n';
-
-function fixture() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'publish-test-'));
-  const bare = path.join(dir, 'origin.git'), root = path.join(dir, 'clone'), source = path.join(dir, 'old');
-  mkdirSync(root); mkdirSync(source);
-  execFileSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
-  sh(root, 'init', '-q', '-b', 'main');
-  sh(root, 'config', 'user.email', 't@example.com'); sh(root, 'config', 'user.name', 't');
-  sh(root, 'config', 'core.autocrlf', 'false');
-  writeFileSync(path.join(root, '.gitignore'), GITIGNORE);
-  writeFileSync(path.join(root, 'index.html'), 'old\n');
-  sh(root, 'add', '-A'); sh(root, 'commit', '-qm', 'start');
-  sh(root, 'remote', 'add', 'origin', bare);
-  sh(root, 'push', '-q', 'origin', 'main');
-  return {dir, bare, root, source, origin: new RegExp('origin\\.git$'), log: () => {}};
-}
-const done = f => rmSync(f.dir, {recursive: true, force: true});
+import {sh, fixture, done} from './publish-fixture.mjs';
 
 test('refuses to run in a clone whose origin is not the site repository', async () => {
   const f = fixture();
