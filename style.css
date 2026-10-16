@@ -40,7 +40,9 @@ p { text-wrap: pretty; }
 ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
 /* Approved offline studies: their transparent edges pass behind the glass frame. */
-.visuals { position:fixed;z-index:0;top:50%;left:calc(66vw - 40px);width:min(68vw,108vh);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none; }
+/* the drawing's square; the third limit keeps its ink (at most 40.5% of the square from the centre, the pendulum's)
+   between the panels' top and bottom edges, so none shows in the strip between a panel and the stage's border */
+.visuals { position:fixed;z-index:0;top:50%;left:calc(66vw - 40px);width:min(68vw,108vh,calc((100vh - 2 * clamp(24px, 7vh, 64px) - 12px) / .81));aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none; }
 .visuals .study-motion,.visuals .study-still { position:absolute;inset:0;width:100%;height:100%;object-fit:contain; }
 .visuals [hidden] { display:none !important; }
 /* the video and its still swap by visibility, not display: re-displaying an element restarts its CSS animations,

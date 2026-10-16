@@ -177,7 +177,7 @@ void main() {
   }
   float s = max(-d, 0.);
   if (frost > .5) frost = mix(uRimFrost, frost, smoothstep(4., uBevel * 1.15, s));
-  float side = smoothstep(uCardR.x - 70., uCardR.y - 6., p.x) * (1. - smoothstep(uCardR.y + 60., uCardR.y + 90., p.x));
+  float side = smoothstep(uCardR.x - 12., uCardR.y - 6., p.x) * (1. - smoothstep(uCardR.y + 60., uCardR.y + 90., p.x));
   frost = mix(frost, min(frost, .72), side);                           // the card's right margin is clear glass, like the bubbles
   float sProf = s * uBevel / bevel;                                    // small drops use the whole profile across their radius
   vec2 g = vec2(0.), pe = vec2(0.);
@@ -238,6 +238,7 @@ let gl = null, canvas = null, E = null, bounds = null;
 function create() {
   canvas = document.createElement('canvas');
   canvas.className = 'liquid-canvas'; canvas.setAttribute('aria-hidden', 'true');
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; update(); });
   gl = canvas.getContext('webgl2', {antialias: false, alpha: true, premultipliedAlpha: true, depth: false, stencil: false, powerPreference: 'high-performance'});
   if (!gl) return false;
   const program = (fs, vs = VERT) => {
@@ -423,7 +424,7 @@ function tick(now) {
   ambient(now);
   let moving = false;
   for (const tw of tweens) {                                            // targets that slide along a path
-    const t = tw.dur ? Math.min(1, (now - tw.start) / tw.dur) : 1;
+    const t = tw.dur ? clamp01((now - tw.start) / tw.dur) : 1;        // (a frame's time can precede the tween's start)
     tw.body.set(tw.fn(t)); moving = true;
     if (t >= 1) { tweens.delete(tw); tw.done(); }
   }
@@ -492,6 +493,7 @@ const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius
 let nextDrop = 0, drops = [], target = 5, seeded = false, panelRect = null, panelFrom = null;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
 const live = () => drops.filter(d => !d.home);
+const forget = d => { const i = drops.indexOf(d); if (i >= 0) drops.splice(i, 1); };   // (gone already if the glass was switched off)
 function pickSize() {                                                   // mostly medium: one small and one large at most
   const n = [0, 0, 0, 0]; for (const d of live()) n[d.size]++;
   const ok = [1, 2].concat(n[0] < 1 ? [0] : [], n[3] < 1 ? [3] : []), min = Math.min(...ok.map(i => n[i]));
@@ -596,7 +598,7 @@ function absorb(d) {                                                    // taken
   d.home = true; stopTweens(d.b);
   const from = {...d.b.c};
   tween(d.b, ABSORB_MS, t => { const r = mix(from.w, 0, inOut(t)); return {x: from.x, y: from.y, w: r, h: r, r}; })
-    .then(() => { bodies.delete(d.b); drops.splice(drops.indexOf(d), 1); });
+    .then(() => { bodies.delete(d.b); forget(d); });
 }
 // ---- how the bubbles float: like things on slow water, not on fixed paths. They all ride one shared current that
 // drifts and turns over time (so neighbours move together), with momentum and drag (bigger ones are heavier and
@@ -722,7 +724,7 @@ function goHome(d) {
     const r = mix(from.w, R, clamp01(t * 4));                           // (a merged pair settles back to its own size)
     return {...path.at(sine(t)), w: r, h: r, r};
   }).then(() => {
-    bodies.delete(b); drops.splice(drops.indexOf(d), 1);
+    bodies.delete(b); forget(d);
   });
 }
 
@@ -735,7 +737,10 @@ const until = (test, timeout = 1600) => new Promise(resolve => {
 // spring follows it closely (a little under-damped, so the glass still wobbles as it lands). Sending the body to a
 // stopping point per stage made it crawl to each one — most visibly just before it merged back into the card.
 const tweens = new Set();
-const tween = (body, dur, fn) => new Promise(done => { tweens.add({body, start: performance.now(), dur: reduceMotion.matches ? 0 : dur, fn, done}); poke(); });
+const tween = (body, dur, fn) => new Promise(done => {
+  if (!Liquid.active) { body.set(fn(1), true); done(); return; }        // glass off: no loop to run it, so it ends at once
+  tweens.add({body, start: performance.now(), dur: reduceMotion.matches ? 0 : dur, fn, done}); poke();
+});
 const clamp01 = v => Math.min(1, Math.max(0, v));
 const inOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const out3 = t => 1 - Math.pow(1 - t, 3);
@@ -760,7 +765,8 @@ Liquid.bud = async (point, rect) => {
         return {x: mix(from.x, to.x - 28, p), y: mix(from.y, to.y, p), w, h, r: Math.min(w, h, mix(from.r, 28, g))};
       });
       await until(() => b.c.w < 11, 400);
-      bodies.delete(b); panelOpen--; panelRect = panelFrom = null; nextDrop = performance.now() + 500; poke();
+      if (!bodies.delete(b)) return;                                     // the glass was switched off meanwhile
+      panelOpen = Math.max(0, panelOpen - 1); panelRect = panelFrom = null; nextDrop = performance.now() + 500; poke();
     },
   };
   // one path: bud out of the edge, pinch off and travel, inflate into the panel — each phase flowing into the next
@@ -803,7 +809,8 @@ Liquid.bench = (n = 60, beads = -1, frost = .5) => {
   return ms;
 };
 // ---- on and off ------------------------------------------------------------------------------------------------------
-function wanted() { return wideQuery.matches && !reduceTransparency.matches && (gl || create()); }
+let lost = false;                                                       // the GPU dropped the context: CSS glass from then on
+function wanted() { return !lost && wideQuery.matches && !reduceTransparency.matches && (gl || create()); }
 function update() {
   const on = !!wanted();
   // the page's head may already have decided (index.html): confirm it, or undo it if WebGL2 is missing after all
@@ -824,6 +831,8 @@ function update() {
     root.classList.remove('liquid-cursor'); bodies.delete(cursor);
     removeEventListener('pointermove', onPointerMove); removeEventListener('scroll', onScrollAim); root.removeEventListener('pointerleave', onLeave);
     for (const b of [...bodies]) if (b !== card) bodies.delete(b);
+    // every animation in flight ends now (at its end state), so nothing waiting on one (a panel opening) is left hanging
+    for (const tw of [...tweens]) { tweens.delete(tw); tw.done(); }
     drops = []; panelOpen = 0; seeded = false;
     if (raf) cancelAnimationFrame(raf); raf = 0;
     dispatchEvent(new Event('resize'));                                // frame.js puts its Hyalite glass back

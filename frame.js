@@ -44,6 +44,14 @@
     .forEach((el, i) => el.style.setProperty('--i', i));
 
   addEventListener('scroll', sync, {passive: true});
+  // the browser scrolls the frame itself to show what gets keyboard focus (Tab to a lower link); that offset is handed to
+  // the page scroll, which moves the text and the drawings as usual (left in the frame, the top of the text was out of reach)
+  view.addEventListener('scroll', () => {
+    if (!framed || !view.scrollTop) return;
+    const at = Math.round(scrollY * ratio) + view.scrollTop;
+    view.scrollTop = 0;
+    scrollTo({top: ratio ? at / ratio : 0, behavior: 'instant'}); sync();
+  });
   addEventListener('resize', layout);
   wide.addEventListener('change', layout);
   new ResizeObserver(layout).observe(content);                      // fonts arriving change the text height

@@ -11,11 +11,18 @@ const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = sel => bubble.querySelector(sel);
 
 let items = {}, gallery = {};
-let openId = null, busy = null, pushed = false, photo = 0;
+let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false;
+// one open, switch or close at a time: run it once the one before has finished (however many are waiting)
+async function turn(run) {
+  while (busy) await busy.catch(() => {});
+  busy = run(); try { await busy; } finally { busy = null; }
+  if (replace) { replace = false; place(); }                      // the window was resized meanwhile
+}
 // liquid.mjs, when it is on, draws the panel's glass: it buds the panel off the card and merges it back (liquidPanel)
 const liquid = () => window.Liquid?.active;
 let liquidPanel = null;
 
+let loaded = null;                                                // rows wait for the content (a click before it arrived)
 async function load() {
   const get = async url => { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; } };
   const [list, pics] = await Promise.all([get('projects/items.json'), get('projects/gallery.json')]);
@@ -90,7 +97,10 @@ function scrolled(e) {
 // ---- geometry -------------------------------------------------------------------------------------------------
 function finalRect() {
   const vw = innerWidth, vh = innerHeight;
-  if (!wideQuery.matches) return {left: 8, top: Math.round(vh * .08), width: vw - 16, height: Math.round(vh * .92) + 30};
+  if (!wideQuery.matches) {                                       // a sheet: on tablets no wider than the card, centred
+    const width = Math.min(vw - 16, 676);
+    return {left: Math.round((vw - width) / 2), top: Math.round(vh * .08), width, height: Math.round(vh * .92) + 30};
+  }
   // the card's mirror image in the right half: same size, same top and bottom, same outer margin
   const cr = card.getBoundingClientRect(), visible = document.documentElement.clientWidth;
   return {left: Math.round(visible - cr.right), top: Math.round(cr.top), width: Math.round(cr.width), height: Math.round(cr.height)};
@@ -123,10 +133,11 @@ function markRow(id) {
 }
 
 async function open(id, {history: push = true} = {}) {
+  await loaded;
   if (!items[id]) return;
-  if (busy) await busy;
-  if (openId === id) return;
-  if (openId) return swap(id, push);
+  return turn(() => openId === id ? null : openId ? swap(id, push) : show(id, push));
+}
+async function show(id, push) {
   openId = id;
   fill(id);
   markRow(id);
@@ -138,78 +149,75 @@ async function open(id, {history: push = true} = {}) {
   // restore where the page was when the bubble opened, undoing any scrolling done since (manual until it is closed)
   history.scrollRestoration = 'manual';
   if (push) { history.pushState({bubble: id}, '', '#' + id); pushed = true; }
-  const run = async () => {
-    if (reduceQuery.matches) {
-      bubble.hidden = false;
-      await bubble.animate([{opacity: 0}, {opacity: 1}], {duration: 200, easing: 'ease-out'}).finished;
-    } else if (!wideQuery.matches) {                               // phones: a sheet sliding up
-      bubble.hidden = false;
-      await bubble.animate([{transform: 'translateY(100%)'}, {transform: 'none'}], {duration: 460, easing: 'cubic-bezier(.2,.8,.2,1)'}).finished;
-    } else if (liquid()) {                                          // a blob of the card's glass buds off and inflates
-      bubble.classList.remove('moving');
-      const fade = {duration: 220, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both'};
-      // hidden from the first frame (an animation *to* 0 starts from the current, visible value: a one-frame flash)
-      body.getAnimations().forEach(a => a.cancel()); closeBtn.getAnimations().forEach(a => a.cancel());
-      body.style.opacity = closeBtn.style.opacity = '0';
-      bubble.hidden = false;
-      liquidPanel = await window.Liquid.bud(rowPoint(id), F);
-      body.animate([{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}], fade);
-      const shown = closeBtn.animate([{opacity: 0}, {opacity: 1}], fade);
-      body.style.opacity = closeBtn.style.opacity = '';                 // the fade (fill: both) holds it from here
-      await shown.finished;
-    } else {                                                        // wide, without liquid glass: it fades in
-      bubble.hidden = false;
-      await bubble.animate([{opacity: 0, transform: 'translateY(10px)'}, {opacity: 1, transform: 'none'}], {duration: 320, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished;
-    }
+  if (wideQuery.matches && liquid()) {                            // a blob of the card's glass buds off and inflates
+    // (with reduced motion too: the glass is drawn by the canvas, which then sets it in place without the journey)
     bubble.classList.remove('moving');
-    glass(true);
-    $('#bubble-title').focus({preventScroll: true});
-  };
-  busy = run(); await busy; busy = null;
+    const fade = {duration: 220, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both'};
+    // hidden from the first frame (an animation *to* 0 starts from the current, visible value: a one-frame flash)
+    body.getAnimations().forEach(a => a.cancel()); closeBtn.getAnimations().forEach(a => a.cancel());
+    body.style.opacity = closeBtn.style.opacity = '0';
+    bubble.hidden = false;
+    liquidPanel = await window.Liquid.bud(rowPoint(id), F);
+    body.animate([{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}], fade);
+    const shown = closeBtn.animate([{opacity: 0}, {opacity: 1}], fade);
+    body.style.opacity = closeBtn.style.opacity = '';                 // the fade (fill: both) holds it from here
+    await shown.finished;
+  } else if (reduceQuery.matches) {
+    bubble.hidden = false;
+    await bubble.animate([{opacity: 0}, {opacity: 1}], {duration: 200, easing: 'ease-out'}).finished;
+  } else if (!wideQuery.matches) {                               // phones: a sheet sliding up
+    bubble.hidden = false;
+    await bubble.animate([{transform: 'translateY(100%)'}, {transform: 'none'}], {duration: 460, easing: 'cubic-bezier(.2,.8,.2,1)'}).finished;
+  } else {                                                        // wide, without liquid glass: it fades in
+    bubble.hidden = false;
+    await bubble.animate([{opacity: 0, transform: 'translateY(10px)'}, {opacity: 1, transform: 'none'}], {duration: 320, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished;
+  }
+  bubble.classList.remove('moving');
+  glass(true);
+  $('#bubble-title').focus({preventScroll: true});
 }
 
 async function swap(id, push) {                                   // already open: cross-fade and morph the size
-  const run = async () => {
-    glass(false); bubble.classList.add('moving');
-    const from = bubble.getBoundingClientRect();
-    await body.animate([{opacity: 1}, {opacity: 0}], {duration: 140, fill: 'forwards'}).finished;
-    openId = id; fill(id); markRow(id);
-    const F = finalRect();
-    Object.assign(bubble.style, px(F));
-    if (!reduceQuery.matches) await bubble.animate([px({left: from.left, top: from.top, width: from.width, height: from.height}), px(F)],
-      {duration: 380, easing: 'cubic-bezier(.3,.7,.2,1)'}).finished;
-    body.getAnimations().forEach(a => a.cancel());
-    await body.animate([{opacity: 0}, {opacity: 1}], {duration: 200}).finished;
-    // switching replaces the history entry, so Back (or ×) closes the bubble instead of stepping through rows
-    if (push) history.replaceState({bubble: id}, '', '#' + id);
-    bubble.classList.remove('moving'); glass(true);
-    $('#bubble-title').focus({preventScroll: true});
-  };
-  busy = run(); await busy; busy = null;
+  glass(false); bubble.classList.add('moving');
+  const from = bubble.getBoundingClientRect();
+  await body.animate([{opacity: 1}, {opacity: 0}], {duration: 140, fill: 'forwards'}).finished;
+  openId = id; fill(id); markRow(id);
+  const F = finalRect();
+  Object.assign(bubble.style, px(F));
+  if (!reduceQuery.matches) await bubble.animate([px({left: from.left, top: from.top, width: from.width, height: from.height}), px(F)],
+    {duration: 380, easing: 'cubic-bezier(.3,.7,.2,1)'}).finished;
+  body.getAnimations().forEach(a => a.cancel());
+  await body.animate([{opacity: 0}, {opacity: 1}], {duration: 200}).finished;
+  // switching replaces the history entry, so Back (or ×) closes the bubble instead of stepping through rows
+  if (push) history.replaceState({bubble: id}, '', '#' + id);
+  bubble.classList.remove('moving'); glass(true);
+  $('#bubble-title').focus({preventScroll: true});
 }
 
 async function close({fromHistory = false} = {}) {
+  if (!openId || (closing && !fromHistory)) return;
+  while (busy) await busy.catch(() => {});
   if (!openId) return;
-  if (busy) await busy;
-  if (!openId) return;
-  if (!fromHistory && pushed && history.state?.bubble) { history.back(); return; }   // popstate finishes the close
+  // popstate finishes the close; until then a second close (Esc twice) must not step back again, off the site
+  if (!fromHistory && pushed && history.state?.bubble) { closing = true; history.back(); return; }
+  closing = false;
   if (!fromHistory && location.hash) history.replaceState(null, '', location.pathname + location.search);
   const id = openId;
-  const run = async () => {
-    const r = bubble.getBoundingClientRect(), F = {left: r.left, top: r.top, width: r.width, height: r.height};
+  return turn(async () => {
+    if (openId !== id) return;
     const settle = () => { glass(false); bubble.classList.add('moving'); };
-    if (reduceQuery.matches) { settle(); await bubble.animate([{opacity: 1}, {opacity: 0}], {duration: 180}).finished; }
-    else if (!wideQuery.matches) {
-      settle();
-      await bubble.animate([{transform: 'none'}, {transform: 'translateY(100%)'}], {duration: 340, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
-    } else if (liquid() && liquidPanel) {                           // the text fades, the glass merges back into the card
-      const fade = {duration: 110, easing: 'ease-in', fill: 'forwards'};
+    if (liquid() && liquidPanel) {                                  // the text fades, the glass merges back into the card
+      const fade = {duration: reduceQuery.matches ? 0 : 110, easing: 'ease-in', fill: 'forwards'};
       body.animate([{opacity: 1}, {opacity: 0}], fade);
       await closeBtn.animate([{opacity: 1}, {opacity: 0}], fade).finished;
       const merging = liquidPanel.close(rowPoint(id)); liquidPanel = null;
       bubble.hidden = true;
       await merging;
       closeBtn.getAnimations().forEach(a => a.cancel());
+    } else if (reduceQuery.matches) { settle(); await bubble.animate([{opacity: 1}, {opacity: 0}], {duration: 180}).finished; }
+    else if (!wideQuery.matches) {
+      settle();
+      await bubble.animate([{transform: 'none'}, {transform: 'translateY(100%)'}], {duration: 340, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
     } else {                                                        // wide, without liquid glass: it fades out
       settle();
       await bubble.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(10px)'}], {duration: 220, easing: 'ease-in'}).finished;
@@ -219,14 +227,20 @@ async function close({fromHistory = false} = {}) {
     openId = null; pushed = false; markRow(null);
     requestAnimationFrame(() => { if (!openId) history.scrollRestoration = 'auto'; });
     card.querySelector(`[data-item="${id}"] .open`)?.focus({preventScroll: true});
-  };
-  busy = run(); await busy; busy = null;
+  });
+}
+
+// the panel's place for the window as it is now (the liquid glass body too)
+function place() {
+  if (!openId) return;
+  if (busy) { replace = true; return; }
+  glass(false); const F = finalRect(); Object.assign(bubble.style, px(F)); liquidPanel?.place(F); glass(true);
 }
 
 // ---- wiring -----------------------------------------------------------------------------------------------------
 async function init() {
   if (!card || !bubble) return;
-  await load();
+  loaded = load();
   card.querySelectorAll('article[data-item] .open').forEach(btn => btn.addEventListener('click', () => {
     const id = btn.closest('article').dataset.item;
     openId === id ? close() : open(id);
@@ -239,7 +253,7 @@ async function init() {
   addEventListener('keydown', e => {
     if (!openId) return;
     if (e.key === 'Escape') { e.preventDefault(); close(); }
-    else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.target.closest?.('input,textarea')) {
+    else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.altKey && !e.ctrlKey && !e.metaKey && !e.target.closest?.('input,textarea')) {
       if (!$('.gallery').hidden) { e.preventDefault(); setPhoto(photo + (e.key === 'ArrowRight' ? 1 : -1)); }
     }
   });
@@ -251,11 +265,22 @@ async function init() {
   }, {capture: true});
   addEventListener('popstate', e => {
     const id = e.state?.bubble ?? location.hash.slice(1);           // typed or linked #id carries no state
-    if (id && items[id]) { pushed = true; open(id, {history: false}); }
+    if (id && items[id]) { closing = false; pushed = true; open(id, {history: false}); }
     else close({fromHistory: true});
   });
-  addEventListener('resize', () => { if (openId && !busy) { glass(false); const F = finalRect(); Object.assign(bubble.style, px(F)); liquidPanel?.place(F); glass(true); } });
-  wideQuery.addEventListener('change', () => { if (openId) { glass(false); Object.assign(bubble.style, px(finalRect())); glass(true); } });
+  addEventListener('resize', place);
+  // liquid glass switches with the width (liquid.mjs has already switched by now): a panel left open gets the glass of
+  // the mode it is in — the liquid engine buds it a new body, or drops the old one along with its other glass
+  wideQuery.addEventListener('change', () => {
+    if (!liquid()) liquidPanel = null;
+    if (!openId) return;
+    turn(async () => {
+      if (!openId) return;
+      Object.assign(bubble.style, px(finalRect()));
+      if (liquid() && !liquidPanel) liquidPanel = await window.Liquid.bud(rowPoint(openId), finalRect());
+    });
+  });
+  await loaded;
   const start = location.hash.slice(1);
   if (items[start]) { history.replaceState({bubble: start}, '', '#' + start); pushed = false; open(start, {history: false}); }
   else (window.requestIdleCallback || setTimeout)(warm, {timeout: 2500});
