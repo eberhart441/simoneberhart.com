@@ -206,7 +206,7 @@ html:not(.liquid) .liquid-canvas { display: none; }
 /* the stage: one box around the card, the panel and the space between (liquid.mjs places it); the bubbles stay inside.
    A faint etched line: a hairline of ink with a light edge under it, as if scored into the paper */
 .liquid-bounds { position: fixed; z-index: 0; pointer-events: none; box-sizing: border-box;
-  border: 1px solid rgba(22, 22, 22, .075); box-shadow: 0 1px 0 rgba(255, 255, 255, .75), inset 0 1px 0 rgba(255, 255, 255, .75); }
+  border: 1px solid rgba(22, 22, 22, .11); box-shadow: 0 1px 0 rgba(255, 255, 255, .85), inset 0 1px 0 rgba(255, 255, 255, .85); }
 html:not(.liquid) .liquid-bounds { display: none; }
 html.liquid main, html.liquid .bubble, html.liquid .bubble.moving {
   background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
