@@ -197,7 +197,7 @@ async function swap(id, push) {                                   // already ope
 async function close({fromHistory = false} = {}) {
   if (!openId || (closing && !fromHistory)) return;
   while (busy) await busy.catch(() => {});
-  if (!openId) return;
+  if (!openId || (closing && !fromHistory)) return;                 // (another close got in first while this one waited)
   // popstate finishes the close; until then a second close (Esc twice) must not step back again, off the site
   if (!fromHistory && pushed && history.state?.bubble) { closing = true; history.back(); return; }
   closing = false;
