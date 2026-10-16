@@ -379,7 +379,7 @@ function render() {
     if (n >= MAX || b.c.w <= .3 || b.c.h <= .3) continue;
     const c = b.c, i = n * 4;
     Bv[i] = c.x; Bv[i + 1] = c.y; Bv[i + 2] = c.w; Bv[i + 3] = c.h; Bpv[i] = c.r; Bpv[i + 1] = b.frost;
-    const RE = b === card ? CARD_REACH + 12 : REACH;
+    const RE = b === card ? CARD_REACH + 12 : Math.max(REACH, kNow + 4);   // (the neck between a bead and the panel needs room too)
     const x0 = c.x - c.w - RE, x1 = c.x + c.w + RE, y0 = c.y - c.h - RE, y1 = c.y + c.h + RE + 12, q = n * 12;
     Q[q] = x0; Q[q + 1] = y0; Q[q + 2] = x1; Q[q + 3] = y0; Q[q + 4] = x0; Q[q + 5] = y1;
     Q[q + 6] = x0; Q[q + 7] = y1; Q[q + 8] = x1; Q[q + 9] = y0; Q[q + 10] = x1; Q[q + 11] = y1;
@@ -387,7 +387,7 @@ function render() {
   }
   gl.uniform4fv(u.uB, Bv); gl.uniform4fv(u.uBp, Bpv); gl.uniform1i(u.uN, n);
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
-  gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
+  gl.uniform1f(u.uK, kNow); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
   gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
@@ -431,6 +431,8 @@ function tick(now) {
   for (const b of bodies) if (b.step(dt)) moving = true;
   const ba = 2 * .8 * Math.sqrt(140); bump.v += (140 * (bump.ta - bump.a) - ba * bump.v) * dt; bump.a += bump.v * dt;
   if (Math.abs(bump.v) > .001 || Math.abs(bump.ta - bump.a) > .002) moving = true;
+  const kTarget = panelSettled ? CARD_REACH : P.smooth;
+  if (Math.abs(kTarget - kNow) > .05) { kNow += (kTarget - kNow) * Math.min(1, dt * 3); if (Math.abs(kTarget - kNow) <= .05) kNow = kTarget; dirty = true; }
   if (now < veilWatch) {                                                // the veil fades the drawing layer: follow it
     const o = +getComputedStyle(visuals).opacity;
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
@@ -493,6 +495,10 @@ const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius
 let nextDrop = 0, drops = [], target = 5, seeded = false, panelRect = null, panelFrom = null;
 // While a panel is open, a few small beads float in the gap between it and the card (budded from the card's edge once the
 // panel has settled, and sent home as it closes): the narrow channel keeps them small and in a column.
+// The reach of the merging between beads and the panel (uK) grows to the card's once the panel has settled, so a bead in the
+// channel is joined to both by a neck, and eases back before the panel merges home (its journey is tuned for the short reach).
+let kNow = P.smooth;
+const GAP_SIZES = [[14, 24], [26, 38], [40, 52]];                         // radius px
 const GAP_ROOM = 70;                                                    // px: the narrowest gap that has beads in it
 let panelSettled = false, nextGap = 0;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
@@ -567,15 +573,18 @@ function budDrop(now) {
 }
 function budGapDrop(now, room) {
   const c = L.card, edge = c.x + c.w, mid = edge + room / 2;
-  const R = 14 + Math.random() * Math.max(0, Math.min(34, room / 2 - 12) - 14);
   const others = drops.filter(d => d.gap && !d.home);
+  const have = [0, 0, 0]; for (const d of others) have[d.tier]++;      // mostly small and medium, one large at most
+  const ok = [0, 1].concat(have[2] < 1 ? [2] : []), fewest = Math.min(...ok.map(i => have[i]));
+  const pick = ok.filter(i => have[i] === fewest), tier = pick[Math.floor(Math.random() * pick.length)];
+  const R = GAP_SIZES[tier][0] + Math.random() * (GAP_SIZES[tier][1] - GAP_SIZES[tier][0]);
   let y = 0, best = -1;
   for (let i = 0; i < 8; i++) {                                         // the emptiest height in the channel
     const yy = c.y + R + TUCK + Math.random() * Math.max(0, c.h - 2 * (R + TUCK));
     const clear = Math.min(...others.map(d => Math.abs(d.b.c.y - yy) - d.R), 1e9);
     if (clear > best) { best = clear; y = yy; }
   }
-  const d = {b: null, size: 1, R, out: {x: mid, y}, y, ph: Math.random() * 6.28, born: 0, life: 25 + Math.random() * 15, home: false, gap: true};
+  const d = {b: null, size: 1, tier, R, out: {x: mid, y}, y, ph: Math.random() * 6.28, sw: .09 + Math.random() * .06, born: 0, life: 25 + Math.random() * 15, home: false, gap: true};
   const x0 = edge - R - TUCK;
   d.b = new Body({x: x0, y, w: R, h: R, r: R}, {frost: DROP_FROST, k: 70, z: .7});
   drops.push(d); bodies.add(d.b);
@@ -602,7 +611,7 @@ function ambient(now) {
     }
     if (panelSettled && panelRect) {
       const room = panelRect.x - (L.card.x + L.card.w);
-      const want = room >= GAP_ROOM + 40 ? 3 : room >= GAP_ROOM ? 2 : 0;
+      const want = room >= 150 ? 3 : room >= GAP_ROOM ? 2 : 0;
       if (drops.filter(d => d.gap && !d.home).length < want && now > nextGap && !document.hidden) { budGapDrop(now, room); nextGap = now + 2500 + Math.random() * 2500; }
       float(channel, now / 1000);
     }
@@ -674,9 +683,10 @@ function float(list, t) {
     const B = L.box, m = BOX_IN + 8;                                     // soft walls just inside the box
     let lo = edge + d.R + (d.visit ? -10 : 26), hi = B.x1 - d.R - m, ylo = B.y0 + d.R + m, yhi = B.y1 - d.R - m;
     if (d.gap) {                                                         // between the card and the panel, along their height
-      lo = edge + d.R + 8; hi = panelRect.x - d.R - 8; if (hi < lo) lo = hi = (edge + panelRect.x) / 2;
+      const mid = (edge + panelRect.x) / 2, swing = Math.max(0, (panelRect.x - edge) / 2 - d.R + 6);
+      lo = edge + d.R - 10; hi = panelRect.x - d.R + 10; if (hi < lo) lo = hi = mid;   // (touching either side is allowed: that is the merge)
       ylo = L.card.y + d.R + 10; yhi = L.card.y + L.card.h - d.R - 10;
-      d.out.x = (edge + panelRect.x) / 2; ax += (d.out.x - d.p.x) * .03;
+      d.out.x = mid + swing * Math.sin(t * d.sw + d.ph); ax += (d.out.x - d.p.x) * .05;
     }
     ax += wall(d.p.x, lo, hi); ay += wall(d.p.y, ylo, yhi);
     const gap = d.p.x - d.R - edge;
