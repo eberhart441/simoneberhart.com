@@ -36,5 +36,9 @@ Why each step exists:
   file and compares it with the local one. "Pushed" is not "live".
 - **Battery.** On battery power Windows limits the browser to 30 fps, so `npm run perf` warns before printing numbers.
 
+Options and prerequisites (ffmpeg, sharp) are in tools/README.md. In short: `publish` takes `--from <folder>` (or `$SITE_SOURCE`), `--dry-run`, `--no-push` and `-m`;
+`npm run hooks` installs the pre-push check (`-- --uninstall` removes it; bypass once with `SKIP_CHECK=1 git push` or `git push --no-verify`).
+Throwaway scripts belong in the session scratch folder, never in this project folder.
+
 `npm run check` runs a syntax check of every script, the drawing-player and drawing-asset checks, a page load that fails on
 any error, and the panel behaviour checks in a real browser.

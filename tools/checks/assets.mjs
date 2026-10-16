@@ -7,18 +7,24 @@ import {createRequire} from 'node:module';
 import path from 'node:path';
 
 const FPS = 60;
-const SHARP = process.env.SHARP_DIR || 'C:/Users/simon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp';
+const SHARP = 'C:/Users/simon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp';
 const WINGET = 'C:/Users/simon/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.1-full_build/bin';
 
-function tool(name) {
-  const candidates = [name, ...[process.env.FFMPEG_DIR, WINGET].filter(Boolean).map(d => path.join(d, name))];
+// FFMPEG_DIR, when set, is the only place looked in: an override that is silently ignored would hide a wrong path.
+function findExecutable(name) {
+  const candidates = process.env.FFMPEG_DIR ? [path.join(process.env.FFMPEG_DIR, name)] : [name, path.join(WINGET, name)];
   for (const c of candidates) if (spawnSync(c, ['-version']).status === 0) return c;
-  throw new Error(`assets: ${name} not found (put it on PATH or set FFMPEG_DIR)`);
+  throw new Error(`assets: the drawing-asset check needs ${name} but could not find it; put ffmpeg on PATH or set FFMPEG_DIR to its bin folder.`);
+}
+
+function loadSharp() {
+  const where = process.env.SHARP_DIR || SHARP;
+  try { return createRequire(import.meta.url)(where); }
+  catch { throw new Error(`assets: the drawing-asset check needs sharp but could not load it from ${where}; set SHARP_DIR to the folder of the sharp package.`); }
 }
 
 export default async function ({root}) {
-  const sharp = createRequire(import.meta.url)(SHARP);
-  const ffprobe = tool('ffprobe'), ffmpeg = tool('ffmpeg');
+  const ffprobe = findExecutable('ffprobe'), ffmpeg = findExecutable('ffmpeg'), sharp = loadSharp();
   const manifest = JSON.parse(await readFile(path.join(root, 'studies/assets/manifest.json'), 'utf8'));
   for (const study of manifest) {
     for (const key of ['video', 'opening', 'poster']) await access(path.join(root, study[key])).catch(() => { throw new Error(`assets: ${study.id} is missing ${study[key]}`); });

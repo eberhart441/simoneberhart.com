@@ -111,3 +111,37 @@ test('compareLive retries while the live file lags, then passes', async () => {
 test('compareLive reports a missing live file', async () => {
   await assert.rejects(compareLive({files: ['a.html'], local: async () => Buffer.from('x'), fetchFile: async () => { throw new Error('HTTP 404'); }, wait: async () => {}, tries: 2}), /a\.html \(HTTP 404\)/);
 });
+
+test('the clone is recognised when the root is written with another drive-letter case or backslashes', { skip: process.platform !== 'win32' }, async () => {
+  const f = fixture();
+  writeFileSync(path.join(f.source, 'index.html'), 'new\n');
+  const flip = f.root[0] === f.root[0].toUpperCase() ? f.root[0].toLowerCase() : f.root[0].toUpperCase();
+  const root = (flip + f.root.slice(1)).replace(/[\/]/g, path.sep === '/' ? '/' : String.fromCharCode(92));
+  await publish({...f, root, files: ['index.html'], message: 'm', dryRun: true});
+  done(f);
+});
+
+test('a refused run (whitelist) leaves the clone completely untouched, cache tags included', async () => {
+  const f = fixture();
+  writeFileSync(path.join(f.root, 'index.html'), '<script src="app.js?v=1"></script>\n');
+  sh(f.root, 'commit', '-qam', 'page');
+  writeFileSync(path.join(f.source, 'app.js'), 'x\n');
+  writeFileSync(path.join(f.source, 'other.txt'), 'y\n');
+  await assert.rejects(publish({...f, files: ['app.js', 'other.txt'], message: 'm'}), /other\.txt/);
+  assert.equal(sh(f.root, 'status', '--short'), '');
+  assert.ok(!existsSync(path.join(f.root, 'other.txt')));
+  done(f);
+});
+
+test('a stray modified file is not committed: the run stops before the commit and names it', async () => {
+  const f = fixture();
+  writeFileSync(path.join(f.source, 'index.html'), 'new\n');
+  writeFileSync(path.join(f.root, '.gitignore'), readFileSync(path.join(f.root, '.gitignore'), 'utf8') + '!/stray.html\n');
+  writeFileSync(path.join(f.root, 'stray.html'), 'a\n');
+  sh(f.root, 'add', '-A'); sh(f.root, 'commit', '-qm', 'stray');
+  writeFileSync(path.join(f.root, 'stray.html'), 'edited by someone else\n');
+  const before = sh(f.root, 'rev-parse', 'HEAD');
+  await assert.rejects(publish({...f, files: ['index.html'], message: 'm', noPush: true}), /stray\.html/);
+  assert.equal(sh(f.root, 'rev-parse', 'HEAD'), before);
+  done(f);
+});

@@ -1,3 +1,5 @@
+import {watchPage} from '../lib/failures.mjs';
+
 // Drives the project panel the way a visitor does (clicks, Escape, resizing, deep links) and asserts only what they can see:
 // whether the panel is shown, which row is marked open, the address, whether the panel's glass is drawn (Liquid.debug(), read-only)
 // and where the panel sits next to the text card. Each scenario was written for one bug from the sweep and failed against the old code.
@@ -24,16 +26,10 @@ export default async function ({baseUrl, launch}) {
   // One fresh context per scenario; any page error or failed request of ours fails it, with the scenario named.
   async function scenario(name, {url = baseUrl, wide = true, ...contextOptions} = {}, run) {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, ...contextOptions});
-    const problems = [];
     const ok = (cond, what, detail) => { if (!cond) throw new Error(`panel check "${name}": ${what}${detail === undefined ? '' : ' ' + JSON.stringify(detail)}`); };
     try {
       const page = await context.newPage();
-      page.on('pageerror', e => problems.push(`page error: ${e.message}`));
-      page.on('requestfailed', r => {
-        const u = r.url(), why = r.failure()?.errorText;
-        if (!u.startsWith(origin) || (/\.webm(\?|$)/.test(u) && why === 'net::ERR_ABORTED')) return;
-        problems.push(`request failed: ${u} (${why})`);
-      });
+      const problems = watchPage(page, origin);
       await page.goto(url, {waitUntil: 'load'});
       try {
         if (wide) await until(page, () => window.Liquid?.active);

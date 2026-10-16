@@ -7,11 +7,11 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {serve} from './lib/serve.mjs';
 import {launch} from './lib/browser.mjs';
 
-// BatteryStatus 1 = discharging. No battery or a failing command prints nothing useful: treat that as mains.
+// BatteryStatus 1 = discharging, 4 = low, 5 = critical: all on battery. No battery or a failing command prints nothing useful: treat that as mains.
 const readBatteryStatus = () => execFileSync('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery).BatteryStatus'], {encoding: 'utf8', timeout: 10000});
 
 export function isOnBattery(read = readBatteryStatus) {
-  try { return read().split(/\s+/).includes('1'); } catch { return false; }
+  try { return read().split(/\s+/).some(s => ['1', '4', '5'].includes(s)); } catch { return false; }
 }
 
 // Frame rate of an empty page: the ceiling the browser is allowed right now.

@@ -5,7 +5,7 @@ import {readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {git} from './git.mjs';
 
-const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Run after the files are copied and before staging, so the new tags land in the same commit.
 export async function bumpTags({root, files}) {
@@ -15,7 +15,7 @@ export async function bumpTags({root, files}) {
   const bumped = [];
   for (const f of files) {
     if (f === 'index.html') continue;
-    const pattern = `(["'/]${escape(f)}\\?v=)[^"'&\\s]*`;
+    const pattern = `(["'/]${escapeRegExp(f)}\\?v=)[^"'&\\s]*`;
     if (!new RegExp(pattern).test(html) || !await git(root, 'status', '--porcelain', '--', f)) continue;
     const tag = createHash('sha1').update(await readFile(path.join(root, f))).digest('hex').slice(0, 8);
     html = html.replace(new RegExp(pattern, 'g'), `$1${tag}`);

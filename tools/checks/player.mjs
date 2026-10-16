@@ -42,7 +42,7 @@ function setup({ isWide = true, reduced = false, calm = false } = {}) {
   return { host, video, still, win, doc, player, listeners };
 }
 
-// Initial state, matching the prior visual picker’s hysteresis, and scene ordering.
+// Initial state and scene ordering. The picker switches scene only after a margin (hysteresis), so the video does not flicker at a boundary.
 media.clear();
 {
   const { host, video, still, win, listeners } = setup();
