@@ -3,7 +3,7 @@
 Checks and publishing for the site (see DEPLOYMENT.md). Node 22 and `npm install` (Playwright; the browser is the installed Edge).
 
 - `npm run check`: syntax of every script, the drawing-player and drawing-asset checks, and the page and panel checks in a real browser.
-- `npm run publish`: copies changed files from the working copy, commits, pushes and verifies the deploy.
+- `node tools/publish.mjs`: copies changed files from the working copy, commits, pushes and verifies the deploy.
 - `npm run perf`: scroll frame times (warns when the numbers cannot be trusted).
 - `npm run hooks`: installs the pre-push hook that runs the check.
 
@@ -11,7 +11,7 @@ Checks and publishing for the site (see DEPLOYMENT.md). Node 22 and `npm install
 
 - `check`: `--root <dir>` checks another folder (default: this repository); `--url <url>` uses a server that is already running instead of starting one.
   It runs `syntax` first and stops there if that fails; otherwise every check runs and all failures are listed together. It prints the elapsed time and warns past 5 minutes.
-- `publish`: `npm run publish -- [--from <folder>] [--dry-run] [--no-push] -m "message" file...`
+- `publish`: `node tools/publish.mjs [--from <folder>] [--dry-run] [--no-push] -m "message" file...` (call node directly: on Windows `npm run` splits a quoted multi-word message across arguments)
   `--from` is the folder to copy from (else `$SITE_SOURCE`, else the old working copy); `--dry-run` stops after staging, before the commit; `--no-push` commits but does not push.
   It also stops, before committing, when anything beyond the listed files (and index.html, if a cache tag changed) is staged.
 - `hooks`: `npm run hooks` installs the pre-push hook; `npm run hooks -- --uninstall` removes it. Bypass it once with `SKIP_CHECK=1 git push` or `git push --no-verify`.

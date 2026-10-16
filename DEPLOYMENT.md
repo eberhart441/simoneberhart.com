@@ -18,7 +18,7 @@ Day to day the site is edited in the working copy (`physarum-redo/portfolio`, no
 into this repository. Use the tools instead of copying by hand: `npm install` once, then
 
     npm run check                                              # before anything goes live
-    npm run publish -- -m "What changed" index.html liquid.mjs # copy, bump caches, commit, push, verify the deploy
+    node tools/publish.mjs -m "What changed" index.html liquid.mjs   # copy, bump caches, commit, push, verify the deploy
     npm run hooks                                              # optional: run the check before every push
 
 Why each step exists:
