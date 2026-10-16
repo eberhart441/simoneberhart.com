@@ -113,7 +113,6 @@ uniform vec2 uLight;       // towards the light, screen space (y down)
 uniform vec3 uBump;        // the cursor's swell inside the glass: x, y, amount
 uniform float uRimFrost;   // the frosted panels' rim is as clear as the bubbles, frosting over toward the inside
 uniform vec2 uTintY;       // the card's top and height, for its tint gradient
-uniform vec2 uRipple;      // the frosted panels' rippling edge: time (s), amplitude (px)
 uniform vec2 uCardR;       // the card's text edge and right edge: past the text it turns to the bubbles' glass
 uniform float uKC;         // how far the card's edge reaches toward the other glass (wider than uK: it bulges out to meet them)
 uniform int uCard;         // 1 when body 0 is the card: its deep inside can skip the other bodies
@@ -166,17 +165,11 @@ float scan(vec2 p, out float frost, out float bevel, out vec2 grad) {
   frost = wf / max(ws, 1e-4); bevel = max(1., wb / max(ws, 1e-4)); grad = gw;
   return d;
 }
-// the panels' edge ripples: two slow waves travel along it (along y on the sides, along x on the top and bottom),
-// -1..1, moving the outline in and out by a pixel or two
-float wave(float x, float t) { return sin(x * .048 - t * 1.5) * .6 + sin(x * .021 + t * 1.0 + 1.3) * .4; }
-float ripple(vec2 p, vec2 n, float t) { return mix(wave(p.x, t), wave(p.y + 300., t), n.x * n.x); }   // blends round corners
 vec2 prof(float s) { return texture(uProf, vec2((clamp(s, 0., uProfDepth) / uProfDepth * (uProfN - 1.) + .5) / uProfN, .5)).rg; }
 void main() {
   vec2 p = cssAt(gl_FragCoord.xy);
   float frost, bevel; vec2 gw;
   float d = scan(p, frost, bevel, gw);
-  float panel = smoothstep(.9, .93, frost);                            // the frosted panels' edges ripple, the bubbles' do not
-  if (panel > 0. && uRipple.y > 0. && d > -uBevel - 8.) d += ripple(p, gw / max(length(gw), 1e-4), uRipple.x) * uRipple.y * panel;
   if (d > .8) {                                                        // outside: only the drop shadow (0 12px 36px -20px)
     float a = 0.;
     if (d < 46.) a = .07 * (1. - smoothstep(-36., 36., field(p - vec2(0., 12.), 0.) + 20.));
@@ -237,7 +230,7 @@ class Body {
   settled(tol = 2) { return ['x', 'y', 'w', 'h'].every(k => Math.abs(this.t[k] - this.c[k]) < tol) && Math.abs(this.v.w) < 5; }
 }
 const CARD_FROST = .94;                                                   // a touch of the drawing shows through, as in the bubbles
-const PANEL_R = 36;                                                      // the frosted panels' corner radius (style.css matches)
+const PANEL_R = 48;                                                      // the frosted panels' corner radius (style.css matches)
 const rectBody = (r, radius = PANEL_R) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
 
 // ---- the engine: created once, switched on and off with the conditions --------------------------------------------
@@ -329,8 +322,6 @@ function uploadInk() {
 
 // ---- render -------------------------------------------------------------------------------------------------------
 let lastFrost = 0, frostOwed = false;
-// the frosted panels' edges ripple a tiny bit (px): slow, so redrawn at most 30 times a second; still for reduced motion
-const RIPPLE = 1; let rippleT = 0, lastRipple = 0;
 const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
 const REACH = 34;                                                       // px past a body's box: its shadow and its merging
 const CARD_REACH = 72;                                                  // the card's edge reaches farther (uKC)
@@ -379,7 +370,7 @@ function render() {
   gl.uniform1i(u.uBlur, 2); gl.uniform1i(u.uProf, 3);
   gl.uniform1f(u.uK, P.smooth); gl.uniform1f(u.uKC, CARD_REACH); gl.uniform1f(u.uBevel, P.bevel); gl.uniform1f(u.uEdge, P.edge);
   gl.uniform1f(u.uProfN, E.PROF.n); gl.uniform1f(u.uProfDepth, E.PROF.depth);
-  gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uRipple, rippleT, RIPPLE); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
+  gl.uniform2f(u.uTintY, L.card.y, L.card.h); gl.uniform2f(u.uCardR, L.textR, L.card.x + L.card.w);
   gl.uniform1i(u.uCard, bodies.values().next().value === card && card.c.w > .3 ? 1 : 0);
   const a = P.light * Math.PI / 180; gl.uniform2f(u.uLight, Math.sin(a), -Math.cos(a));
   gl.uniform3f(u.uBump, bump.x, bump.y, bump.a); gl.uniform1f(u.uRimFrost, DROP_FROST);
@@ -426,7 +417,6 @@ function tick(now) {
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
     moving = true;
   }
-  if (!reduceMotion.matches && now - lastRipple >= 33) { rippleT = now / 1000; lastRipple = now; dirty = true; }
   if (dirty || inkFresh || sceneDirty || frostOwed || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
   // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
