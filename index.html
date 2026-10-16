@@ -15,16 +15,23 @@
 <link rel="stylesheet" href="style.css?v=read1">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- Decide liquid glass before the first paint, so the card never shows the CSS or Hyalite glass first (liquid.mjs
-     confirms it, and undoes this if WebGL2 turns out to be unavailable). -->
+     confirms it, and undoes this if WebGL2 turns out to be unavailable). Hyalite (the CSS refraction) is only fetched
+     when a wide screen goes without liquid glass (frame.js asks for it). -->
 <script>
   if (matchMedia('(min-width: 1040px)').matches && !matchMedia('(prefers-reduced-transparency: reduce)').matches && 'WebGL2RenderingContext' in window)
     document.documentElement.classList.add('liquid');
+  window.loadHyalite = () => {
+    if (window.Hyalite || document.getElementById('hyalite')) return;
+    const s = document.createElement('script'); s.id = 'hyalite'; s.src = 'vendor/hyalite.js';
+    s.onload = () => dispatchEvent(new Event('resize'));          // frame.js and bubble.mjs pick it up
+    document.head.append(s);
+  };
 </script>
 </head>
 <body>
 <div class="visuals" data-scenes="4" aria-hidden="true">
   <video class="study-motion" muted playsinline preload="none" hidden aria-hidden="true"></video>
-  <img class="study-still" src="studies/assets/pendulum-poster.png" alt="" loading="lazy" aria-hidden="true">
+  <img class="study-still" src="studies/assets/pendulum-opening.webp" alt="" loading="lazy" aria-hidden="true">
 </div>
 <main>
 <div class="view"><div class="content">
@@ -113,10 +120,9 @@
   <div class="bubble-bar" aria-hidden="true"><i></i></div>
 </aside>
 <!-- The static scene count lets the glass frame size scrolling before media loads. -->
-<script src="vendor/hyalite.js"></script>
-<script src="frame.js"></script>
-<script type="module" src="study-player.mjs"></script>
-<script type="module" src="liquid.mjs?v=frost2"></script>
+<script src="frame.js?v=fast1"></script>
+<script type="module" src="study-player.mjs?v=fast1"></script>
+<script type="module" src="liquid.mjs?v=fast1"></script>
 <script type="module" src="bubble.mjs"></script>
 <script>dispatchEvent(new Event('resize'))</script>
 </body>

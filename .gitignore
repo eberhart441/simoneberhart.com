@@ -37,4 +37,5 @@
 /studies/assets/*
 !/studies/assets/manifest.json
 !/studies/assets/*.png
+!/studies/assets/*.webp
 !/studies/assets/*.webm

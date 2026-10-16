@@ -72,7 +72,7 @@ export function createStudyPlayer({ host, video, still, manifest, win = window, 
     else swap();
     setState('still');
   };
-  // decode the poster early, so the hand-over at the end of the clip is instant
+  // decode the poster ahead (once the video can play), so the hand-over at the end of the clip is instant
   const preload = study => {
     if (typeof Image !== 'function') return;
     const img = new Image(); img.src = study.poster; img.decode?.().catch(() => {});
@@ -122,10 +122,10 @@ export function createStudyPlayer({ host, video, still, manifest, win = window, 
     still.hidden = false;
     still.src = study.opening;
     setState('loading');
-    preload(study);
     const onReady = () => {
       if (token !== generation || current !== index) return;
       ready = true;
+      preload(study);                                          // after the video, which needs the bandwidth first
       if (hidden) { wasPlaying = true; showStill(study); return; }
       playSelected(token);
     };

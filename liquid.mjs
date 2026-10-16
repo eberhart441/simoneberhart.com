@@ -313,7 +313,7 @@ function layout() {
 }
 
 // ---- the drawing under the glass: whatever the player shows (its video, or its still), at the layer's opacity ------
-let inkFresh = true, inkAlpha = 1, inkSrc = '', veilWatch = 0;
+let inkFresh = true, inkAlpha = 1, inkSrc = '', veilWatch = 0, inkAt = 0;
 const video = visuals.querySelector('.study-motion'), still = visuals.querySelector('.study-still');
 const onVideoFrame = () => { inkFresh = true; poke(); video.requestVideoFrameCallback(onVideoFrame); };
 if (video?.requestVideoFrameCallback) video.requestVideoFrameCallback(onVideoFrame);
@@ -325,7 +325,14 @@ function uploadInk() {
   const key = showVideo ? 'video' : still?.currentSrc;
   if (!src) return;
   if (!inkFresh && key === inkSrc) return;
+  // the glass takes at most 30 video frames a second (like its frost: it shows the drawing frosted), halving the uploads
+  // on a 60 Hz screen; the drawing itself, outside the glass, still plays every frame
+  const nowMs = performance.now();
+  if (showVideo && key === inkSrc && nowMs - inkAt < 24) return;            // (24 ms: every 2nd frame at 60 Hz, all at 30)
+  inkAt = nowMs;
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, E.ink);
+  // texImage2D, not texSubImage2D: only it takes the browser's GPU copy of a video frame (0.6 ms; the other converts on
+  // the main thread, 3 ms)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
   inkFresh = false; inkSrc = key; sceneDirty = true;
 }

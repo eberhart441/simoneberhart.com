@@ -28,7 +28,9 @@
       const total = Math.max(extra, Math.round((scenes - .5) * SEG * innerHeight));
       ratio = total ? extra / total : 1;
       document.body.style.height = innerHeight + total + 'px';
-      if (window.Hyalite && !root.classList.contains('liquid')) Hyalite.attach(card, GLASS);   // liquid.mjs draws it otherwise
+      if (!root.classList.contains('liquid')) {                       // liquid.mjs draws the glass otherwise
+        if (window.Hyalite) Hyalite.attach(card, GLASS); else window.loadHyalite?.();
+      }
       sync();
     } else {
       document.body.style.height = '';
