@@ -39,5 +39,5 @@ const without = (file, from, to, scenario) => test(`undoing a fix makes "${scena
 });
 
 without('bubble.mjs', ' || (closing && !fromHistory)', '', 'Escape twice');
-without('bubble.mjs', 'while (busy) await busy.catch(() => {});\n  busy = run();', 'busy = run();', 'rapid row clicks');
+without('bubble.mjs', 'while (busy) await busy.catch(() => {});\n  busy = run();', 'busy = run();', 'rapid row clicks|widening while open');   // without the lock either scenario can fail first
 without('bubble.mjs', 'if (wideQuery.matches && liquid()) {', 'if (wideQuery.matches && liquid() && !reduceQuery.matches) {', 'reduced motion');

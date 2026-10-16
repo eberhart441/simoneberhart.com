@@ -23,8 +23,13 @@ export default async function ({baseUrl, launch}) {
   const glass = (page, n) => until(page, n => window.Liquid?.active && Liquid.debug().filter(d => d.frost === 1 && d.w > 100).length === n, n).catch(() => {});
   const settle = page => page.waitForTimeout(600);   // for "nothing else happens afterwards", which has no condition to wait for
 
-  // One fresh context per scenario; any page error or failed request of ours fails it, with the scenario named.
-  async function scenario(name, {url = baseUrl, wide = true, ...contextOptions} = {}, run) {
+  // One fresh context per scenario; any page error or failed request of ours fails it, with the scenario named. A failing
+  // scenario does not stop the others: one broken behaviour often breaks several, and the report should show them all.
+  const failures = [];
+  async function scenario(name, options, run) {
+    try { await runScenario(name, options, run); } catch (e) { failures.push(e.message); }
+  }
+  async function runScenario(name, {url = baseUrl, wide = true, ...contextOptions} = {}, run) {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, ...contextOptions});
     const ok = (cond, what, detail) => { if (!cond) throw new Error(`panel check "${name}": ${what}${detail === undefined ? '' : ' ' + JSON.stringify(detail)}`); };
     try {
@@ -127,4 +132,5 @@ export default async function ({baseUrl, launch}) {
       ok(s.hidden && s.origin === origin, 'Escape should close it and stay on the page', s);
     });
   } finally { await browser.close(); }
+  if (failures.length) throw new Error(failures.join('; '));
 }
