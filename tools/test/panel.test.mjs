@@ -34,7 +34,7 @@ const without = (file, from, to, scenario) => test(`undoing a fix makes "${scena
   await assert.rejects(run((f, t) => {
     if (f !== file) return t;
     assert.ok(lf(t).includes(from), `fixture drifted: ${from}`);
-    return lf(t).replace(from, to);
+    return lf(t).split(from).join(to);                        // every copy: a guard may be checked more than once
   }), new RegExp(`panel check "${scenario}"`));
 });
 
