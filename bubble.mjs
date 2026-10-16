@@ -11,7 +11,9 @@ const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = sel => bubble.querySelector(sel);
 
 let items = {}, gallery = {};
-let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false;
+let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false, dragY = 0;
+// the sheet (narrow layout) dims the page behind it and stops it scrolling; the page keeps its place
+const lockPage = on => document.documentElement.classList.toggle('sheet-open', on && !wideQuery.matches);
 // one open, switch or close at a time: run it once the one before has finished (however many are waiting)
 async function turn(run) {
   while (busy) await busy.catch(() => {});
@@ -145,6 +147,7 @@ async function show(id, push) {
   bubble.classList.remove('shadowed', 'lit');
   const F = finalRect();
   Object.assign(bubble.style, px(F));
+  lockPage(true);
   // the bubble's history entry must not carry a scroll position: closing goes back one entry, and the browser would
   // restore where the page was when the bubble opened, undoing any scrolling done since (manual until it is closed)
   history.scrollRestoration = 'manual';
@@ -205,6 +208,7 @@ async function close({fromHistory = false} = {}) {
   const id = openId;
   return turn(async () => {
     if (openId !== id) return;
+    lockPage(false);
     const settle = () => { glass(false); bubble.classList.add('moving'); };
     if (liquid() && liquidPanel) {                                  // the text fades, the glass merges back into the card
       const fade = {duration: reduceQuery.matches ? 0 : 110, easing: 'ease-in', fill: 'forwards'};
@@ -217,17 +221,44 @@ async function close({fromHistory = false} = {}) {
     } else if (reduceQuery.matches) { settle(); await bubble.animate([{opacity: 1}, {opacity: 0}], {duration: 180}).finished; }
     else if (!wideQuery.matches) {
       settle();
-      await bubble.animate([{transform: 'none'}, {transform: 'translateY(100%)'}], {duration: 340, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
+      const from = dragY ? `translateY(${dragY}px)` : 'none';
+      await bubble.animate([{transform: from}, {transform: 'translateY(100%)'}], {duration: dragY ? 240 : 340, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
     } else {                                                        // wide, without liquid glass: it fades out
       settle();
       await bubble.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(10px)'}], {duration: 220, easing: 'ease-in'}).finished;
     }
     bubble.hidden = true; bubble.classList.remove('moving', 'shadowed');
+    dragY = 0; bubble.style.transform = ''; bubble.style.transition = '';
     body.getAnimations().forEach(a => a.cancel()); closeBtn.style.opacity = '';
     openId = null; pushed = false; markRow(null);
     requestAnimationFrame(() => { if (!openId) history.scrollRestoration = 'auto'; });
     card.querySelector(`[data-item="${id}"] .open`)?.focus({preventScroll: true});
   });
+}
+
+// Narrow layout: drag the sheet down from the top of its content to close it. It follows the finger, closes on a long or quick
+// drag (the close continues from where the finger left it) and springs back otherwise.
+function sheetSwipe(scrim) {
+  let y0 = 0, dy = 0, t0 = 0, dragging = false;
+  const ready = () => !wideQuery.matches && openId && !busy;
+  bubble.addEventListener('touchstart', e => { y0 = ready() && e.touches.length === 1 ? e.touches[0].clientY : 0; dy = 0; dragging = false; t0 = e.timeStamp; }, {passive: true});
+  bubble.addEventListener('touchmove', e => {
+    if (!y0 || !ready()) return;
+    const d = e.touches[0].clientY - y0;
+    if (!dragging) { if (d > 8 && body.scrollTop <= 0) dragging = true; else return; }
+    e.preventDefault();
+    dy = Math.max(0, d); bubble.style.transition = 'none'; bubble.style.transform = `translateY(${dy}px)`;
+    scrim.style.opacity = String(Math.max(.2, 1 - dy / 500));
+  }, {passive: false});
+  const end = e => {
+    scrim.style.opacity = '';
+    if (!dragging) { y0 = 0; return; }
+    dragging = false; y0 = 0;
+    if (dy > 110 || dy / Math.max(1, e.timeStamp - t0) > .6) { dragY = dy; close(); return; }
+    bubble.style.transition = 'transform .25s ease'; bubble.style.transform = '';
+    setTimeout(() => { bubble.style.transition = ''; }, 280);
+  };
+  bubble.addEventListener('touchend', end); bubble.addEventListener('touchcancel', end);
 }
 
 // the panel's place for the window as it is now (the liquid glass body too)
@@ -245,6 +276,13 @@ async function init() {
     const id = btn.closest('article').dataset.item;
     openId === id ? close() : open(id);
   }));
+  // narrow layout: a tap anywhere on a row opens it (the links inside keep working; desktop keeps the title only)
+  card.querySelectorAll('article[data-item]').forEach(row => row.addEventListener('click', e => {
+    if (wideQuery.matches || e.target.closest('a, button')) return;
+    const id = row.dataset.item; openId === id ? close() : open(id);
+  }));
+  const scrim = document.createElement('div'); scrim.className = 'sheet-scrim'; scrim.setAttribute('aria-hidden', 'true'); document.body.append(scrim);
+  sheetSwipe(scrim);
   closeBtn.addEventListener('click', () => close());
   body.addEventListener('scroll', scrolled, {passive: true});
   new ResizeObserver(() => scrolled()).observe(body);               // the bubble resizing or morphing
@@ -261,6 +299,11 @@ async function init() {
   addEventListener('pointerdown', e => {
     if (!openId || bubble.contains(e.target) || e.target.closest?.('main')) return;
     e.stopImmediatePropagation();
+    // the click that follows this press lands on whatever is under the finger once the dimming goes (a row, which would
+    // open): it belongs to the press that closed the sheet, so it is dropped
+    const drop = ev => { ev.stopPropagation(); ev.preventDefault(); };
+    addEventListener('click', drop, {capture: true, once: true});
+    setTimeout(() => removeEventListener('click', drop, {capture: true}), 600);
     close();
   }, {capture: true});
   addEventListener('popstate', e => {
@@ -272,6 +315,7 @@ async function init() {
   // liquid glass switches with the width (liquid.mjs has already switched by now): a panel left open gets the glass of
   // the mode it is in — the liquid engine buds it a new body, or drops the old one along with its other glass
   wideQuery.addEventListener('change', () => {
+    lockPage(!!openId);
     if (!liquid()) liquidPanel = null;
     if (!openId) return;
     turn(async () => {

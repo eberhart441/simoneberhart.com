@@ -133,9 +133,13 @@ html.framed .content { will-change: transform; padding-bottom: var(--s8); }
 }
 
 @media (max-width: 760px) {
-  :root { --pad: var(--s5); --s9: 72px; }
-  main { margin: var(--s3) var(--s3) var(--s3); }
+  :root { --pad: var(--s5); --s9: 48px; }
+  /* 8px of sage around the card, more where a notch or the home bar needs it */
+  main { margin: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); border-radius: 28px; }
   .content { padding: var(--s6) var(--pad) var(--s5); }
+  h1 { margin-bottom: var(--s4); }
+  h2 { margin-bottom: var(--s4); }
+  article + article { margin-top: 32px; }
 }
 
 h1 {
@@ -336,7 +340,30 @@ article[data-item].active::before { opacity: 1; transform: none; }
 
 @media (max-width: 1039px) {
   .bubble, .bubble.moving { border-radius: 36px 36px 0 0; background: var(--glass-solid); }   /* over text, not a drawing */
-  .bubble-body { padding: var(--s6) var(--s5) var(--s7); }
+  .bubble-body { padding: var(--s6) var(--s5) calc(var(--s7) + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 760px) { .bubble, .bubble.moving { border-radius: 28px 28px 0 0; } }
+
+/* ---- the narrow layout (phones and tablets): sage around the card, thumb-sized targets, a sheet that dims and locks the page */
+.sheet-scrim { display: none; }
+@media (max-width: 1039px) {
+  html { background-color: var(--surround); -webkit-tap-highlight-color: transparent; }
+  /* a solid paper card on the sage page (the glass is a wide-layout thing) */
+  main { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* hit areas of 44px, as invisible padding (the layout does not change): the contact links and footer are flex items, the
+     inline links and the row titles sit in text lines */
+  .contact a { padding-block: 9px; margin-block: -9px; }
+  footer a { padding-block: 13px; margin-block: -13px; }
+  article p a, .bubble a { padding-block: 12px; }
+  h3 .open { padding-block: 10px; margin-block: -10px; }
+  /* a whole row opens its sheet; it dims a little while pressed */
+  article[data-item] { cursor: pointer; transition: opacity .12s; }
+  article[data-item]:active { opacity: .6; }
+  .bubble-close::after { content: ''; position: absolute; inset: -6px; }
+  .sheet-scrim { display: block; position: fixed; inset: 0; z-index: 1; background: rgba(22, 22, 22, .32);
+    opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  html.sheet-open .sheet-scrim { opacity: 1; pointer-events: auto; }
+  html.sheet-open, html.sheet-open body { overflow: hidden; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .bubble, .bubble.moving { background: var(--glass-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
