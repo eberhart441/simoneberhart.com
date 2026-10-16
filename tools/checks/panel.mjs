@@ -72,6 +72,14 @@ export default async function ({baseUrl, launch}) {
       ok(s.origin === origin && s.hidden && !s.hash, 'should stay on the page, closed', s);
     });
 
+    await scenario('Escape twice while opening', {}, async (page, ok) => {
+      await page.click('[data-item=arm] .open'); await page.waitForTimeout(350);   // mid-animation: the opening has not finished
+      await page.evaluate(() => { for (let i = 0; i < 2; i++) dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})); });
+      await page.waitForTimeout(3000);
+      const s = await state(page);
+      ok(s.origin === origin && s.hidden && !s.hash, 'should stay on the page, closed', s);
+    });
+
     await scenario('reduced motion', {reducedMotion: 'reduce'}, async (page, ok) => {
       await page.click('[data-item=arm] .open'); await panelSettled(page); await glass(page, 1);
       let s = await state(page);
