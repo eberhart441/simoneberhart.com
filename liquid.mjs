@@ -6,7 +6,7 @@
 //
 // Optically it is the card's glass from before: Hyalite's refraction profile (Snell's law through a squircle bevel,
 // with the card's thickness, bevel, slope, shade and rim) computed into a small table the shader reads by depth;
-// the same 6px frost applied before the bend; the card's tint, rim lines and drop shadow.
+// a 9px frost applied before the bend; the card's tint, rim lines and drop shadow.
 //
 // A transparent WebGL2 canvas sits between the drawings and the text. It draws only glass (and shadows); everywhere
 // else the page shows through, so the drawing player, its transitions and the text are untouched. Under the glass
@@ -29,7 +29,7 @@ const cardEl = document.querySelector('main');
 const visuals = document.querySelector('.visuals');
 
 // the card's glass (frame.js GLASS, with the Hyalite defaults it relies on)
-const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 6, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
+const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 9, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
 const MAX = 16;
 
 const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
@@ -178,7 +178,7 @@ void main() {
   float s = max(-d, 0.);
   if (frost > .5) frost = mix(uRimFrost, frost, smoothstep(4., uBevel * 1.15, s));
   float side = smoothstep(uCardR.x - 70., uCardR.y - 6., p.x) * (1. - smoothstep(uCardR.y + 60., uCardR.y + 90., p.x));
-  frost = mix(frost, min(frost, .55), side);                           // the card's right margin is clear glass, like the bubbles
+  frost = mix(frost, min(frost, .72), side);                           // the card's right margin is clear glass, like the bubbles
   float sProf = s * uBevel / bevel;                                    // small drops use the whole profile across their radius
   vec2 g = vec2(0.), pe = vec2(0.);
   if (sProf < uProfDepth + 1.) {                                       // the bevel bends and lights; the flat inside does not
@@ -229,7 +229,7 @@ class Body {
   }
   settled(tol = 2) { return ['x', 'y', 'w', 'h'].every(k => Math.abs(this.t[k] - this.c[k]) < tol) && Math.abs(this.v.w) < 5; }
 }
-const CARD_FROST = .94;                                                   // a touch of the drawing shows through, as in the bubbles
+const CARD_FROST = .98;                                                   // a touch of the drawing shows through, as in the bubbles
 const PANEL_R = 36;                                                      // the frosted panels' corner radius (style.css matches)
 const rectBody = (r, radius = PANEL_R) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
 
@@ -345,7 +345,7 @@ function render() {
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, E.paper);
   uploadInk();
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, E.ink);
-  // the frost: the background, blurred (6px). It is soft anyway, so with the drawing playing at 60 fps it is refreshed at
+  // the frost: the background, blurred (9px). It is soft anyway, so with the drawing playing at 60 fps it is refreshed at
   // most 30 times a second (the sharp drawing under clear glass still takes every frame)
   const nowMs = performance.now();
   if (sceneDirty && nowMs - lastFrost < 30) { sceneDirty = false; frostOwed = true; }
@@ -355,8 +355,9 @@ function render() {
     common(E.scene, E.a.w, E.a.h);
     gl.bindFramebuffer(gl.FRAMEBUFFER, E.a.f); gl.viewport(0, 0, E.a.w, E.a.h); gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.useProgram(E.blur.p); gl.uniform1i(E.blur.u.uSrc, 2); gl.activeTexture(gl.TEXTURE2);
-    const k = P.blur / 2 / 2 * 1.25;                                    // half resolution; the kernel is ~2 steps wide
-    for (const [src, dst, step] of [[E.a, E.b, [k, 0]], [E.b, E.a, [0, k]]]) {
+    // half resolution; the kernel is ~2 steps wide, and it runs twice (so the steps stay small and thin ink stays smooth)
+    const k = P.blur / 2 / 2 * 1.25 / Math.SQRT2;
+    for (const [src, dst, step] of [[E.a, E.b, [k, 0]], [E.b, E.a, [0, k]], [E.a, E.b, [k, 0]], [E.b, E.a, [0, k]]]) {
       gl.bindTexture(gl.TEXTURE_2D, src.t); gl.bindFramebuffer(gl.FRAMEBUFFER, dst.f); gl.viewport(0, 0, dst.w, dst.h);
       gl.uniform2f(E.blur.u.uStep, step[0] / src.w, step[1] / src.h); gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
@@ -479,7 +480,7 @@ const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 // out when the page loads; each wanders a while, then drifts home and merges into the card, and the card buds a new one
 // (it swells as a bulge on the card's edge, still joined by a neck, before it pulls away). A project panel takes them in:
 // beads where it opens are absorbed into it, the rest go home; after it closes the card buds them out again.
-const COUNT = [4, 5], DROP_FROST = .85;                                   // few enough that the drawing stays the subject
+const COUNT = [4, 5], DROP_FROST = .93;                                   // few enough that the drawing stays the subject
 const SIZES = [[30, 44], [48, 70], [76, 104], [110, 150]];             // radius px, small to large
 let nextDrop = 0, drops = [], target = 5, seeded = false, panelRect = null, panelFrom = null;
 const BIRTH = 3000, RETURN = 3800, RETURN_FAST = 1900, ABSORB_MS = 420;
