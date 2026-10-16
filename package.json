@@ -1,0 +1,15 @@
+{
+  "name": "simoneberhart-site",
+  "private": true,
+  "type": "module",
+  "description": "Checks and publishing for simoneberhart.com. The site itself is plain static files.",
+  "scripts": {
+    "check": "node tools/check.mjs",
+    "publish": "node tools/publish.mjs",
+    "perf": "node tools/perf.mjs",
+    "hooks": "node tools/install-hooks.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}
