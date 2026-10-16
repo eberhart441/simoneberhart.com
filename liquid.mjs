@@ -282,7 +282,7 @@ function create() {
 // ---- state --------------------------------------------------------------------------------------------------------
 let W = 0, H = 0, DPR = 1, raf = 0, last = 0, dirty = true, sceneDirty = true;
 const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}, box: {x0: 0, y0: 0, x1: 1, y1: 1}};
-const BOX_OUT = 22, BOX_IN = 10;                                          // the box's margin around the panels; bubbles keep BOX_IN clear of it
+const BOX_OUT = 14, BOX_IN = 10;                                          // the box's margin around the panels; bubbles keep BOX_IN clear of it
 // where a bubble of radius r may be: wholly inside the box
 const inBox = (x, y, r) => ({x: Math.min(L.box.x1 - BOX_IN - r, Math.max(L.box.x0 + BOX_IN + r, x)), y: Math.min(L.box.y1 - BOX_IN - r, Math.max(L.box.y0 + BOX_IN + r, y))});
 const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: CARD_FROST, k: 300, z: 1});
