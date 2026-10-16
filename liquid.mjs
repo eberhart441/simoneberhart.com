@@ -230,11 +230,11 @@ class Body {
   settled(tol = 2) { return ['x', 'y', 'w', 'h'].every(k => Math.abs(this.t[k] - this.c[k]) < tol) && Math.abs(this.v.w) < 5; }
 }
 const CARD_FROST = .94;                                                   // a touch of the drawing shows through, as in the bubbles
-const PANEL_R = 48;                                                      // the frosted panels' corner radius (style.css matches)
+const PANEL_R = 36;                                                      // the frosted panels' corner radius (style.css matches)
 const rectBody = (r, radius = PANEL_R) => ({x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w / 2, h: r.h / 2, r: radius});
 
 // ---- the engine: created once, switched on and off with the conditions --------------------------------------------
-let gl = null, canvas = null, E = null;
+let gl = null, canvas = null, E = null, bounds = null;
 function create() {
   canvas = document.createElement('canvas');
   canvas.className = 'liquid-canvas'; canvas.setAttribute('aria-hidden', 'true');
@@ -274,12 +274,17 @@ function create() {
   const paper = new Image(); paper.src = 'paper-texture.png';
   paper.onload = () => { gl.bindTexture(gl.TEXTURE_2D, E.paper); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paper); sceneDirty = dirty = true; };
   visuals.after(canvas);
+  bounds = document.createElement('div'); bounds.className = 'liquid-bounds'; bounds.setAttribute('aria-hidden', 'true');
+  visuals.after(bounds);
   return true;
 }
 
 // ---- state --------------------------------------------------------------------------------------------------------
 let W = 0, H = 0, DPR = 1, raf = 0, last = 0, dirty = true, sceneDirty = true;
-const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}};
+const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}, box: {x0: 0, y0: 0, x1: 1, y1: 1}};
+const BOX_OUT = 14, BOX_IN = 10;                                          // the box's margin around the panels; bubbles keep BOX_IN clear of it
+// where a bubble of radius r may be: wholly inside the box
+const inBox = (x, y, r) => ({x: Math.min(L.box.x1 - BOX_IN - r, Math.max(L.box.x0 + BOX_IN + r, x)), y: Math.min(L.box.y1 - BOX_IN - r, Math.max(L.box.y0 + BOX_IN + r, y))});
 const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: CARD_FROST, k: 300, z: 1});
 const bodies = new Set([card]);
 const cursor = new Body({x: -100, y: -100, w: 0, h: 0, r: 0}, {k: 420, z: .72});
@@ -296,6 +301,10 @@ function layout() {
   }
   const c = cardEl.getBoundingClientRect(), v = visuals.getBoundingClientRect();
   L.card = {x: c.left, y: c.top, w: c.width, h: c.height};
+  // the stage: one rounded box around the card, the panel (the card's mirror image) and the space between, with a
+  // little margin; the bubbles never leave it, and a faint line marks it (style.css .liquid-bounds)
+  L.box = {x0: c.left - BOX_OUT, y0: c.top - BOX_OUT, x1: W - c.left + BOX_OUT, y1: c.bottom + BOX_OUT};
+  Object.assign(bounds.style, {left: L.box.x0 + 'px', top: L.box.y0 + 'px', width: L.box.x1 - L.box.x0 + 'px', height: L.box.y1 - L.box.y0 + 'px', borderRadius: PANEL_R + BOX_OUT + 'px'});
   L.textR = c.right - (parseFloat(getComputedStyle(cardEl.querySelector('.content') || cardEl).paddingRight) || 60);
   L.ink = {x: v.left, y: v.top, w: v.width || 1, h: v.height || 1};
   card.set(rectBody(L.card), true);
@@ -482,7 +491,7 @@ function pickSize() {                                                   // mostl
 }
 function spot(R) {                                                      // a home for its wander, away from the others
   // close to the card: from just off its edge to a few hundred px out, the nearest the likeliest
-  const edge = L.card.x + L.card.w, x0 = edge + R + 30, x1 = Math.min(W - R - 110, edge + R + 200), y0 = L.card.y + R * .5, y1 = L.card.y + L.card.h - R * .5;
+  const edge = L.card.x + L.card.w, x0 = edge + R + 30, x1 = Math.min(L.box.x1 - BOX_IN - R - 40, edge + R + 200), y0 = L.box.y0 + BOX_IN + R, y1 = L.box.y1 - BOX_IN - R;
   let best = null, bestGap = -1;
   for (let i = 0; i < 16; i++) {
     const c = {x: mix(x0, Math.max(x0, x1), Math.pow(Math.random(), 2.2)), y: mix(y0, Math.max(y0, y1), Math.random())};
@@ -617,7 +626,8 @@ function float(list, t) {
     let ay = (c.y * speed - d.v.y) * drag + (d.out.y - d.p.y) * .016;
     const wall = (v, lo, hi) => (v < lo ? (lo - v) * .9 : 0) - (v > hi ? (v - hi) * .9 : 0);
     // only a visiting bubble may touch the card; the others keep their distance
-    ax += wall(d.p.x, edge + d.R + (d.visit ? -10 : 26), W - d.R - 18); ay += wall(d.p.y, d.R + 14, H - d.R - 14);
+    const B = L.box, m = BOX_IN + 8;                                     // soft walls just inside the box
+    ax += wall(d.p.x, edge + d.R + (d.visit ? -10 : 26), B.x1 - d.R - m); ay += wall(d.p.y, B.y0 + d.R + m, B.y1 - d.R - m);
     const gap = d.p.x - d.R - edge;
     // a visit: drawn in until it touches, the card's edge reaching out to it in a liquid neck. Leaving, it is eased
     // away for a few seconds, so the neck stretches thin and snaps
@@ -633,6 +643,8 @@ function float(list, t) {
     if (v > vmax) { d.v.x *= vmax / v; d.v.y *= vmax / v; }
     d.p.x += d.v.x * dt; d.p.y += d.v.y * dt;
     const rr = d.R * (1 + .015 * Math.sin(t * .6 + d.ph));
+    const k = inBox(d.p.x, d.p.y, rr);                                 // and never past it
+    if (k.x !== d.p.x) { d.p.x = k.x; d.v.x = 0; } if (k.y !== d.p.y) { d.p.y = k.y; d.v.y = 0; }
     d.b.set({x: d.p.x, y: d.p.y, w: rr, h: rr, r: rr});
   }
 }
@@ -661,7 +673,7 @@ async function maybePair(now) {
   const edge = L.card.x + L.card.w, rA = A.b.c.w, rB = B.b.c.w;
   const rM = Math.min(170, Math.sqrt(rA * rA + rB * rB));                // about the two beads' area together
   const fA = {...A.b.c}, fB = {...B.b.c}, ph = Math.random() * 6.28;
-  const meet = {x: Math.max(edge + rM + 110, (fA.x + fB.x) / 2), y: (fA.y + fB.y) / 2};
+  const meet = inBox(Math.max(edge + rM + 110, (fA.x + fB.x) / 2), (fA.y + fB.y) / 2, rM + 24);
   const drift = t => ({x: meet.x + Math.sin(t * .5 + ph) * 20, y: meet.y + Math.sin(t * .37 + ph) * 14});
   const alive = () => A.pair === pair && B.pair === pair && !A.home && !B.home;
   // meet: both slide to the meeting point (the neck forms as they near), then swell into one bead
@@ -677,7 +689,7 @@ async function maybePair(now) {
   const ang = Math.PI / 2 + (Math.random() - .5) * 1.1, ux = Math.cos(ang), uy = Math.sin(ang), m1 = drift(1), sep = (rA + rB + 80) / 2;
   await Promise.all([[A, rA, 1], [B, rB, -1]].map(([d, r, side]) => tween(d.b, Math.max(PART, tripMs(sep)), t => {
     const p = sine(t), rr = mix(rM, r, inOut(clamp01(t / .55)));
-    return {x: m1.x + ux * side * sep * p, y: m1.y + uy * side * sep * p, w: rr, h: rr, r: rr};
+    return {...inBox(m1.x + ux * side * sep * p, m1.y + uy * side * sep * p, rr), w: rr, h: rr, r: rr};
   })));
   if (!alive()) return;
   for (const d of [A, B]) { d.pair = null; rebase(d); }
