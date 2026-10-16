@@ -12,6 +12,7 @@ const check = root => spawnSync(process.execPath, [path.join(repo, 'tools/check.
 test('passes on the live site and exits zero', () => {
   const r = check(repo);
   assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /took \d+s/);
 });
 
 test('a broken script makes it fail, naming the script and the check', async () => {
@@ -22,5 +23,7 @@ test('a broken script makes it fail, naming the script and the check', async () 
   await rm(copy, {recursive: true, force: true});
   assert.notEqual(r.status, 0);
   assert.match(r.stdout, /FAIL\s+syntax.*liquid\.mjs/);
-  assert.match(r.stdout, /FAIL\s+page/);   // the page check runs anyway and also sees the error
+  // stopped after syntax: the page and panel checks would only cascade into confusing page errors
+  assert.doesNotMatch(r.stdout, /(ok|FAIL)\s+(page|panel|player|assets)/);
+  assert.match(r.stdout, /check failed: syntax/);
 });
