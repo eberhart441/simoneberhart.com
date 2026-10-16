@@ -2,7 +2,7 @@
 
 Checks and publishing for the site (see DEPLOYMENT.md). Node 22 and `npm install` (Playwright; the browser is the installed Edge).
 
-- `npm run check`: syntax of every script, the drawing-player and drawing-asset checks, and the page and panel checks in a real browser.
+- `npm run check`: syntax of every script, the drawing-player and drawing-asset checks, and the page, panel and phone (touch) checks in a real browser.
 - `node tools/publish.mjs`: copies changed files from the working copy, commits, pushes and verifies the deploy.
 - `npm run perf`: scroll frame times (warns when the numbers cannot be trusted).
 - `npm run hooks`: installs the pre-push hook that runs the check.

@@ -41,4 +41,4 @@ Options and prerequisites (ffmpeg, sharp) are in tools/README.md. In short: `pub
 Throwaway scripts belong in the session scratch folder, never in this project folder.
 
 `npm run check` runs a syntax check of every script, the drawing-player and drawing-asset checks, a page load that fails on
-any error, and the panel behaviour checks in a real browser.
+any error, the panel behaviour checks and the phone (touch) checks in a real browser.
