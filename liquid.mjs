@@ -282,7 +282,7 @@ function create() {
 // ---- state --------------------------------------------------------------------------------------------------------
 let W = 0, H = 0, DPR = 1, raf = 0, last = 0, dirty = true, sceneDirty = true;
 const L = {card: {x: 0, y: 0, w: 0, h: 0}, ink: {x: 0, y: 0, w: 1, h: 1}, box: {x0: 0, y0: 0, x1: 1, y1: 1}};
-const BOX_OUT = 14, BOX_IN = 10;                                          // the box's margin around the panels; bubbles keep BOX_IN clear of it
+const BOX_OUT = 22, BOX_IN = 10;                                          // the box's margin around the panels; bubbles keep BOX_IN clear of it
 // where a bubble of radius r may be: wholly inside the box
 const inBox = (x, y, r) => ({x: Math.min(L.box.x1 - BOX_IN - r, Math.max(L.box.x0 + BOX_IN + r, x)), y: Math.min(L.box.y1 - BOX_IN - r, Math.max(L.box.y0 + BOX_IN + r, y))});
 const card = new Body({x: 0, y: 0, w: 0, h: 0, r: PANEL_R}, {frost: CARD_FROST, k: 300, z: 1});
@@ -303,8 +303,9 @@ function layout() {
   L.card = {x: c.left, y: c.top, w: c.width, h: c.height};
   // the stage: one rounded box around the card, the panel (the card's mirror image) and the space between, with a
   // little margin; the bubbles never leave it, and a faint line marks it (style.css .liquid-bounds)
-  L.box = {x0: c.left - BOX_OUT, y0: c.top - BOX_OUT, x1: W - c.left + BOX_OUT, y1: c.bottom + BOX_OUT};
-  Object.assign(bounds.style, {left: L.box.x0 + 'px', top: L.box.y0 + 'px', width: L.box.x1 - L.box.x0 + 'px', height: L.box.y1 - L.box.y0 + 'px', borderRadius: PANEL_R + BOX_OUT + 'px'});
+  const out = Math.max(8, Math.min(BOX_OUT, c.left - 10, c.top - 10));   // narrower on small windows, never off screen
+  L.box = {x0: c.left - out, y0: c.top - out, x1: W - c.left + out, y1: c.bottom + out};
+  Object.assign(bounds.style, {left: L.box.x0 + 'px', top: L.box.y0 + 'px', width: L.box.x1 - L.box.x0 + 'px', height: L.box.y1 - L.box.y0 + 'px', borderRadius: PANEL_R + out + 'px'});
   L.textR = c.right - (parseFloat(getComputedStyle(cardEl.querySelector('.content') || cardEl).paddingRight) || 60);
   L.ink = {x: v.left, y: v.top, w: v.width || 1, h: v.height || 1};
   card.set(rectBody(L.card), true);
