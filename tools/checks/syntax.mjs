@@ -15,7 +15,7 @@ async function* scripts(dir) {
 }
 
 // Returns an error message, or null when the source parses.
-function problem(file, source) {
+function syntaxError(file, source) {
   if (file.endsWith('.js')) {   // a classic <script>; only fall back to module syntax if it is not one
     try { new vm.Script(source, {filename: file}); return null; } catch { /* maybe a module */ }
   }
@@ -26,7 +26,7 @@ function problem(file, source) {
 export default async function ({root}) {
   const bad = [];
   for await (const file of scripts(root)) {
-    const msg = problem(file, await readFile(file, 'utf8'));
+    const msg = syntaxError(file, await readFile(file, 'utf8'));
     if (msg) bad.push(`${path.relative(root, file).split(path.sep).join('/')}: ${msg}`);
   }
   if (bad.length) throw new Error(`syntax error in ${bad.join('; ')}`);

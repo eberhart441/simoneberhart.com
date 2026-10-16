@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {assertDeployClone} from './publish/guard.mjs';
 import {copyFiles} from './publish/copy.mjs';
 import {bumpTags} from './publish/cachebust.mjs';
-import {stage} from './publish/stage.mjs';
+import {assertWhitelisted, stage} from './publish/stage.mjs';
 import {git} from './publish/git.mjs';
 import {waitForBuild, compareLive} from './publish/deploy.mjs';
 
@@ -19,10 +19,11 @@ export async function publish({root, source, files, message, dryRun = false, noP
   if (!files.length) throw new Error('Name the files to publish.');
   if (!message) throw new Error('Give a commit message with -m.');
   await assertDeployClone({root, origin});
+  await assertWhitelisted(root, files);
   await copyFiles({source, root, files});
   const bumped = await bumpTags({root, files});
   if (bumped.length) log(`New cache tags in index.html for: ${bumped.join(', ')}`);
-  const status = await stage(root, files);
+  const status = await stage(root, files, {bumped: bumped.length > 0});
   log(status || '(no changes)');
   if (!status) throw new Error('Nothing changed: the listed files already match the repository.');
   if (dryRun) { log('Dry run: stopped before the commit.'); return null; }

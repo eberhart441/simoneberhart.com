@@ -46,3 +46,8 @@ test('both problems give both warnings, battery first', () => {
   assert.equal(w.length, 2);
   assert.match(w[0], /battery/i);
 });
+
+test('low and critical battery also count as battery power', () => {
+  assert.equal(isOnBattery(() => '4\r\n'), true);
+  assert.equal(isOnBattery(() => '5'), true);
+});
