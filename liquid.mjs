@@ -32,7 +32,7 @@ const visuals = document.querySelector('.visuals');
 const P = {bevel: 40, thickness: 70, slope: 2.7, blur: 9, shade: .368, rim: 1.2, edgeW: 8, edge: .36, light: -140, smooth: 34};
 const MAX = 16;
 
-const Liquid = window.Liquid = {active: false, bud: null, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
+const Liquid = window.Liquid = {active: false, bud: null, reach: () => kNow, debug: () => [...bodies].map(b => ({...b.c, frost: b.frost, id: b.id})),
   drops: () => drops.map(d => ({id: d.b?.id, born: !!d.born, pair: !!d.pair, home: d.home, visit: !!d.visit, gap: !!d.gap, tween: [...tweens].some(t => t.body === d.b)}))};
 
 // ---- Hyalite's refraction profile, as a table by depth from the rim (px) --------------------------------------------
@@ -560,6 +560,11 @@ function route(pts) {
   return {len, at};
 }
 const tripMs = (len, pace = PACE) => Math.max(1500, len / pace * 1000);                                                        // how far inside the edge a tucked-in bubble sits
+// a bead that has finished budding out of the card starts its own life: the slower spring, and floating from where it is
+function settleDrop(d) {
+  if (d.home) return;
+  d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0};
+}
 function budDrop(now) {
   const c = L.card, edge = c.x + c.w, d = makeDrop(0);
   const R = d.R, y = Math.min(c.y + c.h - R - TUCK, Math.max(c.y + R + TUCK, c.y + c.h * (.18 + Math.random() * .64))), out = d.out; d.y = y;
@@ -569,7 +574,7 @@ function budDrop(now) {
   // straight out sideways until clear of the card's edge (so it never cuts a corner), then on to its home
   const path = route([{x: x0, y}, {x: Math.max(edge + R + 12, Math.min(out.x, edge + R + 12)), y}, out]);
   tween(d.b, tripMs(path.len), t => ({...path.at(sine(t)), w: R, h: R, r: R}))
-    .then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
+    .then(() => settleDrop(d));
 }
 function budGapDrop(now, room) {
   const c = L.card, edge = c.x + c.w, mid = edge + room / 2;
@@ -590,7 +595,7 @@ function budGapDrop(now, room) {
   drops.push(d); bodies.add(d.b);
   const path = route([{x: x0, y}, {x: edge + R + 12, y}, d.out]);
   tween(d.b, tripMs(path.len), t => ({...path.at(sine(t)), w: R, h: R, r: R}))
-    .then(() => { if (!d.home) { d.born = performance.now(); d.b.k = 24; d.b.z = .62; d.p = {x: d.b.c.x, y: d.b.c.y}; d.v = {x: 0, y: 0}; } });
+    .then(() => settleDrop(d));
 }
 function ambient(now) {
   if (!seeded) seed(now);
@@ -831,7 +836,7 @@ Liquid.bud = async (point, rect) => {
   });
   b.k = 200; b.z = .55;                                                 // looser at the end: it wobbles as it settles
   await until(() => b.settled(6));
-  panelSettled = closed ? false : true; nextGap = performance.now() + 1200;
+  panelSettled = !closed && Liquid.active && bodies.has(b); nextGap = performance.now() + 1200;   // (not if the glass was switched off meanwhile)
   return handle;
 };
 

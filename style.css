@@ -347,14 +347,14 @@ article[data-item].active::before { opacity: 1; transform: none; }
 /* ---- the narrow layout (phones and tablets): sage around the card, thumb-sized targets, a sheet that dims and locks the page */
 .sheet-scrim { display: none; }
 @media (max-width: 1039px) {
-  html { background-color: var(--surround); -webkit-tap-highlight-color: transparent; }
+  html { background-color: var(--surround); -webkit-tap-highlight-color: transparent; scrollbar-gutter: stable; }
   /* a solid paper card on the sage page (the glass is a wide-layout thing) */
   main { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* hit areas of 44px, as invisible padding (the layout does not change): the contact links and footer are flex items, the
      inline links and the row titles sit in text lines */
   .contact a { padding-block: 9px; margin-block: -9px; }
   footer a { padding-block: 13px; margin-block: -13px; }
-  article p a, .bubble a { padding-block: 12px; }
+  .bubble-links a { padding-block: 12px; }
   h3 .open { padding-block: 10px; margin-block: -10px; }
   /* a whole row opens its sheet; it dims a little while pressed */
   article[data-item] { cursor: pointer; transition: opacity .12s; }

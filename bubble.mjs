@@ -97,11 +97,22 @@ function scrolled(e) {
 }
 
 // ---- geometry -------------------------------------------------------------------------------------------------
+// The safe-area insets (a notch, rounded corners) in px. CSS env() can only be read through a measured element.
+let insetProbe = null;
+function sideInsets() {
+  if (!insetProbe) {
+    insetProbe = document.createElement('div'); insetProbe.setAttribute('aria-hidden', 'true');
+    insetProbe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)';
+    document.body.append(insetProbe);
+  }
+  const s = getComputedStyle(insetProbe);
+  return {left: parseFloat(s.paddingLeft) || 0, right: parseFloat(s.paddingRight) || 0};
+}
 function finalRect() {
   const vw = innerWidth, vh = innerHeight;
-  if (!wideQuery.matches) {                                       // a sheet: on tablets no wider than the card, centred
-    const width = Math.min(vw - 16, 676);
-    return {left: Math.round((vw - width) / 2), top: Math.round(vh * .08), width, height: Math.round(vh * .92) + 30};
+  if (!wideQuery.matches) {                                       // a sheet: on tablets no wider than the card, centred, clear of any notch
+    const {left, right} = sideInsets(), room = vw - left - right, width = Math.min(room - 16, 676);
+    return {left: Math.round(left + (room - width) / 2), top: Math.round(vh * .08), width, height: Math.round(vh * .92) + 30};
   }
   // the card's mirror image in the right half: same size, same top and bottom, same outer margin
   const cr = card.getBoundingClientRect(), visible = document.documentElement.clientWidth;
@@ -250,15 +261,18 @@ function sheetSwipe(scrim) {
     dy = Math.max(0, d); bubble.style.transition = 'none'; bubble.style.transform = `translateY(${dy}px)`;
     scrim.style.opacity = String(Math.max(.2, 1 - dy / 500));
   }, {passive: false});
-  const end = e => {
-    scrim.style.opacity = '';
-    if (!dragging) { y0 = 0; return; }
-    dragging = false; y0 = 0;
-    if (dy > 110 || dy / Math.max(1, e.timeStamp - t0) > .6) { dragY = dy; close(); return; }
+  const springBack = () => {
     bubble.style.transition = 'transform .25s ease'; bubble.style.transform = '';
     setTimeout(() => { bubble.style.transition = ''; }, 280);
   };
-  bubble.addEventListener('touchend', end); bubble.addEventListener('touchcancel', end);
+  const finish = (e, released) => {
+    scrim.style.opacity = '';
+    if (!dragging) { y0 = 0; return; }
+    dragging = false; y0 = 0;
+    if (released && (dy > 110 || dy / Math.max(1, e.timeStamp - t0) > .6)) { dragY = dy; close(); return; }
+    springBack();
+  };
+  bubble.addEventListener('touchend', e => finish(e, true)); bubble.addEventListener('touchcancel', e => finish(e, false));
 }
 
 // the panel's place for the window as it is now (the liquid glass body too)
@@ -272,16 +286,15 @@ function place() {
 async function init() {
   if (!card || !bubble) return;
   loaded = load();
-  card.querySelectorAll('article[data-item] .open').forEach(btn => btn.addEventListener('click', () => {
-    const id = btn.closest('article').dataset.item;
-    openId === id ? close() : open(id);
-  }));
+  const toggle = id => openId === id ? close() : open(id);
+  card.querySelectorAll('article[data-item] .open').forEach(btn => btn.addEventListener('click', () => toggle(btn.closest('article').dataset.item)));
   // narrow layout: a tap anywhere on a row opens it (the links inside keep working; desktop keeps the title only)
   card.querySelectorAll('article[data-item]').forEach(row => row.addEventListener('click', e => {
     if (wideQuery.matches || e.target.closest('a, button')) return;
-    const id = row.dataset.item; openId === id ? close() : open(id);
+    toggle(row.dataset.item);
   }));
   const scrim = document.createElement('div'); scrim.className = 'sheet-scrim'; scrim.setAttribute('aria-hidden', 'true'); document.body.append(scrim);
+  scrim.addEventListener('click', () => close());                   // on click, not on press: the click then ends on the scrim itself
   sheetSwipe(scrim);
   closeBtn.addEventListener('click', () => close());
   body.addEventListener('scroll', scrolled, {passive: true});
@@ -297,13 +310,9 @@ async function init() {
   });
   // a click on empty space closes the bubble (and, while it is open, does nothing else)
   addEventListener('pointerdown', e => {
+    if (!wideQuery.matches) return;                                 // narrow layout: the scrim closes the sheet (above)
     if (!openId || bubble.contains(e.target) || e.target.closest?.('main')) return;
     e.stopImmediatePropagation();
-    // the click that follows this press lands on whatever is under the finger once the dimming goes (a row, which would
-    // open): it belongs to the press that closed the sheet, so it is dropped
-    const drop = ev => { ev.stopPropagation(); ev.preventDefault(); };
-    addEventListener('click', drop, {capture: true, once: true});
-    setTimeout(() => removeEventListener('click', drop, {capture: true}), 600);
     close();
   }, {capture: true});
   addEventListener('popstate', e => {
