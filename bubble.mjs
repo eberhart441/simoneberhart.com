@@ -111,7 +111,9 @@ function sideInsets() {
 function finalRect() {
   const vw = innerWidth, vh = innerHeight;
   if (!wideQuery.matches) {                                       // a sheet: on tablets no wider than the card, centred, clear of any notch
-    const {left, right} = sideInsets(), room = vw - left - right, width = Math.min(room - 16, 676);
+    // The page's width is the root element's box: innerWidth and clientWidth both count the scrollbar space the page keeps
+    // reserved (scrollbar-gutter), which a fixed element cannot reach.
+    const {left, right} = sideInsets(), room = document.documentElement.getBoundingClientRect().width - left - right, width = Math.min(room - 16, 676);
     return {left: Math.round(left + (room - width) / 2), top: Math.round(vh * .08), width, height: Math.round(vh * .92) + 30};
   }
   // the card's mirror image in the right half: same size, same top and bottom, same outer margin
@@ -157,6 +159,7 @@ async function show(id, push) {
   bubble.classList.add('moving');
   bubble.classList.remove('shadowed', 'lit');
   const F = finalRect();
+  dragY = 0; bubble.style.transition = '';
   Object.assign(bubble.style, px(F));
   lockPage(true);
   // the bubble's history entry must not carry a scroll position: closing goes back one entry, and the browser would
@@ -265,14 +268,15 @@ function sheetSwipe(scrim) {
     bubble.style.transition = 'transform .25s ease'; bubble.style.transform = '';
     setTimeout(() => { bubble.style.transition = ''; }, 280);
   };
-  const finish = (e, released) => {
+  const finish = e => {
     scrim.style.opacity = '';
     if (!dragging) { y0 = 0; return; }
     dragging = false; y0 = 0;
-    if (released && (dy > 110 || dy / Math.max(1, e.timeStamp - t0) > .6)) { dragY = dy; close(); return; }
+    const released = e.type === 'touchend';                           // a cancelled touch (the system took it) never closes
+    if (released && !closing && (dy > 110 || dy / Math.max(1, e.timeStamp - t0) > .6)) { dragY = dy; close(); return; }
     springBack();
   };
-  bubble.addEventListener('touchend', e => finish(e, true)); bubble.addEventListener('touchcancel', e => finish(e, false));
+  bubble.addEventListener('touchend', finish); bubble.addEventListener('touchcancel', finish);
 }
 
 // the panel's place for the window as it is now (the liquid glass body too)

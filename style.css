@@ -347,7 +347,9 @@ article[data-item].active::before { opacity: 1; transform: none; }
 /* ---- the narrow layout (phones and tablets): sage around the card, thumb-sized targets, a sheet that dims and locks the page */
 .sheet-scrim { display: none; }
 @media (max-width: 1039px) {
-  html { background-color: var(--surround); -webkit-tap-highlight-color: transparent; scrollbar-gutter: stable; }
+  html { background-color: var(--surround); -webkit-tap-highlight-color: transparent; scrollbar-gutter: stable; transition: background-color .3s ease; }
+  /* the reserved scrollbar space is outside the dimming (it cannot be reached by a fixed element): dim it the same amount */
+  html.sheet-open { background-color: color-mix(in srgb, var(--surround) 68%, #161616); }
   /* a solid paper card on the sage page (the glass is a wide-layout thing) */
   main { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
   /* hit areas of 44px, as invisible padding (the layout does not change): the contact links and footer are flex items, the
