@@ -6,6 +6,7 @@ Checks and publishing for the site (see DEPLOYMENT.md). Node 22 and `npm install
 - `node tools/publish.mjs`: copies changed files from the working copy, commits, pushes and verifies the deploy.
 - `npm run perf`: scroll frame times (warns when the numbers cannot be trusted).
 - `npm run hooks`: installs the pre-push hook that runs the check.
+- `npm test`: the tools' own tests, one file at a time (about 7 minutes: they drive real browsers, and in parallel they starve each other into timeouts).
 
 ## Options
 
