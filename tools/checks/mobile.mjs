@@ -8,6 +8,7 @@ const NOTCH = {top: 0, left: 47, bottom: 21, right: 47};                 // the 
 
 export default async function ({baseUrl, launch}) {
   const browser = await launch();
+  const withScrollbars = await launch([], {ignoreDefaultArgs: ['--hide-scrollbars']});   // the usual headless browser has none
   const origin = new URL(baseUrl).origin;
   const until = (page, fn, arg) => page.waitForFunction(fn, arg, {timeout: WAIT});
   const sheetShown = page => until(page, () => !document.querySelector('#bubble').hidden && document.activeElement?.id === 'bubble-title');
@@ -25,8 +26,8 @@ export default async function ({baseUrl, launch}) {
   const centre = (page, selector) => page.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, selector);
 
   const failures = [];
-  async function scenario(name, run, {context: contextOptions = PHONE, setup} = {}) {
-    const context = await browser.newContext(contextOptions), page = await context.newPage();
+  async function scenario(name, run, {context: contextOptions = PHONE, setup, scrollbars = false} = {}) {
+    const context = await (scrollbars ? withScrollbars : browser).newContext(contextOptions), page = await context.newPage();
     const problems = watchPage(page, origin);
     page.on('dialog', d => d.dismiss());
     const ok = (cond, what, detail) => { if (!cond) throw new Error(`mobile check "${name}": ${what}${detail === undefined ? '' : ' ' + JSON.stringify(detail)}`); };
@@ -35,7 +36,7 @@ export default async function ({baseUrl, launch}) {
       if (setup) await setup(page, context);
       await page.goto(baseUrl, {waitUntil: 'load'});
       // the text rises into place on load: a tap measured before it has settled lands somewhere else
-      await page.waitForFunction(() => !document.getAnimations().some(a => a.playState === 'running'), null, {timeout: WAIT});
+      await page.waitForFunction(() => !document.getAnimations().some(a => a.animationName === 'rise' && a.playState === 'running'), null, {timeout: WAIT});
       await run(page, ok);
       ok(!problems.length, 'page errors', problems);
     } catch (e) {
@@ -67,14 +68,18 @@ export default async function ({baseUrl, launch}) {
       ok((await state(page)).hidden, 'the sheet should stay closed when a link is tapped');
     });
 
-    await scenario('a tap beside a link opens the row, not the link', async (page, ok) => {
-      // 10px above the "Transmission video" link (the browser snaps a tap within ~8px to a link anyway): its hit area must not reach that far
-      // (measured on the link's text, not its box: the box includes any padding)
-      const [x, y] = await page.evaluate(() => { const range = document.createRange(); range.selectNodeContents(document.querySelector('[data-item=arm] p a')); const r = range.getBoundingClientRect(); return [r.left + 20, r.top - 10]; });
-      await page.touchscreen.tap(x, y);
+    await scenario('a link inside a sentence answers a touch only on its own text', async (page, ok) => {
+      // measured on the link's text, not its box (the box includes any padding): the lines around it belong to the row
+      const hit = await page.evaluate(() => {
+        const a = document.querySelector('[data-item=arm] p a'), range = document.createRange(); range.selectNodeContents(a);
+        const r = range.getBoundingClientRect(), x = r.left + 20;
+        return {above: [-14, -10, -6].filter(dy => document.elementFromPoint(x, r.top + dy) === a), below: [6, 10, 14].filter(dy => document.elementFromPoint(x, r.bottom + dy) === a), x, y: r.top - 20};
+      });
+      ok(!hit.above.length && !hit.below.length, 'points just outside the link\'s text should not be part of the link', hit);
+      await page.touchscreen.tap(hit.x, hit.y);                          // the line above it: a tap there opens the row
       await sheetShown(page);
       const s = await state(page);
-      ok(!s.hidden && /single-motor/i.test(s.title), 'the row\'s sheet should open', s);
+      ok(!s.hidden && /single-motor/i.test(s.title), 'a tap on the line above the link should open the row\'s sheet', s);
     });
 
     await scenario('the sheet dims and locks the page', async (page, ok) => {
@@ -125,16 +130,39 @@ export default async function ({baseUrl, launch}) {
       setup: async (page, context) => { const cdp = await context.newCDPSession(page); await cdp.send('Emulation.setSafeAreaInsetsOverride', {insets: NOTCH}); },
     });
 
+    await scenario('a drag released while the sheet is already closing springs back', async (page, ok) => {
+      await page.touchscreen.tap(...await centre(page, '[data-item=recycler] p')); await sheetShown(page);
+      await page.evaluate(() => { history.back = () => {}; });           // a slow browser history: the close is waiting for it
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      await swipe(page, [195, 300], [195, 600]); await page.waitForTimeout(700);
+      const t = await page.evaluate(() => getComputedStyle(document.querySelector('#bubble')).transform);
+      ok(t === 'none', 'a sheet that was dragged but not closed should be back in place', {t});
+    });
+
+    await scenario('with a classic scrollbar, opening a sheet does not move the page behind it', async (page, ok) => {
+      const edges = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return {left: Math.round(m.left), right: Math.round(m.right)}; });
+      const bar = await page.evaluate(() => innerWidth - document.documentElement.clientWidth);
+      ok(bar > 0, 'this scenario needs a window with a classic scrollbar', {bar});
+      const before = await edges();
+      await page.click('[data-item=recycler] .open'); await sheetShown(page);
+      // the page's width is the root element's box: innerWidth and clientWidth both include the reserved scrollbar space, which a fixed element cannot reach
+      const open = await edges(), sheet = await page.evaluate(() => ({right: Math.round(document.querySelector('#bubble').getBoundingClientRect().right), width: Math.round(document.documentElement.getBoundingClientRect().width)}));
+      ok(Math.abs(open.left - before.left) <= 1 && Math.abs(open.right - before.right) <= 1, 'the card behind the dimming should stay where it was', {before, open, bar});
+      ok(sheet.right <= sheet.width - 7, 'the sheet should keep its margin from the window\'s edge', sheet);
+      await page.keyboard.press('Escape'); await sheetHidden(page); await page.waitForTimeout(400);
+      const after = await edges();
+      ok(Math.abs(after.left - before.left) <= 1 && Math.abs(after.right - before.right) <= 1, 'closing should put the card back where it was', {before, after});
+    }, {context: {viewport: {width: 600, height: 800}}, scrollbars: true});
+
     await scenario('the page looks finished', async (page, ok) => {
       const s = await page.evaluate(() => { const m = getComputedStyle(document.querySelector('main')), c = document.querySelector('.contact').getBoundingClientRect(), p = document.querySelector('#projects').getBoundingClientRect();
-        return {bg: getComputedStyle(document.documentElement).backgroundColor, radius: m.borderTopLeftRadius, margin: m.marginLeft, gapToProjects: Math.round(p.top - c.bottom), gutter: getComputedStyle(document.documentElement).scrollbarGutter,
+        return {bg: getComputedStyle(document.documentElement).backgroundColor, radius: m.borderTopLeftRadius, margin: m.marginLeft, gapToProjects: Math.round(p.top - c.bottom),
           viewport: document.querySelector('meta[name=viewport]').content, theme: [...document.querySelectorAll('meta[name=theme-color]')].map(e => e.content + '|' + (e.media || '')).join(' ')}; });
       ok(s.bg === 'rgb(220, 225, 217)', 'the page behind the card should be sage', s);
       ok(s.radius === '28px' && s.margin === '8px', 'the card should be tighter: 28px corners, 8px margin', s);
       ok(s.gapToProjects <= 64, 'the space above "Projects" should be tighter', s);
       ok(/viewport-fit=cover/.test(s.viewport), 'the page should cover the whole screen so safe areas can be respected', s);
-      ok(s.gutter === 'stable', 'the scrollbar space should stay reserved, so locking the page behind a sheet does not shift it', s);
     });
-  } finally { await browser.close(); }
+  } finally { await Promise.all([browser.close(), withScrollbars.close()]); }
   if (failures.length) throw new Error(failures.join('; '));
 }

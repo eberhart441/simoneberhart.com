@@ -65,8 +65,12 @@ export default async function ({baseUrl, launch}) {
     });
 
     await scenario('narrowing the window while a panel opens leaves the merge reach normal', async (page, ok) => {
-      await page.click('[data-item=arm] .open'); await page.waitForTimeout(250);   // mid-opening
-      await page.setViewportSize({width: 900, height: 900}); await page.waitForTimeout(1500);
+      await page.click('[data-item=arm] .open');
+      // the opening has begun (its glass body exists) and not finished (the title has no focus yet): narrow the window now
+      await until(page, () => Liquid.debug().some(d => d.frost === 1) && document.activeElement?.id !== 'bubble-title');
+      await page.setViewportSize({width: 900, height: 900});
+      await until(page, () => !Liquid.active);
+      await until(page, () => document.activeElement?.id === 'bubble-title');   // the opening has run to its end
       await page.setViewportSize({width: 1440, height: 900});
       await until(page, () => window.Liquid?.active);
       await page.waitForTimeout(2500);                                 // long enough for any wrongly raised reach to ease up
