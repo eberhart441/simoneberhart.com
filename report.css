@@ -45,5 +45,8 @@ article.report .diagram .shaft { stroke: var(--ink); stroke-width: 3; stroke-lin
 article.report .diagram .link { stroke: var(--ink); stroke-width: 2; } article.report .diagram .link.off { stroke-dasharray: 3 5; opacity: .5; }
 article.report .diagram .turn, article.report .diagram .head { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
 article.report .diagram .lab { font: 400 13px var(--mono); fill: var(--muted); }
-article.report .diagram .part:not(.on) { opacity: .75; }
+article.report .diagram .part:not(.on) { opacity: .8; }
+article.report .diagram .joint { fill: var(--paper, #f6f5f1); } article.report .diagram .joint.on { fill: var(--ink); }
+article.report .diagram .chain { stroke: var(--ink); stroke-width: 2; opacity: .35; } article.report .diagram .base { fill: var(--ink); opacity: .35; }
+article.report .diagram .lab.strong { fill: var(--ink); }
 @container (max-width: 420px) { article.report .photos { grid-template-columns: 1fr; } }
