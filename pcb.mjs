@@ -1,7 +1,7 @@
 // The PCB viewer in a project panel: a board's layers as one SVG (projects/pcb/<board>.svg, built from its Gerber files by
 // projects/pcb/build-pcb.mjs) that can be panned, zoomed, flipped between top and bottom, and have its layers switched.
 // bubble.mjs calls show(boards) when a project has boards (projects/pcb/boards.json) and hide() otherwise.
-import {panzoom} from './panzoom.mjs?v=pz1';
+import {panzoom} from './panzoom.mjs?v=pz2';
 const root = document.querySelector('.pcb');
 const $ = sel => root.querySelector(sel);
 const frame = $('.pcb-frame'), stage = $('.pcb-stage');

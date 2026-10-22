@@ -20,12 +20,6 @@ export function panzoom(frame) {
     box = pad[2] / pad[3] > r ? [pad[0], pad[1], pad[2], pad[2] / r] : [pad[0], pad[1], pad[3] * r, pad[3]];
   };
   const fit = () => { zoom = 1; [cx, cy] = [pad[0] + pad[2] / 2, pad[1] + pad[3] / 2]; render(); };
-  // show a part of the drawing: [x, y, w, h] in its own units
-  const show = r => {
-    const [x, y, w, h] = r;
-    zoom = Math.min(MAX, Math.max(1, Math.min(box[2] / (w * 1.08), box[3] / (h * 1.08))));
-    [cx, cy] = [x + w / 2, y + h / 2]; clamp(); render();
-  };
   const zoomAt = (factor, px, py) => {                                // px, py: a point in the frame (px): it stays where it is
     if (!svg) return;
     const r = frame.getBoundingClientRect(), z = Math.min(MAX, Math.max(1, zoom * factor));
@@ -35,18 +29,17 @@ export function panzoom(frame) {
   };
   const centre = () => { const r = frame.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
 
-  const pointers = new Map(); let pinch = 0, travelled = 0;
+  const pointers = new Map(); let pinch = 0;
   const dist = () => { const [a, b] = [...pointers.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
   frame.addEventListener('pointerdown', e => {
     if (e.target.closest('.pcb-zoom') || !svg) return;
     frame.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
-    pinch = pointers.size === 2 ? dist() : 0; travelled = 0;
+    pinch = pointers.size === 2 ? dist() : 0;
     frame.classList.add('grabbing'); frame.focus({preventScroll: true});
   });
   frame.addEventListener('pointermove', e => {
     const p = pointers.get(e.pointerId); if (!p || !svg) return;
     const dx = e.clientX - p[0], dy = e.clientY - p[1]; pointers.set(e.pointerId, [e.clientX, e.clientY]);
-    travelled += Math.abs(dx) + Math.abs(dy);
     if (pointers.size === 2) {
       const d = dist(), [a, b] = [...pointers.values()];
       if (pinch) zoomAt(d / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
@@ -83,7 +76,6 @@ export function panzoom(frame) {
   return {
     // start showing an SVG whose full extent is `viewBox` ([x, y, w, h])
     set(el, viewBox) { svg = el; vb = viewBox; if (svg) { fitBox(); fit(); } },
-    fit, show,
-    moved: () => travelled > 4,                                      // did the last press drag, rather than click?
+    fit,
   };
 }

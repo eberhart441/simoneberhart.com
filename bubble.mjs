@@ -67,7 +67,7 @@ async function showReport(id) {
       box.innerHTML = html;
       box.querySelector('[data-pcb]')?.replaceWith(fig);              // a report can place the board viewer in its text
       const slot = box.querySelector('[data-schematic]');             // and the schematic viewer
-      if (slot && schematics[id]) (schematic ||= import('./schematic.mjs?v=sch1')).then(m => { if (openId === id && slot.isConnected) m.mount(slot, schematics[id]); });
+      if (slot && schematics[id]) (schematic ||= import('./schematic.mjs?v=sch2')).then(m => { if (openId === id && slot.isConnected) m.mount(slot, schematics[id]); });
       requestAnimationFrame(scrolled);
     }
   } catch { reports.delete(id); }
@@ -78,7 +78,7 @@ let pcb = null;
 async function showBoards(id) {
   const list = boards[id] || [];
   if (!list.length && !pcb) { $('.pcb').hidden = true; return; }
-  pcb ||= import('./pcb.mjs?v=pcb2');
+  pcb ||= import('./pcb.mjs?v=pcb3');
   const {show} = await pcb;
   if (openId === id) { show(list); requestAnimationFrame(scrolled); }
 }
