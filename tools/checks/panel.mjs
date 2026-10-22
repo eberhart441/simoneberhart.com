@@ -175,6 +175,12 @@ export default async function ({baseUrl, launch}) {
       await until(page, () => [...document.querySelectorAll('svg.sch text')].some(t => t.textContent === 'EXT CAN TRANCIEVER'));
       ok((await page.evaluate(() => document.querySelectorAll('svg.sch .part').length)) > 20, 'the CAN sheet should be drawn with its parts');
     });
+    await scenario('a project shows its videos as links to YouTube', {}, async (page, ok) => {
+      await page.click('[data-item=foundry] .open'); await panelSettled(page);
+      await until(page, () => document.querySelectorAll('.bubble-videos .vid').length > 0);
+      const v = await page.evaluate(() => ({tiles: [...document.querySelectorAll('.bubble-videos .vid')].map(a => a.href), loaded: [...document.querySelectorAll('.bubble-videos img')].every(i => i.complete)}));
+      ok(v.tiles.length === 3 && v.tiles.every(h => h.startsWith('https://www.youtube.com/watch?v=') || h.startsWith('https://www.youtube.com/shorts/')), 'the foundry should show its three videos, each a link to YouTube', v);
+    });
     await scenario('a project without boards hides the viewer', {}, async (page, ok) => {
       await page.click('[data-item=foundry] .open'); await panelSettled(page); await settle(page);
       ok(await page.evaluate(() => document.querySelector('.pcb').hidden), 'foundry has no boards, so no viewer');

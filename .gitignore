@@ -44,6 +44,10 @@
 /projects/schematics/*
 !/projects/schematics/*.svg
 !/projects/schematics/schematics.json
+!/projects/videos/
+/projects/videos/*
+!/projects/videos/*.webp
+!/projects/videos/videos.json
 !/projects/reports/
 /projects/reports/*
 !/projects/reports/*.html
