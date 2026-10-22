@@ -24,6 +24,12 @@ export default async function ({baseUrl, launch}) {
         if (t.charts !== 2) throw new Error(`the write-up should have its two figures, it has ${t.charts}`);
         if (!t.imgs.length || t.imgs.includes(false)) throw new Error('the photos in the write-up should load');
       }],
+      ['transcripts', 'transcript/', async page => {
+        await page.evaluate(() => document.querySelectorAll('img').forEach(i => { i.loading = 'eager'; }));
+        await page.waitForFunction(() => [...document.querySelectorAll('.page img')].every(i => i.complete), null, {timeout: 10000}).catch(() => {});
+        const t = await page.evaluate(() => ({schools: [...document.querySelectorAll('h2')].map(h => h.textContent), imgs: [...document.querySelectorAll('.page img')].map(i => i.complete && i.naturalWidth > 0)}));
+        if (t.schools.length !== 3 || t.imgs.length !== 3 || t.imgs.includes(false)) throw new Error(`the three transcripts should load: ${JSON.stringify(t)}`);
+      }],
       ['résumé', 'resume/', async page => {
         const t = await page.evaluate(() => ({imgs: [...document.querySelectorAll('.page img')].map(i => i.complete && i.naturalWidth > 0)}));
         if (!t.imgs.length || t.imgs.includes(false)) throw new Error('the résumé pages should both load');

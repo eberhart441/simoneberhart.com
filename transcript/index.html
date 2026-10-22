@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simon Eberhart – Transcripts</title>
+<meta name="description" content="Unofficial transcripts for Simon Eberhart from Yale, Southern Connecticut State University and Olin College of Engineering.">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f6f5f1; color: #1b1a17; font: 15px/1.5 'IBM Plex Sans', system-ui, sans-serif; }
+  nav { max-width: 880px; margin: 0 auto; padding: 24px 16px 16px; display: flex; justify-content: space-between; gap: 16px; }
+  nav a { color: inherit; text-decoration: underline; text-decoration-color: rgba(27, 26, 23, .3); text-underline-offset: 3px; }
+  nav a:hover { text-decoration-color: currentColor; }
+  main { max-width: 880px; margin: 0 auto; padding: 0 16px 48px; display: grid; gap: 24px; }
+  .page { position: relative; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 12px 36px -12px rgba(0, 0, 0, .14); overflow: hidden; }
+  .page img { display: block; width: 100%; height: auto; }
+  h2 { font: 500 15px/1.4 'IBM Plex Sans', system-ui, sans-serif; margin: 8px 0 -12px; }
+  h2 span { font-weight: 400; color: #57544f; margin-left: 8px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media print { nav { display: none; } body { background: #fff; } main { padding: 0; gap: 16px; } .page { box-shadow: none; break-inside: avoid; } }
+</style>
+<script data-goatcounter="https://simoneberhart.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+// analytics events: which row was opened, and which contact or outbound link was clicked (page views come from the tag above)
+addEventListener('click', e => {
+  const el = e.target.closest?.('a[href], button.open'); if (!el || !window.goatcounter?.count) return;
+  let name;
+  if (el.matches('button.open')) name = 'open ' + el.closest('[data-item]')?.dataset.item;
+  else {
+    const u = new URL(el.href, location.href);
+    if (u.protocol === 'mailto:') name = 'click email';
+    else if (/.pdf$/i.test(u.pathname)) name = 'click pdf ' + u.pathname.split('/').pop();
+    else if (u.origin !== location.origin) name = 'click ' + u.hostname.replace(/^www./, '') + (u.hostname.includes('github') || u.hostname.includes('youtube') || u.hostname.includes('printables') ? u.pathname : '');
+    else if (/resume/i.test(u.pathname)) name = 'click resume';
+  }
+  if (name) goatcounter.count({path: name, title: name, event: true});
+});
+</script>
+</head><body>
+<nav><a href="/">← simoneberhart.com</a></nav>
+<main>
+  <h1 class="sr">Simon Eberhart – Transcripts</h1>
+  <h2>Yale University<span>Fall 2025</span></h2>
+  <div class="page">
+    <img src="yale.webp" width="1831" height="497" alt="Yale transcript, Fall 2025: Artificial Life, grade A, 1 credit hour, term and cumulative GPA 4.00.">
+  </div>
+  <h2>Southern Connecticut State University</h2>
+  <div class="page">
+    <img src="scsu.webp" width="1778" height="772" loading="lazy" alt="Southern Connecticut State University transcript: Microbiology, grade A+, 4 credit hours, overall GPA 4.00.">
+  </div>
+  <h2>Olin College of Engineering<span>Fall 2026, in progress</span></h2>
+  <div class="page">
+    <img src="olin.webp" width="1523" height="637" loading="lazy" alt="Olin unofficial transcript, 2026-27 Fall semester, in progress: Identity from the Mind and the Brain, Design Nature, Quantitative Engineering Analysis 1, Modeling and Simulation of the Physical World, and Olin First Year Introduction.">
+  </div>
+</main>
+</body>
+</html>
