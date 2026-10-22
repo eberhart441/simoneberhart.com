@@ -121,6 +121,13 @@ html.framed .view {
   mask-image: linear-gradient(transparent, #000 var(--s6), #000 calc(100% - var(--s6)), transparent);
 }
 html.framed .content { will-change: transform; padding-bottom: var(--s8); }
+/* The text is moved by the page's scroll position. Where the browser can tie an animation to scroll (Chrome, Edge, Safari 26),
+   it does the moving itself, on the compositor: the text keeps pace with the scrollbar however busy the main thread is with the
+   video and the glass. (frame.js sets --extra, how far the text must travel, and moves it from script in other browsers.) */
+@supports (animation-timeline: scroll()) {
+  html.framed .content { animation: content-scroll linear both; animation-timeline: scroll(root block); }
+  @keyframes content-scroll { to { transform: translate3d(0, calc(var(--extra, 0) * -1px), 0); } }
+}
 
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

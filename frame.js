@@ -16,7 +16,9 @@
   // SEG of the screen height, so the drawings do not fly past; when that makes the page longer than the text
   // needs, the text scrolls proportionally slower and still reaches its end exactly at the bottom.
   const SEG = .8;
-  const sync = () => { if (framed) content.style.transform = `translate3d(0, ${-Math.round(scrollY * ratio)}px, 0)`; };
+  // browsers that can tie an animation to scroll move the text themselves (style.css); the rest do it here, from script
+  const driven = CSS.supports('animation-timeline: scroll()');
+  const sync = () => { if (framed && !driven) content.style.transform = `translate3d(0, ${-Math.round(scrollY * ratio)}px, 0)`; };
 
   function layout() {
     framed = wide.matches;
@@ -31,6 +33,7 @@
       if (!root.classList.contains('liquid')) {                       // liquid.mjs draws the glass otherwise
         if (window.Hyalite) Hyalite.attach(card, GLASS); else window.loadHyalite?.();
       }
+      content.style.setProperty('--extra', String(extra));              // how far the text travels over the whole scroll
       sync();
     } else {
       document.body.style.height = '';

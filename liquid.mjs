@@ -316,20 +316,34 @@ function layout() {
 // ---- the drawing under the glass: whatever the player shows (its video, or its still), at the layer's opacity ------
 let inkFresh = true, inkAlpha = 1, inkSrc = '', veilWatch = 0, inkAt = 0;
 const video = visuals.querySelector('.study-motion'), still = visuals.querySelector('.study-still');
-const onVideoFrame = () => { inkFresh = true; poke(); video.requestVideoFrameCallback(onVideoFrame); };
+// a new video frame wakes the loop but does not mark the glass dirty: whether it is drawn is inkDue's call (poke() here made the
+// glass redraw on every video frame, 60 times a second, whether or not anything the glass shows had changed)
+const wake = () => { if (!raf && Liquid.active) raf = requestAnimationFrame(tick); };
+const onVideoFrame = () => { inkFresh = true; wake(); video.requestVideoFrameCallback(onVideoFrame); };
 if (video?.requestVideoFrameCallback) video.requestVideoFrameCallback(onVideoFrame);
-still?.addEventListener('load', () => { inkFresh = true; poke(); });
-new MutationObserver(() => { veilWatch = performance.now() + 900; poke(); }).observe(visuals, {attributes: true, attributeFilter: ['class']});
-function uploadInk() {
+still?.addEventListener('load', () => { inkFresh = true; wake(); });
+new MutationObserver(() => { veilWatch = performance.now() + 900; wake(); }).observe(visuals, {attributes: true, attributeFilter: ['class']});
+// Scrolling is when the main thread has the least to spare (the text is moved from script), so the work the glass does is
+// cut back then: video frames are copied in about 8 times a second instead of 30, and nothing is redrawn that did not change.
+let scrollingUntil = 0;
+const scrolling = nowMs => nowMs < scrollingUntil;
+const onScroll = () => { scrollingUntil = performance.now() + 200; };
+function pickInk() {
   const showVideo = video && !video.hidden && video.readyState >= 2;
   const src = showVideo ? video : (still?.complete && still.naturalWidth ? still : null);
-  const key = showVideo ? 'video' : still?.currentSrc;
-  if (!src) return;
-  if (!inkFresh && key === inkSrc) return;
-  // the glass takes at most 30 video frames a second (like its frost: it shows the drawing frosted), halving the uploads
-  // on a 60 Hz screen; the drawing itself, outside the glass, still plays every frame
+  return {showVideo, src, key: showVideo ? 'video' : still?.currentSrc};
+}
+// would uploadInk copy something now? A new picture always; a new video frame only every so often: the glass shows the
+// drawing frosted, so 30 a second (24 ms: every 2nd frame at 60 Hz) is plenty, and the drawing outside it plays every frame
+function inkDue(nowMs) {
+  const {showVideo, src, key} = pickInk();
+  if (!src || (!inkFresh && key === inkSrc)) return false;
+  return !(showVideo && key === inkSrc) || nowMs - inkAt >= (scrolling(nowMs) ? 125 : 24);
+}
+function uploadInk() {
   const nowMs = performance.now();
-  if (showVideo && key === inkSrc && nowMs - inkAt < 24) return;            // (24 ms: every 2nd frame at 60 Hz, all at 30)
+  if (!inkDue(nowMs)) return;
+  const {src, key} = pickInk();
   inkAt = nowMs;
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, E.ink);
   // texImage2D, not texSubImage2D: only it takes the browser's GPU copy of a video frame (0.6 ms; the other converts on
@@ -339,7 +353,7 @@ function uploadInk() {
 }
 
 // ---- render -------------------------------------------------------------------------------------------------------
-let lastFrost = 0, frostOwed = false;
+let lastFrost = 0, frostOwed = false, lastRender = 0;
 const Bv = new Float32Array(MAX * 4), Bpv = new Float32Array(MAX * 4), Q = new Float32Array(MAX * 12);
 const REACH = 34;                                                       // px past a body's box: its shadow and its merging
 const CARD_REACH = 72;                                                  // the card's edge reaches farther (uKC)
@@ -438,7 +452,13 @@ function tick(now) {
     if (Math.abs(o - inkAlpha) > .002) { inkAlpha = o; sceneDirty = dirty = true; }
     moving = true;
   }
-  if (dirty || inkFresh || sceneDirty || frostOwed || (moving && visiblyChanged())) { render(); markDrawn(); dirty = false; Liquid.renders = (Liquid.renders || 0) + 1; }
+  // Slow bead drift alone (nothing else changed) is drawn at 30 Hz, and at 15 Hz while scrolling: a bead moves about a pixel a
+  // frame, so half the frames show nothing new. Anything else (the cursor, a panel, a quick tween, the veil, new video) draws
+  // every frame. (Beads travel on tweens of many seconds: only a short one, like the panel's, is quick.)
+  let quick = false; for (const tw of tweens) if (tw.dur < 1500) { quick = true; break; }
+  const ink = inkDue(now), calm = !dirty && !sceneDirty && !frostOwed && !ink && !quick && !panelOpen && !(now < veilWatch);
+  const drift = moving && visiblyChanged() && (!calm || now - lastRender >= (scrolling(now) ? 66 : 30));
+  if (dirty || ink || sceneDirty || frostOwed || drift) { render(); markDrawn(); dirty = false; lastRender = now; Liquid.renders = (Liquid.renders || 0) + 1; }
   // keep ticking while anything moves (or a drop is out, or the veil is fading); otherwise sleep until poked
   // (beads are always out, so in practice it keeps ticking; it also must not sleep before the card buds them again)
   // exactly one loop: something during this tick (a bubble budding, a tween starting) may already have queued the next
@@ -483,7 +503,12 @@ const onPointerMove = e => {
   if (!cursor.c.w) cursor.set({x: e.clientX, y: e.clientY}, true);   // appear where the pointer is, not fly in
   aim(e.clientX, e.clientY, e.target);
 };
-const onScrollAim = () => { if (pointerAt) aim(pointerAt.x, pointerAt.y, document.elementFromPoint(pointerAt.x, pointerAt.y)); };
+let aimAt = 0, aimTimer = 0;
+const aimNow = () => { if (pointerAt) { aimAt = performance.now(); aim(pointerAt.x, pointerAt.y, document.elementFromPoint(pointerAt.x, pointerAt.y)); } };
+const onScrollAim = () => {                                           // the text moves under a still pointer: look again, but not every frame
+  clearTimeout(aimTimer); aimTimer = setTimeout(aimNow, 120);
+  if (performance.now() - aimAt >= 100) aimNow();
+};
 const onLeave = () => { cursor.set({w: 0, h: 0, r: 0}); bump.ta = 0; poke(); };
 
 // ---- beads: there are always 6–8 beads of the glass drifting over the drawing, in a range of sizes. Some are already
@@ -877,6 +902,7 @@ function update() {
   Liquid.active = on;
   root.classList.toggle('liquid', on);
   if (on) {
+    addEventListener('scroll', onScroll, {passive: true});
     if (window.Hyalite) Hyalite.detach(cardEl);                        // the canvas draws the card's glass now
     if (finePointer.matches) {
       if (!dot) { dot = document.createElement('div'); dot.className = 'liquid-dot'; dot.setAttribute('aria-hidden', 'true'); document.body.append(dot); }
@@ -888,11 +914,12 @@ function update() {
     layout(); inkFresh = true; poke();
   } else {
     root.classList.remove('liquid-cursor'); bodies.delete(cursor);
+    removeEventListener('scroll', onScroll);
     removeEventListener('pointermove', onPointerMove); removeEventListener('scroll', onScrollAim); root.removeEventListener('pointerleave', onLeave);
     for (const b of [...bodies]) if (b !== card) bodies.delete(b);
     // every animation in flight ends now (at its end state), so nothing waiting on one (a panel opening) is left hanging
     for (const tw of [...tweens]) { tweens.delete(tw); tw.done(); }
-    drops = []; panelOpen = 0; seeded = false; panelSettled = false;
+    drops = []; panelOpen = 0; seeded = false; panelSettled = false; kNow = P.smooth;   // (the merge reach starts over too)
     if (raf) cancelAnimationFrame(raf); raf = 0;
     dispatchEvent(new Event('resize'));                                // frame.js puts its Hyalite glass back
   }
