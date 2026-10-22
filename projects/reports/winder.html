@@ -1,8 +1,8 @@
 <article class="report">
-<div class="abstract"><p>A filament winder I built to go with a Filabot EX2 extruder. It makes recycled filament come out a steady width. I designed the whole thing, from the frame to the motor control, and put it on Printables, where it's been downloaded over 150 times.</p></div>
+<div class="abstract"><p>A filament winder I built to go with a Filabot EX2 extruder. It makes recycled filament come out a steady width. I designed the whole thing, from the frame to the motor control, and wrote the code that runs it. I put it on Printables, where it's been downloaded over 150 times.</p></div>
 
 <h2><span>1</span>How it works</h2>
-<p>A magnet and a hall-effect sensor measure the width of the filament. It runs between them and pushes the sensor away from the magnet, and the hall sensor reads how far. An Arduino watches that number and speeds the winder up or slows it down to keep the width steady. Pull faster and the filament gets thinner. Pull slower and it gets thicker.</p>
+<p>A magnet and a hall-effect sensor measure the width of the filament. It runs between them and pushes the sensor away from the magnet, and the hall sensor reads how far. An Arduino watches that number and speeds the winder up or slows it down to keep the width steady.</p>
 <figure><svg class="diagram" viewBox="0 0 520 230" role="img" aria-label="Filament leaves the extruder on the left and passes through a sensor on its way to the spool on the right. The sensor tells an Arduino how wide the filament is, and the Arduino sets how fast the winder turns.">
   <rect class="part" x="14" y="46" width="96" height="64" rx="8"/><text class="lab strong" x="62" y="83" text-anchor="middle">extruder</text>
   <line class="shaft" x1="110" y1="78" x2="414" y2="78"/>
@@ -13,12 +13,25 @@
   <line class="link" x1="250" y1="160" x2="250" y2="112"/><path class="head" d="M244 118 l6 -6 l6 6"/><text class="lab" x="262" y="140">reads the width</text>
   <path class="link" d="M294 183 H456 V122" fill="none"/><path class="head" d="M450 128 l6 -6 l6 6"/><text class="lab" x="334" y="176">sets the speed</text>
 </svg><figcaption>The loop. The sensor reads the width and the Arduino sets how fast the winder pulls.</figcaption></figure>
+<p>The thicker the filament, the further it pushes the sensor and the lower the number goes. It reads 760 with nothing in it and 600 with 1.75 mm filament in it. Those two numbers are in the code.</p>
+<pre class="code"><code><i class="k">const</i> <i class="k">int</i> baseReading = 760;       <i class="c">// empty</i>
+<i class="k">const</i> <i class="k">int</i> filamentDiameter = 600;  <i class="c">// 1.75mm</i></code></pre>
+
+<h2><span>2</span>The code</h2>
+<p>The whole sketch is about 60 lines of Arduino C++. It reads the sensor 10 times a second. If the filament is too thin it slows the motor down a notch, so the filament gets thicker. If it's too thick it speeds the motor up a notch, so it gets thinner.</p>
+<pre class="code"><code><i class="k">if</i> (sensorValue &gt;= filamentDiameter + 10) {
+  motorSpeed = motorSpeed - 5;   <i class="c">// too thin</i>
+} <i class="k">else</i> <i class="k">if</i> (sensorValue &lt;= filamentDiameter - 10) {
+  motorSpeed = motorSpeed + 5;   <i class="c">// too thick</i>
+}
+analogWrite(pwmPinMotor, motorSpeed);</code></pre>
+<p>There's a dead band of 10 either side of the target so it doesn't hunt back and forth over noise. The speed is kept between 100 and 200 out of 255. If nothing is in the sensor, the motor stops. A fan runs flat out the whole time.</p>
 <p>It holds the width to around ±0.05 mm.</p>
 
-<h2><span>2</span>The winder</h2>
+<h2><span>3</span>The winder</h2>
 <p>I designed all of it, the frame, the motor control and everything between. It's 3D printed.</p>
 <figure><img src="projects/recycler/01-winder.webp" alt="The filament winder: a spool of clear filament on a printed frame with a motor and gears" loading="lazy"><figcaption>The winder, with a spool on it.</figcaption></figure>
 
-<h2><span>3</span>Open source</h2>
+<h2><span>4</span>Open source</h2>
 <p>I made it in August 2025 and put the files on Printables so anyone can build one. It has over 150 downloads. <a href="https://www.printables.com/model/585758-the-best-diy-filament-maker">Here's the page.</a></p>
 </article>
