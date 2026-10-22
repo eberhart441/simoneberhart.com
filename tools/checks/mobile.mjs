@@ -36,7 +36,7 @@ export default async function ({baseUrl, launch}) {
     page.on('dialog', d => d.dismiss());
     const ok = (cond, what, detail) => { if (!cond) throw new Error(`mobile check "${name}": ${what}${detail === undefined ? '' : ' ' + JSON.stringify(detail)}`); };
     try {
-      await page.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.fulfill({contentType: 'text/html', body: '<!doctype html><title>outside</title>'}));   // other sites: an empty stub
+      await page.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.request().resourceType() === 'script' ? r.fulfill({contentType: 'text/javascript', body: ''}) : r.fulfill({contentType: 'text/html', body: '<!doctype html><title>outside</title>'}));   // other sites: an empty stub
       if (setup) await setup(page, context);
       await page.goto(baseUrl, {waitUntil: 'load'});
       // the text rises into place on load: a tap measured before it has settled lands somewhere else
