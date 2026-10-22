@@ -7,7 +7,7 @@
   --paper: #f6f5f1;
   --surround: #dce1d9;              /* sage: the page around the stage (wide screens) */
   --ink: #161616;
-  --muted: #57544f;
+  --muted: #3f3c38;
   --line: #16161614;                /* hairlines */
   --underline: #16161640;
   --accent: #c8102e;
@@ -29,7 +29,7 @@ html { background: var(--paper) url('paper-texture.png') repeat; }
 body {
   margin: 0;
   color: var(--ink);
-  font: 400 16px/1.65 var(--sans);
+  font: 400 17px/1.65 var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -187,7 +187,7 @@ h3 {
   margin-bottom: var(--s1);
 }
 h3 span {
-  font: 400 12px/1 var(--mono);
+  font: 400 13px/1 var(--mono);
   letter-spacing: .01em;
   color: var(--muted);
   margin-left: var(--s2);
@@ -312,7 +312,7 @@ article[data-item].active::before { opacity: 1; transform: none; }
 }
 .bubble-close:hover { background: rgba(255, 255, 255, .8); }
 .bubble-close:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.bubble-kind { font: 400 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--s2); }
+.bubble-kind { font: 400 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--s2); }
 .bubble h2 { font: 400 36px/1.05 var(--serif); letter-spacing: -.02em; margin: 0 var(--s5) var(--s2) 0; outline: none; }
 .bubble-meta { color: var(--muted); font-size: 14px; margin: 0; }
 .bubble-body > :last-child { margin-bottom: 0; }
@@ -344,7 +344,7 @@ article[data-item].active::before { opacity: 1; transform: none; }
 .pcb-bar button:hover { color: var(--ink); }
 .pcb-bar button[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
 .pcb-boards button { font-size: 13px; }
-.pcb-caption { font-size: 13px; color: var(--muted); margin-top: var(--s2); }
+.pcb-caption { font-size: 14px; color: var(--muted); margin-top: var(--s2); }
 .pcb-caption:empty { display: none; }
 /* the drawing: the board is paper, copper is ink, the silkscreen a quieter ink, the holes paper again */
 .pcb svg .board { color: #fbfaf7; }
@@ -373,7 +373,7 @@ article[data-item].active::before { opacity: 1; transform: none; }
 }
 .gallery-prev { left: 10px; } .gallery-next { right: 10px; }
 .gallery-frame:hover button, .gallery-frame button:focus-visible { opacity: 1; }
-.gallery-caption { font-size: 13px; color: var(--muted); margin-top: var(--s2); }
+.gallery-caption { font-size: 14px; color: var(--muted); margin-top: var(--s2); }
 .gallery-caption:empty { display: none; }
 .gallery-strip { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s3); }
 .gallery-count { margin-left: auto; font: 400 12px/1 var(--mono); color: var(--muted); }

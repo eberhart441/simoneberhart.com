@@ -15,10 +15,10 @@ article.report .abstract p { margin: 0; }
 article.report .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0 0; }
 article.report .stat { border-top: 1px solid var(--line); padding-top: 10px; }
 article.report .stat b { display: block; font: 400 26px/1.1 var(--serif); }
-article.report .stat span { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; }
+article.report .stat span { display: block; color: var(--muted); font-size: 14px; line-height: 1.4; }
 @container (max-width: 560px) { article.report .stats { grid-template-columns: 1fr 1fr; } }
 article.report figure { margin: 20px 0 26px; }
-article.report figcaption { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 8px; max-width: 66ch; }
+article.report figcaption { color: var(--muted); font-size: 14px; line-height: 1.5; margin-top: 8px; max-width: 66ch; }
 article.report figure > img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); }
 article.report .chart { width: 100%; height: auto; display: block; }
 article.report .chart .g { stroke: var(--line); stroke-width: 1; } article.report .chart .zero { stroke: #16161650; }
