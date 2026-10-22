@@ -10,7 +10,7 @@ const wideQuery = matchMedia('(min-width: 1040px)');
 const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = sel => bubble.querySelector(sel);
 
-let items = {}, gallery = {};
+let items = {}, gallery = {}, boards = {};
 let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false, dragY = 0;
 // the sheet (narrow layout) dims the page behind it and stops it scrolling; the page keeps its place
 const lockPage = on => document.documentElement.classList.toggle('sheet-open', on && !wideQuery.matches);
@@ -27,9 +27,9 @@ let liquidPanel = null;
 let loaded = null;                                                // rows wait for the content (a click before it arrived)
 async function load() {
   const get = async url => { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; } };
-  const [list, pics] = await Promise.all([get('projects/items.json'), get('projects/gallery.json')]);
+  const [list, pics, pcbs] = await Promise.all([get('projects/items.json'), get('projects/gallery.json'), get('projects/pcb/boards.json')]);
   for (const it of list || []) items[it.id] = it;
-  gallery = pics || {};
+  gallery = pics || {}; boards = pcbs || {};
 }
 
 // ---- content --------------------------------------------------------------------------------------------------
@@ -47,8 +47,18 @@ function fill(id) {
   const links = $('.bubble-links');
   links.hidden = !it.links?.length;
   links.replaceChildren(...(it.links || []).map(l => Object.assign(document.createElement('a'), {href: l.href, textContent: l.label + ' ↗', target: '_blank', rel: 'noopener'})));
-  photo = 0; showGallery(id);
+  photo = 0; showGallery(id); showBoards(id);
   body.scrollTop = 0; scrolled();
+}
+
+// a project's circuit boards (pcb.mjs, loaded when the first one is wanted)
+let pcb = null;
+async function showBoards(id) {
+  const list = boards[id] || [];
+  if (!list.length && !pcb) { $('.pcb').hidden = true; return; }
+  pcb ||= import('./pcb.mjs?v=pcb1');
+  const {show} = await pcb;
+  if (openId === id) { show(list); requestAnimationFrame(scrolled); }
 }
 
 function showGallery(id) {

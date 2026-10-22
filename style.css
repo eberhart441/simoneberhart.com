@@ -325,6 +325,42 @@ article[data-item].active::before { opacity: 1; transform: none; }
 .bubble-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0; }
 .bubble-tools span { font: 400 12px/1.6 var(--mono); padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px var(--line); }
 .bubble-links { display: flex; flex-wrap: wrap; gap: 4px var(--s5); }
+/* the PCB viewer (pcb.mjs): a board drawn as ink on paper */
+.pcb { margin: var(--s6) 0 0; }
+.gallery + .pcb { margin-top: var(--s5); }
+.pcb-frame { --ar: 1.333; position: relative; aspect-ratio: var(--ar); border-radius: 14px; overflow: hidden; background: rgba(22, 22, 22, .045); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 2px; transition: aspect-ratio .3s ease; }
+.pcb-frame.grabbing { cursor: grabbing; }
+.pcb-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(22, 22, 22, .1); pointer-events: none; }
+.pcb-frame.loading .pcb-stage { opacity: 0; }
+.pcb-stage, .pcb-stage svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity .25s; }
+.pcb-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; background: rgba(246, 245, 241, .82); box-shadow: 0 0 0 1px rgba(22, 22, 22, .1), 0 2px 10px rgba(22, 22, 22, .08); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.pcb-zoom button { width: 32px; height: 32px; padding: 0; border: 0; background: none; color: var(--ink); font: 400 17px/1 var(--mono); cursor: pointer; }
+.pcb-zoom button + button { box-shadow: 0 -1px 0 rgba(22, 22, 22, .1); }
+.pcb-zoom button:hover { background: rgba(22, 22, 22, .06); }
+.pcb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px var(--s4); margin-top: var(--s3); }
+.pcb-bar > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.pcb-bar > div[hidden] { display: none; }
+.pcb-bar button { font: 400 12px/1.6 var(--mono); padding: 2px 10px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .5); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; transition: background .15s, color .15s; }
+.pcb-bar button:hover { color: var(--ink); }
+.pcb-bar button[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
+.pcb-boards button { font-size: 13px; }
+.pcb-caption { font-size: 13px; color: var(--muted); margin-top: var(--s2); }
+.pcb-caption:empty { display: none; }
+/* the drawing: the board is paper, copper is ink, the silkscreen a quieter ink, the holes paper again */
+.pcb svg .board { color: #fbfaf7; }
+.pcb svg .edge { color: var(--ink); }
+.pcb svg .edge * { stroke: var(--ink); stroke-width: 1.2px; vector-effect: non-scaling-stroke; }
+.pcb svg .cu-top, .pcb svg .cu-bot { color: var(--ink); opacity: .88; }
+.pcb svg .cu-in1 { color: #57544f; opacity: .55; } .pcb svg .cu-in2 { color: #8d8a83; opacity: .55; }
+.pcb svg .silk-top, .pcb svg .silk-bot { color: #7a766e; }
+.pcb svg .holes { color: #fbfaf7; }
+.pcb svg .holes * { stroke: var(--ink); stroke-width: .08px; }
+.pcb svg g[data-layer] { display: none; }
+.pcb svg[data-side="top"][data-show~="cu"] .cu-top, .pcb svg[data-side="bot"][data-show~="cu"] .cu-bot,
+.pcb svg[data-show~="in1"] .cu-in1, .pcb svg[data-show~="in2"] .cu-in2,
+.pcb svg[data-side="top"][data-show~="silk"] .silk-top, .pcb svg[data-side="bot"][data-show~="silk"] .silk-bot,
+.pcb svg[data-show~="holes"] .holes { display: inline; }
+@media (prefers-reduced-motion: reduce) { .pcb-frame, .pcb-stage { transition: none; } }
 .bubble [hidden] { display: none !important; }
 
 /* gallery */

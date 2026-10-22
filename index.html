@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3d3f779a">
+<link rel="stylesheet" href="style.css?v=24b279c9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- Decide liquid glass before the first paint, so the card never shows the CSS or Hyalite glass first (liquid.mjs
      confirms it, and undoes this if WebGL2 turns out to be unavailable). Hyalite (the CSS refraction) is only fetched
@@ -127,6 +127,18 @@ addEventListener('click', e => {
       <figcaption class="gallery-caption"></figcaption>
       <div class="gallery-strip"><div class="gallery-thumbs"></div><span class="gallery-count"></span></div>
     </figure>
+    <figure class="pcb" hidden>
+      <div class="pcb-frame" tabindex="0" role="group" aria-label="Circuit board layout: drag to move, plus and minus to zoom">
+        <div class="pcb-stage"></div>
+        <div class="pcb-zoom"><button type="button" data-z="in" aria-label="Zoom in">+</button><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="fit" aria-label="Fit the board">⤢</button></div>
+      </div>
+      <div class="pcb-bar">
+        <div class="pcb-boards"></div>
+        <div class="pcb-side"><button type="button" data-side="top">Top</button><button type="button" data-side="bot">Bottom</button></div>
+        <div class="pcb-layers"></div>
+      </div>
+      <figcaption class="pcb-caption"></figcaption>
+    </figure>
     <p class="bubble-summary"></p>
     <ul class="bubble-points"></ul>
     <p class="bubble-tools"></p>
@@ -138,7 +150,7 @@ addEventListener('click', e => {
 <script src="frame.js?v=hunt1"></script>
 <script type="module" src="study-player.mjs?v=fast1"></script>
 <script type="module" src="liquid.mjs?v=hunt1"></script>
-<script type="module" src="bubble.mjs?v=hunt1"></script>
+<script type="module" src="bubble.mjs?v=968a9bc7"></script>
 <script>dispatchEvent(new Event('resize'))</script>
 </body>
 </html>
