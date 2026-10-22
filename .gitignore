@@ -16,6 +16,7 @@
 !/palantir/
 !/resume/
 !/trading-log/
+!/buyin/
 !/vendor/
 /vendor/*
 !/vendor/hyalite.js

@@ -17,6 +17,13 @@ export default async function ({baseUrl, launch}) {
         const pdf = await page.request.get(new URL('trading-log/BuyIn-trading-log.pdf', baseUrl).href);
         if (!pdf.ok()) throw new Error(`the original log PDF should be downloadable (HTTP ${pdf.status()})`);
       }],
+      ['BuyIn write-up', 'buyin/', async page => {
+        const t = await page.evaluate(() => ({text: document.body.innerText, charts: document.querySelectorAll('svg.chart').length, imgs: [...document.querySelectorAll('figure img')].map(i => i.complete && i.naturalWidth > 0)}));
+        const missing = ['+$130.97', '+$288.00', '$154.44', '37 / 61'].filter(x => !t.text.includes(x));
+        if (missing.length) throw new Error(`the write-up's numbers should match the log, missing: ${missing.join(', ')}`);
+        if (t.charts !== 2) throw new Error(`the write-up should have its two figures, it has ${t.charts}`);
+        if (!t.imgs.length || t.imgs.includes(false)) throw new Error('the photos in the write-up should load');
+      }],
       ['résumé', 'resume/', async page => {
         const t = await page.evaluate(() => ({imgs: [...document.querySelectorAll('.page img')].map(i => i.complete && i.naturalWidth > 0)}));
         if (!t.imgs.length || t.imgs.includes(false)) throw new Error('the résumé pages should both load');
