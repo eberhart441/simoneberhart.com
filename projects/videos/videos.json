@@ -1,0 +1,105 @@
+{
+ "arm": [
+  {
+   "id": "OJFuRm17yMc",
+   "title": "3D printed 6 speed transmission",
+   "kind": "video",
+   "length": "0:44",
+   "poster": "projects/videos/v-OJFuRm17yMc.webp",
+   "href": "https://www.youtube.com/watch?v=OJFuRm17yMc"
+  },
+  {
+   "id": "Rc7nm96mFeQ",
+   "title": "Electromagnet dog clutch design",
+   "kind": "short",
+   "poster": "projects/videos/v-Rc7nm96mFeQ.webp",
+   "href": "https://www.youtube.com/shorts/Rc7nm96mFeQ"
+  },
+  {
+   "id": "dzFVjHgBt1k",
+   "title": "Electromagnet",
+   "kind": "short",
+   "poster": "projects/videos/v-dzFVjHgBt1k.webp",
+   "href": "https://www.youtube.com/shorts/dzFVjHgBt1k"
+  },
+  {
+   "id": "8oxO3QIhLyA",
+   "title": "10 amps",
+   "kind": "short",
+   "poster": "projects/videos/v-8oxO3QIhLyA.webp",
+   "href": "https://www.youtube.com/shorts/8oxO3QIhLyA"
+  },
+  {
+   "id": "tLJ7rZvUq48",
+   "title": "3D printed 6 speed transmission",
+   "kind": "short",
+   "poster": "projects/videos/v-tLJ7rZvUq48.webp",
+   "href": "https://www.youtube.com/shorts/tLJ7rZvUq48"
+  },
+  {
+   "id": "-S3oOO7d-YU",
+   "title": "Clutch hardware",
+   "kind": "short",
+   "poster": "projects/videos/v--S3oOO7d-YU.webp",
+   "href": "https://www.youtube.com/shorts/-S3oOO7d-YU"
+  },
+  {
+   "id": "P2ip1LXNxEE",
+   "title": "Magic",
+   "kind": "short",
+   "poster": "projects/videos/v-P2ip1LXNxEE.webp",
+   "href": "https://www.youtube.com/shorts/P2ip1LXNxEE"
+  }
+ ],
+ "recycler": [
+  {
+   "id": "GmbfbMQWorY",
+   "title": "Filament maker demonstration",
+   "kind": "short",
+   "poster": "projects/videos/v-GmbfbMQWorY.webp",
+   "href": "https://www.youtube.com/shorts/GmbfbMQWorY"
+  }
+ ],
+ "foundry": [
+  {
+   "id": "1bnZZRNrtAE",
+   "title": "Metal pour 2024",
+   "kind": "video",
+   "length": "0:11",
+   "poster": "projects/videos/v-1bnZZRNrtAE.webp",
+   "href": "https://www.youtube.com/watch?v=1bnZZRNrtAE"
+  },
+  {
+   "id": "6N1hXe9mDSY",
+   "title": "Inside the furnace",
+   "kind": "short",
+   "poster": "projects/videos/v-6N1hXe9mDSY.webp",
+   "href": "https://www.youtube.com/shorts/6N1hXe9mDSY"
+  },
+  {
+   "id": "mAWDvlUvWc0",
+   "title": "The furnace firing",
+   "kind": "short",
+   "poster": "projects/videos/v-mAWDvlUvWc0.webp",
+   "href": "https://www.youtube.com/shorts/mAWDvlUvWc0"
+  }
+ ],
+ "quant": [
+  {
+   "id": "cE_erRPIcsw",
+   "title": "Demonstration",
+   "kind": "video",
+   "length": "9:38",
+   "poster": "projects/videos/v-cE_erRPIcsw.webp",
+   "href": "https://www.youtube.com/watch?v=cE_erRPIcsw"
+  },
+  {
+   "id": "1UqdirXN-8o",
+   "title": "Analysis demonstration",
+   "kind": "video",
+   "length": "0:34",
+   "poster": "projects/videos/v-1UqdirXN-8o.webp",
+   "href": "https://www.youtube.com/watch?v=1UqdirXN-8o"
+  }
+ ]
+}

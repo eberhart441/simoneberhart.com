@@ -10,7 +10,7 @@ const wideQuery = matchMedia('(min-width: 1040px)');
 const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = sel => bubble.querySelector(sel);
 
-let items = {}, gallery = {}, boards = {}, schematics = {};
+let items = {}, gallery = {}, boards = {}, schematics = {}, videos = {};
 let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false, dragY = 0;
 // the sheet (narrow layout) dims the page behind it and stops it scrolling; the page keeps its place
 const lockPage = on => document.documentElement.classList.toggle('sheet-open', on && !wideQuery.matches);
@@ -27,9 +27,9 @@ let liquidPanel = null;
 let loaded = null;                                                // rows wait for the content (a click before it arrived)
 async function load() {
   const get = async url => { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; } };
-  const [list, pics, pcbs, schs] = await Promise.all([get('projects/items.json'), get('projects/gallery.json'), get('projects/pcb/boards.json'), get('projects/schematics/schematics.json')]);
+  const [list, pics, pcbs, schs, vids] = await Promise.all([get('projects/items.json'), get('projects/gallery.json'), get('projects/pcb/boards.json'), get('projects/schematics/schematics.json'), get('projects/videos/videos.json')]);
   for (const it of list || []) items[it.id] = it;
-  gallery = pics || {}; boards = pcbs || {}; schematics = schs || {};
+  gallery = pics || {}; boards = pcbs || {}; schematics = schs || {}; videos = vids || {};
 }
 
 // ---- content --------------------------------------------------------------------------------------------------
@@ -48,8 +48,25 @@ function fill(id) {
   const links = $('.bubble-links');
   links.hidden = !it.links?.length;
   links.replaceChildren(...(it.links || []).map(l => Object.assign(document.createElement('a'), /^https?:/.test(l.href) ? {href: l.href, textContent: l.label + ' ↗', target: '_blank', rel: 'noopener'} : {href: l.href, textContent: l.label})));
-  photo = 0; showGallery(id); showBoards(id); showReport(id);
+  photo = 0; showGallery(id); showBoards(id); showReport(id); showVideos(id);
   body.scrollTop = 0; scrolled();
+}
+
+// a project's videos: a poster for each, linking to YouTube (videos in a row, shorts in a smaller one)
+function showVideos(id) {
+  const box = $('.bubble-videos'), list = videos[id] || [];
+  box.hidden = !list.length;
+  const tile = v => {
+    const a = Object.assign(document.createElement('a'), {className: 'vid', href: v.href, target: '_blank', rel: 'noopener'});
+    a.setAttribute('aria-label', `${v.title} (video on YouTube)`);
+    a.append(Object.assign(document.createElement('img'), {src: v.poster, alt: '', loading: 'lazy', decoding: 'async'}),
+      Object.assign(document.createElement('span'), {className: 'vid-title', textContent: v.title}));
+    if (v.length) a.append(Object.assign(document.createElement('span'), {className: 'vid-len', textContent: v.length}));
+    return a;
+  };
+  const row = (kind, cls) => { const vs = list.filter(v => v.kind === kind); return vs.length ? [Object.assign(document.createElement('div'), {className: cls})].map(d => (d.append(...vs.map(tile)), d))[0] : null; };
+  box.replaceChildren(Object.assign(document.createElement('p'), {className: 'bubble-kind', textContent: 'Videos'}), ...[row('video', 'vids wide'), row('short', 'vids short')].filter(Boolean));
+  requestAnimationFrame(scrolled);
 }
 
 // a project's report (projects/reports/<id>.html, built by the script beside it): it replaces the summary and bullets
