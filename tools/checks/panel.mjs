@@ -131,6 +131,33 @@ export default async function ({baseUrl, launch}) {
       s = await state(page);
       ok(s.hidden && s.origin === origin, 'Escape should close it and stay on the page', s);
     });
+
+    await scenario('the board viewer', {}, async (page, ok) => {
+      await page.click('[data-item=arm] .open'); await panelSettled(page);
+      const view = () => page.evaluate(() => { const v = document.querySelector('.pcb svg')?.getAttribute('viewBox'); return v && v.split(' ').map(Number); });
+      await until(page, () => document.querySelector('.pcb svg g[data-layer]'));
+      let s = await page.evaluate(() => ({shown: !document.querySelector('.pcb').hidden, boards: [...document.querySelectorAll('.pcb-boards button')].map(b => b.textContent), side: document.querySelector('.pcb svg').dataset.side}));
+      ok(s.shown && s.boards.length === 2 && s.side === 'top', 'the arm should show two boards, top side first', s);
+      const before = await view();
+      await page.click('.pcb-zoom [data-z=in]');
+      const zoomed = await view();
+      ok(zoomed[2] < before[2], 'the zoom button should narrow the view', {before, zoomed});
+      const frame = await page.locator('.pcb-frame').boundingBox();
+      await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height / 2); await page.mouse.down(); await page.mouse.move(frame.x + frame.width / 2 - 80, frame.y + frame.height / 2); await page.mouse.up();
+      const moved = await view();
+      ok(moved[0] > zoomed[0], 'dragging left should move the view right along the board', {zoomed, moved});
+      await page.click('.pcb-zoom [data-z=fit]');
+      ok((await view())[2] === before[2], 'fit should bring the whole board back');
+      await page.click('.pcb-side [data-side=bot]');
+      s = await page.evaluate(() => { const g = document.querySelector('.pcb svg g[data-layer=cu-bot]'); return {side: document.querySelector('.pcb svg').dataset.side, cuBot: getComputedStyle(g).display, cuTop: getComputedStyle(document.querySelector('.pcb svg .cu-top')).display}; });
+      ok(s.side === 'bot' && s.cuBot !== 'none' && s.cuTop === 'none', 'the bottom side should show the bottom copper', s);
+      await page.click('.pcb-boards button:nth-child(2)'); await until(page, () => document.querySelector('.pcb-boards button[aria-pressed=true]')?.textContent === 'Graphite');
+      await page.close();
+    });
+    await scenario('a project without boards hides the viewer', {}, async (page, ok) => {
+      await page.click('[data-item=foundry] .open'); await panelSettled(page); await settle(page);
+      ok(await page.evaluate(() => document.querySelector('.pcb').hidden), 'foundry has no boards, so no viewer');
+    });
   } finally { await browser.close(); }
   if (failures.length) throw new Error(failures.join('; '));
 }

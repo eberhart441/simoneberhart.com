@@ -12,6 +12,7 @@
 !/study-player.mjs
 !/liquid.mjs
 !/bubble.mjs
+!/pcb.mjs
 !/palantir/
 !/resume/
 !/trading-log/
@@ -32,6 +33,8 @@
 !/projects/*/*.mp4
 !/projects/*/*.webm
 !/projects/*/captions.json
+!/projects/pcb/*.svg
+!/projects/pcb/boards.json
 !/studies/
 /studies/*
 !/studies/assets/
