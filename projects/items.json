@@ -3,6 +3,7 @@
     "id": "arm",
     "kind": "Project",
     "title": "Single-motor robot arm drive",
+    "report": "projects/reports/arm.html",
     "dates": "since 2024",
     "summary": "One motor, several joints. Clutches pick which joint the motor moves.",
     "points": [

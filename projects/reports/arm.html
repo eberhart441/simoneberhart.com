@@ -1,0 +1,35 @@
+<article class="report">
+<div class="abstract"><p>This is a robot arm drive with one motor. Clutches decide which joint the motor moves, so a single motor can run the whole arm. It's been my main side project for over two years and it's still a work in progress. I don't have performance numbers yet. I plan to raise money for it at some point.</p></div>
+
+<h2><span>1</span>The idea</h2>
+<p>Most robot arms have a motor in every joint. This one has a single motor. Every joint has a clutch, and the clutch decides whether that joint gets driven or sits still. To move one joint you engage its clutch. To move another you let go and engage a different one.</p>
+<figure><svg class="diagram" viewBox="0 0 520 210" role="img" aria-label="One motor on the left drives a shaft that runs past three clutches. The middle clutch is engaged, so only its joint moves. The other two are open.">
+  <rect class="part" x="14" y="106" width="86" height="64" rx="8"/><text class="lab" x="57" y="143" text-anchor="middle">motor</text>
+  <line class="shaft" x1="100" y1="138" x2="500" y2="138"/>
+  <g><line class="link off" x1="190" y1="124" x2="190" y2="78"/><rect class="part" x="174" y="124" width="32" height="28" rx="4"/><circle class="part" cx="190" cy="58" r="20"/></g>
+  <g><line class="link on" x1="320" y1="124" x2="320" y2="78"/><rect class="part on" x="304" y="124" width="32" height="28" rx="4"/><circle class="part on" cx="320" cy="58" r="20"/><path class="turn" d="M298 40 A28 28 0 0 1 342 40" /><path class="head" d="M342 40 l-7 -1 m7 1 l-1 7"/></g>
+  <g><line class="link off" x1="450" y1="124" x2="450" y2="78"/><rect class="part" x="434" y="124" width="32" height="28" rx="4"/><circle class="part" cx="450" cy="58" r="20"/></g>
+  <text class="lab" x="190" y="186" text-anchor="middle">clutch</text><text class="lab" x="320" y="186" text-anchor="middle">engaged</text><text class="lab" x="450" y="186" text-anchor="middle">clutch</text>
+  <text class="lab" x="190" y="20" text-anchor="middle">joint</text>
+</svg><figcaption>The idea, simplified. One motor turns the shaft. Only the engaged clutch passes the motion to its joint.</figcaption></figure>
+<p>The bet is that fewer motors makes for a simpler arm. The hard part is the clutches, because everything depends on them engaging and letting go cleanly.</p>
+
+<h2><span>2</span>Three versions</h2>
+<p>I've built the clutches three ways. The first used servos to engage them. The second used solenoids I designed myself. The third uses off-the-shelf solenoids. That work led to a few provisional patents.</p>
+<div class="photos">
+<figure><img src="projects/arm/01-transmission.webp" alt="The transmission, in CAD" loading="lazy"><figcaption>The transmission, in CAD</figcaption></figure>
+<figure><img src="projects/arm/02-clutches.webp" alt="The clutches, in CAD" loading="lazy"><figcaption>The clutches, in CAD</figcaption></figure>
+<figure><img src="projects/arm/03-prototype.webp" alt="A prototype" loading="lazy"><figcaption>A prototype</figcaption></figure>
+<figure><img src="projects/arm/04-clutch-print.webp" alt="A printed clutch, up close" loading="lazy"><figcaption>A printed clutch, up close</figcaption></figure>
+</div>
+
+<h2><span>3</span>The electronics</h2>
+<p>I designed the PCB that drives the solenoids and wrote the firmware for it. Two of my boards are below. You can drag them around, zoom in and flip them over.</p>
+<div data-pcb></div>
+<p>The control software is partly done.</p>
+
+<h2><span>4</span>Where it's going</h2>
+<p>I started out building this as its own platform, a whole arm with its own control software. Now I'm moving it onto Universal Robots instead. It becomes an end effector that goes on a UR arm, so I don't have to build the whole arm.</p>
+<p>The plan is to raise money for it at some point. Right now there are no performance numbers, and I'd rather say that than make some up.</p>
+<p class="foot"><a href="https://www.youtube.com/watch?v=OJFuRm17yMc">Transmission video ↗</a> · Built with KiCad, Fusion 360, Onshape and JavaScript. Provisional patents filed.</p>
+</article>

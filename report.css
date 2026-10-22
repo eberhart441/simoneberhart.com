@@ -37,3 +37,13 @@ article.report .code code { font: inherit; white-space: pre; }
 article.report .code i { font-style: normal; }
 article.report .code .c { color: var(--muted); font-style: italic; } article.report .code .k { color: var(--accent); } article.report .code .s { color: #57544f; }
 article.report .foot { color: var(--muted); font-size: 14px; margin-top: 40px; }
+article.report .photos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 26px; }
+article.report .photos figure { margin: 0; }
+article.report .diagram { width: 100%; height: auto; display: block; }
+article.report .diagram .part { fill: none; stroke: var(--ink); stroke-width: 1.6; } article.report .diagram .part.on { fill: var(--ink); }
+article.report .diagram .shaft { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+article.report .diagram .link { stroke: var(--ink); stroke-width: 2; } article.report .diagram .link.off { stroke-dasharray: 3 5; opacity: .5; }
+article.report .diagram .turn, article.report .diagram .head { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+article.report .diagram .lab { font: 400 13px var(--mono); fill: var(--muted); }
+article.report .diagram .part:not(.on) { opacity: .75; }
+@container (max-width: 420px) { article.report .photos { grid-template-columns: 1fr; } }

@@ -55,13 +55,18 @@ function fill(id) {
 // a project's report (projects/reports/<id>.html, built by the script beside it): it replaces the summary and bullets
 const reports = new Map();
 async function showReport(id) {
-  const box = $('.bubble-report'), url = items[id].report;
+  const box = $('.bubble-report'), url = items[id].report, fig = $('.pcb');
+  if (box.contains(fig)) box.before(fig);                           // the board viewer goes back out before the report is replaced
   box.hidden = !url;
   if (!url) { box.replaceChildren(); return; }
   try {
     if (!reports.has(id)) reports.set(id, fetch(url).then(r => r.ok ? r.text() : ''));
     const html = await reports.get(id);
-    if (openId === id) { box.innerHTML = html; requestAnimationFrame(scrolled); }
+    if (openId === id) {
+      box.innerHTML = html;
+      box.querySelector('[data-pcb]')?.replaceWith(fig);              // a report can place the board viewer in its text
+      requestAnimationFrame(scrolled);
+    }
   } catch { reports.delete(id); }
 }
 
