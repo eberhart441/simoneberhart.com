@@ -40,6 +40,7 @@ function fill(id) {
   $('.bubble-meta').textContent = [it.role, it.dates].filter(Boolean).join(' · ');
   $('.bubble-meta').hidden = !it.role && !it.dates;
   $('.bubble-summary').textContent = it.summary || '';
+  $('.bubble-summary').hidden = $('.bubble-points').hidden = !!it.report;
   const ul = $('.bubble-points'); ul.replaceChildren(...(it.points || []).map(t => Object.assign(document.createElement('li'), {textContent: t})));
   const tools = $('.bubble-tools');
   tools.hidden = !it.tools?.length;
@@ -47,8 +48,21 @@ function fill(id) {
   const links = $('.bubble-links');
   links.hidden = !it.links?.length;
   links.replaceChildren(...(it.links || []).map(l => Object.assign(document.createElement('a'), /^https?:/.test(l.href) ? {href: l.href, textContent: l.label + ' ↗', target: '_blank', rel: 'noopener'} : {href: l.href, textContent: l.label})));
-  photo = 0; showGallery(id); showBoards(id);
+  photo = 0; showGallery(id); showBoards(id); showReport(id);
   body.scrollTop = 0; scrolled();
+}
+
+// a project's report (projects/reports/<id>.html, built by the script beside it): it replaces the summary and bullets
+const reports = new Map();
+async function showReport(id) {
+  const box = $('.bubble-report'), url = items[id].report;
+  box.hidden = !url;
+  if (!url) { box.replaceChildren(); return; }
+  try {
+    if (!reports.has(id)) reports.set(id, fetch(url).then(r => r.ok ? r.text() : ''));
+    const html = await reports.get(id);
+    if (openId === id) { box.innerHTML = html; requestAnimationFrame(scrolled); }
+  } catch { reports.delete(id); }
 }
 
 // a project's circuit boards (pcb.mjs, loaded when the first one is wanted)
@@ -62,7 +76,7 @@ async function showBoards(id) {
 }
 
 function showGallery(id) {
-  const pics = gallery[id] || [], fig = $('.gallery');
+  const pics = items[id]?.report ? [] : gallery[id] || [], fig = $('.gallery');
   fig.hidden = !pics.length;
   if (!pics.length) return;
   const many = pics.length > 1;

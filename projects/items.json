@@ -88,7 +88,8 @@
   {
     "id": "quant",
     "kind": "Project",
-    "title": "BuyIn: statistical arbitrage model",
+    "title": "Statistical arbitrage model",
+    "report": "projects/reports/quant.html",
     "dates": "2022–2025",
     "summary": "Nearest-neighbour forecasting on intraday price and volume: find the historical windows that most resemble a stock's recent behaviour, and read off what came next.",
     "points": [
@@ -105,7 +106,7 @@
     ],
     "links": [
       {
-        "label": "Write-up",
+        "label": "Full report",
         "href": "buyin/"
       },
       {

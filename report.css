@@ -1,0 +1,36 @@
+/* A report: the write-up layout used in a project panel and on a page of its own (e.g. /buyin/). It takes the page's colour and
+   font variables (--ink, --muted, --line, --accent, --serif, --sans, --mono) and sizes itself to the width it is given, so the
+   same markup reads in a 430px panel and a 760px page. */
+article.report { container-type: inline-size; color: var(--ink); }
+.bubble-report { margin-top: var(--s6); }
+article.report p { margin: 0 0 12px; max-width: 66ch; color: var(--ink); }
+article.report .foot, article.report figcaption { color: var(--muted); }
+article.report h2 { font: 400 26px/1.1 var(--serif); letter-spacing: -.01em; margin: 40px 0 10px; max-width: none; }
+article.report h2 span { font: 400 12px/1 var(--mono); color: var(--muted); margin-right: 10px; vertical-align: 3px; }
+article.report h3 { font: 500 14px/1.4 var(--sans); margin: 22px 0 4px; }
+article.report a { text-decoration: underline; text-decoration-color: var(--underline, #16161640); text-underline-offset: 3px; }
+article.report a:hover { text-decoration-color: var(--accent); }
+article.report .abstract { border-left: 2px solid var(--ink); padding: 2px 0 2px 16px; }
+article.report .abstract p { margin: 0; }
+article.report .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0 0; }
+article.report .stat { border-top: 1px solid var(--line); padding-top: 10px; }
+article.report .stat b { display: block; font: 400 26px/1.1 var(--serif); }
+article.report .stat span { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; }
+@container (max-width: 560px) { article.report .stats { grid-template-columns: 1fr 1fr; } }
+article.report figure { margin: 20px 0 26px; }
+article.report figcaption { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 8px; max-width: 66ch; }
+article.report figure > img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); }
+article.report .chart { width: 100%; height: auto; display: block; }
+article.report .chart .g { stroke: var(--line); stroke-width: 1; } article.report .chart .zero { stroke: #16161650; }
+article.report .chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; } article.report .chart .net { stroke: var(--ink); } article.report .chart .gross { stroke: #16161666; stroke-dasharray: 5 4; }
+article.report .chart .pos { fill: var(--ink); } article.report .chart .neg { fill: var(--accent); }
+article.report .chart text { font: 400 12px var(--mono); fill: var(--muted); }
+@container (max-width: 620px) { article.report .chart text { font-size: 20px; } article.report .chart .line { stroke-width: 3; } }
+article.report .scroll { overflow-x: auto; }
+article.report table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0; }
+article.report th, article.report td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); }
+article.report th { font: 400 12px var(--mono); color: var(--muted); border-bottom-color: #16161640; }
+article.report td.n, article.report th.n { text-align: right; font: 400 13px var(--mono); padding: 7px 0 7px 12px; } article.report td.neg { color: var(--accent); }
+article.report table.kv td:first-child { color: var(--muted); } article.report table.kv td.n { font-size: 13px; }
+article.report .code { font: 400 13px/1.6 var(--mono); background: #1616160a; border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; white-space: pre; }
+article.report .foot { color: var(--muted); font-size: 14px; margin-top: 40px; }
