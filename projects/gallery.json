@@ -1,1 +1,66 @@
-{}
+{
+ "arm": [
+  {
+   "src": "projects/arm/01-transmission.webp",
+   "caption": "Transmission, CAD"
+  },
+  {
+   "src": "projects/arm/02-clutches.webp",
+   "caption": "Clutch assembly, CAD"
+  },
+  {
+   "src": "projects/arm/03-prototype.webp",
+   "caption": "Prototype"
+  },
+  {
+   "src": "projects/arm/04-clutch-print.webp",
+   "caption": "Printed clutch detail"
+  }
+ ],
+ "baja-sensor": [
+  {
+   "src": "projects/baja-sensor/01-mcu.webp",
+   "caption": "Microcontroller and accelerometer"
+  },
+  {
+   "src": "projects/baja-sensor/02-can.webp",
+   "caption": "CAN interface"
+  }
+ ],
+ "recycler": [
+  {
+   "src": "projects/recycler/01-winder.webp",
+   "caption": "The winder"
+  }
+ ],
+ "foundry": [
+  {
+   "src": "projects/foundry/01-furnace.webp",
+   "caption": "Oil-barrel furnace"
+  },
+  {
+   "src": "projects/foundry/02-crucible.webp",
+   "caption": "Crucible in the furnace"
+  },
+  {
+   "src": "projects/foundry/03-pour.webp",
+   "caption": "Pouring into the mold"
+  }
+ ],
+ "quant": [
+  {
+   "src": "projects/quant/01-app.webp",
+   "caption": "BuyIn"
+  },
+  {
+   "src": "projects/quant/02-cluster.webp",
+   "caption": "Part of the cluster"
+  }
+ ],
+ "baja": [
+  {
+   "src": "projects/baja/01-car.webp",
+   "caption": "Olin Baja SAE car"
+  }
+ ]
+}
