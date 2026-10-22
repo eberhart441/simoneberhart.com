@@ -2,73 +2,120 @@
   {
     "id": "arm",
     "kind": "Project",
-    "title": "Single-motor robot arm",
+    "title": "Single-motor robot arm drive",
     "dates": "since 2024",
-    "summary": "Six joints driven by one motor. Electromagnetic clutches in the base pick which joint the motor drives, and cables carry the motion up the arm.",
+    "summary": "One motor, several joints. Clutches pick which joint the motor moves.",
     "points": [
-      "Two years of research on a novel actuation technique for a six-axis arm.",
-      "Built custom solenoids, PCBs, enclosures and actuators.",
-      "Designed a universal tool changer for affordable robotics.",
-      "Wrote a custom software suite for programming and orchestrating the robot.",
-      "Four provisional patents."
+      "Designed the clutches and got them working together as one transmission.",
+      "Three versions: servo-based, then solenoids I designed myself, then off-the-shelf solenoids.",
+      "Designed the PCB that drives the solenoids and wrote the firmware.",
+      "Control software is partly done.",
+      "Next up: turning it into an end effector for Universal Robots arms, instead of building a whole arm."
     ],
-    "tools": ["KiCad", "Fusion 360", "Onshape", "JavaScript"],
-    "links": [{"label": "Transmission video", "href": "https://www.youtube.com/watch?v=OJFuRm17yMc"}]
+    "tools": [
+      "KiCad",
+      "Fusion 360",
+      "Onshape",
+      "JavaScript"
+    ],
+    "links": [
+      {
+        "label": "Transmission video",
+        "href": "https://www.youtube.com/watch?v=OJFuRm17yMc"
+      }
+    ]
   },
   {
     "id": "baja-sensor",
     "kind": "Project",
     "title": "Baja SAE fuel sensor",
     "dates": "2026",
-    "summary": "Measures fuel level from shifts in the tank's resonant frequency.",
+    "summary": "Fuel level from how the tank rattles. The tank sits on rubber mounts, so it rings over bumps, and that frequency shifts as the fuel level changes.",
     "points": [
-      "Designed a sensor suite that tracks resonant frequency deviations from the tank.",
-      "Designed a custom PCB and software that isolate the frequencies with fast Fourier transforms."
+      "Two accelerometer boards: one right under the tank, one about 6 inches away on the frame. Subtracting them cancels the chassis, and an FFT picks out the tank's frequency.",
+      "The boards talk over CAN, so you can add as many as you want. One master board feeds the car's logging computer.",
+      "Designed the boards and firmware. The boards are being fabbed now."
     ],
-    "tools": ["PCB design", "FFT"],
+    "tools": [
+      "PCB design",
+      "FFT",
+      "CAN"
+    ],
     "links": []
   },
   {
     "id": "recycler",
     "kind": "Project",
-    "title": "Filament recycler",
-    "dates": "",
-    "summary": "A low-cost machine that turns failed 3D prints back into usable filament.",
+    "title": "Filament winder",
+    "dates": "August 2025",
+    "summary": "Keeps recycled filament a consistent width. Built to go with a Filabot EX2 extruder.",
     "points": [
-      "Uses hall-effect sensor readings to tune the extrusion line as it runs, holding the filament diameter.",
-      "Ran tests to check the quality of the plastic it produces."
+      "A magnet and a hall-effect sensor read the filament's thickness: the filament pushes the sensor away from the magnet as it passes through.",
+      "An Arduino speeds the winder up and slows it down to hold the diameter steady.",
+      "Designed the whole winder, from the frame to the motor control.",
+      "Open-sourced on Printables: 150+ downloads."
     ],
-    "tools": ["Fusion 360", "3D printing", "C++"],
-    "links": []
+    "tools": [
+      "Arduino",
+      "Fusion 360",
+      "3D printing"
+    ],
+    "links": [
+      {
+        "label": "Printables",
+        "href": "https://www.printables.com/model/585758-the-best-diy-filament-maker"
+      }
+    ]
   },
   {
     "id": "foundry",
     "kind": "Project",
     "title": "Backyard foundry",
-    "dates": "since 2024",
-    "summary": "A melting furnace built from an empty oil barrel, ceramic wool, refractory cement and a weed burner.",
+    "dates": "2025",
+    "summary": "A furnace made from an oil barrel, ceramic wool, refractory cement and a weed burner. Melts bronze (about 950 °C).",
     "points": [
-      "Reaches 1200 °C, hot enough to melt aluminium and copper.",
-      "Castings made with a custom-built two-part mold, including jewelry and sculptures."
+      "Cast cityscape sculptures: captured 3D geometry from Google Maps with RenderDoc, then simplified and closed the mesh in Python so it could be cast.",
+      "Made two-part molds. Also cast two bronze rings."
     ],
-    "tools": ["Metal casting", "Mold making"],
+    "tools": [
+      "Metal casting",
+      "Mold making",
+      "Python",
+      "RenderDoc"
+    ],
     "links": []
   },
   {
     "id": "quant",
     "kind": "Project",
-    "title": "Statistical arbitrage model",
-    "dates": "2022–2024",
-    "summary": "A statistical arbitrage model running on a compute cluster built from old computers.",
+    "title": "BuyIn: statistical arbitrage model",
+    "dates": "2022–2025",
+    "summary": "Nearest-neighbour forecasting on intraday price and volume: find the historical windows that most resemble a stock's recent behaviour, and read off what came next.",
     "points": [
-      "Developed the model around novel Euclidean-distance algorithms.",
-      "Built a homemade 20-node compute cluster with custom network protocols.",
-      "Traded live for three months."
+      "Windows of 5-minute bars are z-score normalized (price and volume as two channels) and matched by Euclidean distance against a database of historical windows ending at the same time of day. The forecast is the mean continuation of the k = 100 nearest neighbours, rescaled to the current price.",
+      "The search is partitioned across every core with multiprocessing, and ran on a 20-node cluster I built from old computers, with custom network protocols.",
+      "The auto-trader only enters when the 2-, 3- and 4-day windows all forecast the same direction past a z-score threshold. It sizes positions with the Kelly criterion, executes through the Interactive Brokers API, and exits on contrary signals or a four-hour cap.",
+      "Traded its signals live for three months (Oct 2023 to Jan 2024): 61 trades, +18.11% after fees and +39.84% before. Fees took $154 of the $288 gross.",
+      "Provisional patent filed."
     ],
-    "tools": ["Python", "NumPy", "SQLite"],
+    "tools": [
+      "Python",
+      "NumPy",
+      "SQLite"
+    ],
     "links": [
-      {"label": "Code", "href": "https://github.com/eberhart441/BuyIn-Build/tree/main/build-dayTrade"},
-      {"label": "Demo", "href": "https://www.youtube.com/watch?v=cE_erRPIcsw"}
+      {
+        "label": "Trading log",
+        "href": "trading-log/"
+      },
+      {
+        "label": "Code",
+        "href": "https://github.com/eberhart441/BuyOut"
+      },
+      {
+        "label": "Demo",
+        "href": "https://www.youtube.com/watch?v=cE_erRPIcsw"
+      }
     ]
   },
   {
@@ -77,13 +124,18 @@
     "title": "Hygrade Precision Technologies",
     "dates": "2025–2026",
     "role": "Engineering intern, then junior engineering technician · Plainville, CT",
-    "summary": "Aerospace manufacturing to micron-level tolerances.",
+    "summary": "Machined and inspected aerospace and defence parts to micron tolerances.",
     "points": [
-      "Manufactured parts for SpaceX, Lockheed Martin, Boeing and General Electric.",
-      "Metrology for thousands of precision parts with CMMs and height gauges.",
-      "Worked through manufacturing issues across the shop's CNC and grinding machines."
+      "Parts for SpaceX Starlink, NASA Artemis, the F135 and other jet engines, and GE turbines for Navy destroyers.",
+      "Ran a CNC lathe and a manual plunge grinder, and did inspection on CMMs and with height, bore and ring gauges, calipers, micrometers and gauge blocks.",
+      "Ground the overspray off a GE destroyer-turbine bushing, back to spec, when it was holding up their line. Damaging it would have cost them about $20M in delay penalties.",
+      "Helped track down manufacturing issues across the shop's CNCs and grinders."
     ],
-    "tools": ["CMM", "CNC", "Precision grinding"],
+    "tools": [
+      "CMM",
+      "CNC",
+      "Precision grinding"
+    ],
     "links": []
   },
   {
@@ -92,12 +144,15 @@
     "title": "Olin Baja SAE",
     "dates": "since 2026",
     "role": "Electrical engineer · Needham, MA",
-    "summary": "Electrical engineering for Olin's Baja SAE car.",
+    "summary": "Electrical engineer on Olin's Baja SAE team.",
     "points": [
-      "Designing the fuel-level sensor suite that tracks the tank's resonant frequency.",
-      "Custom PCB and FFT software to isolate the frequencies."
+      "Designed the fuel-level sensing boards (see Baja SAE fuel sensor).",
+      "Helped assemble the new car."
     ],
-    "tools": ["PCB design", "FFT"],
+    "tools": [
+      "PCB design",
+      "FFT"
+    ],
     "links": []
   },
   {
@@ -106,10 +161,10 @@
     "title": "D.A. Design LLC",
     "dates": "since 2025",
     "role": "Founder · Woodbridge, CT",
-    "summary": "A robotics and manufacturing research company that holds Simon's projects and their patents.",
+    "summary": "A small robotics and manufacturing company I started to turn my own projects into products.",
     "points": [
-      "Founded to eventually commercialize independent projects.",
-      "Four provisional patents filed."
+      "4 provisional patents filed: the solenoid design, its magnet arrangement, slip-based limit finding and arm detection for the end effector, and the trading model.",
+      "Now turning the single-motor arm drive into a product for Universal Robots arms."
     ],
     "tools": [],
     "links": []
@@ -118,16 +173,20 @@
     "id": "dragonfly",
     "kind": "Experience",
     "title": "Dragonfly Engineering",
-    "dates": "2024",
+    "dates": "summer 2024",
     "role": "Robotics intern · Santa Clara, CA",
-    "summary": "Industrial robotics on a biotech injection-molding line.",
+    "summary": "Reverse engineered robot arms, programmed KUKA robots, and turned a manual mill into a CNC.",
     "points": [
-      "Reverse engineered six-axis robot arms with proprietary vision systems, bought from Google X.",
-      "Programmed industrial robots in KRL for the assembly line.",
-      "Converted a three-axis mill into a CNC with a homemade electronics assembly and custom milled brackets.",
-      "Designed products for customers with DFM in mind and worked with suppliers to source components."
+      "Reverse engineered six-axis robot arms with built-in vision systems, purchased from Google X: traced the wiring and Ethernet network, worked out which computers ran the vision system, and recovered its software.",
+      "Programmed KUKA industrial robots in KRL for the assembly line.",
+      "Converted a manual mill to CNC, with custom electronics and milled brackets.",
+      "Designed products with manufacturing in mind and worked with suppliers to source parts."
     ],
-    "tools": ["KUKA KRL", "CNC", "DFM"],
+    "tools": [
+      "KUKA KRL",
+      "CNC",
+      "DFM"
+    ],
     "links": []
   }
 ]

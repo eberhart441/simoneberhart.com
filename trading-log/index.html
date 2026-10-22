@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BuyIn trading log – Simon Eberhart</title>
+<meta name="description" content="Live trading results of the BuyIn model, Oct 20, 2023 to Jan 8, 2024: 61 trades, 18.11% after fees, 39.84% before.">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; --paper: #f6f5f1; --ink: #161616; --muted: #57544f; --line: #16161620; --accent: #c8102e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper) url('../paper-texture.png'); color: var(--ink); font: 400 16px/1.6 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  nav { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: #16161640; text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent); }
+  h1 { font: 400 clamp(40px, 7vw, 56px)/1 'Instrument Serif', Georgia, serif; letter-spacing: -.025em; margin: 0 0 16px; }
+  .lede { color: var(--muted); max-width: 60ch; margin: 0 0 32px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 0 0 32px; }
+  .stat { border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat b { display: block; font: 400 30px/1.1 'Instrument Serif', Georgia, serif; }
+  .stat span { color: var(--muted); font-size: 14px; }
+  .chart { width: 100%; height: auto; display: block; margin: 0 0 8px; }
+  .chart .g { stroke: var(--line); stroke-width: 1; } .chart .zero { stroke: #16161650; }
+  .chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; } .chart .net { stroke: var(--ink); } .chart .gross { stroke: #16161666; stroke-dasharray: 5 4; }
+  .chart .dot.net { fill: var(--ink); } .chart .dot.gross { fill: #16161699; }
+  .chart text { font: 400 12px 'DM Mono', ui-monospace, monospace; fill: var(--muted); } .chart .lab { fill: var(--ink); font-size: 14px; } .chart .sub { font-size: 11px; }
+  @media (max-width: 640px) { .chart text { font-size: 21px; } .chart .lab { font-size: 23px; } .chart .sub { display: none; } }
+  .cap { color: var(--muted); font-size: 14px; max-width: 70ch; margin: 0 0 40px; }
+  h2 { font: 400 28px/1.1 'Instrument Serif', Georgia, serif; margin: 0 0 12px; }
+  .scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font: 400 12px 'DM Mono', ui-monospace, monospace; color: var(--muted); letter-spacing: .02em; border-bottom-color: #16161640; position: sticky; top: 0; background: var(--paper); }
+  td.n, th.n { text-align: right; font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; } .neg { color: var(--accent); }
+  tfoot td { font-weight: 500; border-bottom: 0; padding-top: 12px; }
+  .foot { color: var(--muted); font-size: 14px; margin-top: 24px; max-width: 70ch; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav><a href="../">← simoneberhart.com</a><a href="BuyIn-trading-log.pdf">Original log (PDF)</a></nav>
+<h1>BuyIn trading log</h1>
+<p class="lede">Live trades from the BuyIn model, Oct 20, 2023 to Jan 8, 2024: 61 trades, almost all single-contract options. Everything here is as recorded in the log.</p>
+<div class="stats">
+  <div class="stat"><b>$130.97</b><span>net profit, +18.11% after fees</span></div>
+  <div class="stat"><b>$288.00</b><span>before fees, +39.84%</span></div>
+  <div class="stat"><b>$154.44</b><span>paid in fees</span></div>
+  <div class="stat"><b>37 / 24</b><span>winning / losing trades</span></div>
+</div>
+<svg class="chart" viewBox="0 0 880 340" role="img" aria-labelledby="ct cd">
+  <title id="ct">Running profit by date</title>
+  <desc id="cd">Profit builds from zero on Oct 20, 2023 to $130.97 after fees and $288.00 before fees on Jan 8, 2024.</desc>
+  <line class="g" x1="58" x2="762" y1="300.0" y2="300.0"/><text class="ax" x="50" y="304.0" text-anchor="end">−$100</text>
+  <line class="g zero" x1="58" x2="762" y1="243.6" y2="243.6"/><text class="ax" x="50" y="247.6" text-anchor="end">$0</text>
+  <line class="g" x1="58" x2="762" y1="187.2" y2="187.2"/><text class="ax" x="50" y="191.2" text-anchor="end">$100</text>
+  <line class="g" x1="58" x2="762" y1="130.8" y2="130.8"/><text class="ax" x="50" y="134.8" text-anchor="end">$200</text>
+  <line class="g" x1="58" x2="762" y1="74.4" y2="74.4"/><text class="ax" x="50" y="78.4" text-anchor="end">$300</text>
+  <line class="g" x1="58" x2="762" y1="18.0" y2="18.0"/><text class="ax" x="50" y="22.0" text-anchor="end">$400</text>
+  <line class="g" x1="171.1" x2="171.1" y1="300" y2="305"/><text class="ax" x="171.1" y="320" text-anchor="middle">Nov 23</text>
+  <line class="g" x1="422.6" x2="422.6" y1="300" y2="305"/><text class="ax" x="422.6" y="320" text-anchor="middle">Dec 23</text>
+  <line class="g" x1="682.4" x2="682.4" y1="300" y2="305"/><text class="ax" x="682.4" y="320" text-anchor="middle">Jan 24</text>
+  <path class="line gross" d="M74.8 252.1 L99.9 159.0 L116.7 155.1 L116.7 145.5 L125.0 141.0 L133.4 130.2 L133.4 127.4 L133.4 124.6 L158.6 125.7 L167.0 111.1 L167.0 108.8 L167.0 126.9 L167.0 134.7 L175.3 119.0 L175.3 107.7 L175.3 117.8 L183.7 108.8 L183.7 106.5 L183.7 120.6 L217.2 116.1 L217.2 122.3 L225.6 118.4 L225.6 111.1 L225.6 105.4 L225.6 113.3 L242.4 115.6 L250.8 112.8 L250.8 127.4 L275.9 141.0 L275.9 145.5 L284.3 131.4 L284.3 131.4 L292.7 129.7 L292.7 131.9 L292.7 125.2 L301.0 126.9 L309.4 97.5 L334.6 100.9 L343.0 102.0 L343.0 97.5 L351.3 84.6 L351.3 79.5 L351.3 98.7 L368.1 91.9 L368.1 87.9 L393.2 80.6 L401.6 77.8 L418.4 76.7 L418.4 71.6 L426.8 56.9 L451.9 57.5 L460.3 47.3 L468.7 38.9 L485.4 25.9 L527.3 60.9 L527.3 54.1 L544.1 53.0 L711.7 48.5 L711.7 40.0 L720.1 45.6 L745.2 81.2"/>
+  <path class="line net" d="M74.8 253.2 L99.9 161.4 L116.7 158.6 L116.7 150.2 L125.0 146.8 L133.4 137.3 L133.4 135.6 L133.4 134.0 L158.6 136.3 L167.0 122.8 L167.0 121.7 L167.0 140.9 L167.0 150.0 L175.3 135.4 L175.3 125.3 L175.3 136.6 L183.7 129.0 L183.7 128.0 L183.7 143.6 L217.2 140.5 L217.2 147.9 L225.6 145.1 L225.6 139.5 L225.6 135.2 L225.6 144.2 L242.4 147.7 L250.8 146.0 L250.8 161.9 L275.9 176.6 L275.9 182.3 L284.3 169.3 L284.3 171.6 L292.7 171.1 L292.7 174.5 L292.7 168.9 L301.0 174.1 L309.4 147.1 L334.6 152.8 L343.0 155.1 L343.0 154.1 L351.3 142.3 L351.3 139.8 L351.3 160.2 L368.1 154.6 L368.1 153.0 L393.2 148.0 L401.6 146.3 L418.4 146.4 L418.4 142.5 L426.8 129.0 L451.9 130.7 L460.3 122.9 L468.7 115.6 L485.4 103.8 L527.3 140.0 L527.3 135.6 L544.1 136.8 L711.7 133.5 L711.7 126.2 L720.1 133.0 L745.2 169.7"/>
+  <circle class="dot gross" cx="745.2" cy="81.2" r="3.5"/><circle class="dot net" cx="745.2" cy="169.7" r="3.5"/>
+  <text class="lab" x="755.2" y="85.2">$288.00</text><text class="sub" x="755.2" y="101.2">before fees</text>
+  <text class="lab" x="755.2" y="173.7">$130.97</text><text class="sub" x="755.2" y="189.7">after fees</text>
+</svg>
+<p class="cap">Running profit by date: solid after fees, dashed before. Fees took $154.44 of the $288.00: the signal made money, and the account was too small to carry the fees.</p>
+<h2>All 61 trades</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th class="n">Qty</th><th class="n">Cost</th><th class="n">Fees</th><th class="n">Revenue</th><th class="n">Profit</th><th class="n">Return</th></tr></thead>
+  <tbody>
+      <tr><td>Oct 20</td><td>UL</td><td>Option Call</td><td class="n">1</td><td class="n">$425.00</td><td class="n">$2.08</td><td class="n neg">−$15.00</td><td class="n neg">−$17.08</td><td class="n neg">−4.02%</td></tr>
+      <tr><td>Oct 23</td><td>MSFT</td><td>Option Call</td><td class="n">1</td><td class="n">$692.00</td><td class="n">$2.09</td><td class="n">+$165.00</td><td class="n">+$162.91</td><td class="n">+23.54%</td></tr>
+      <tr><td>Oct 25</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$136.00</td><td class="n">$2.08</td><td class="n">+$7.00</td><td class="n">+$4.92</td><td class="n">+3.62%</td></tr>
+      <tr><td>Oct 25</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$481.00</td><td class="n">$2.09</td><td class="n">+$17.00</td><td class="n">+$14.91</td><td class="n">+3.10%</td></tr>
+      <tr><td>Oct 26</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$100.00</td><td class="n">$2.08</td><td class="n">+$8.00</td><td class="n">+$5.92</td><td class="n">+5.92%</td></tr>
+      <tr><td>Oct 27</td><td>A</td><td>Option Put</td><td class="n">1</td><td class="n">$321.00</td><td class="n">$2.08</td><td class="n">+$19.00</td><td class="n">+$16.92</td><td class="n">+5.27%</td></tr>
+      <tr><td>Oct 27</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$287.00</td><td class="n">$2.08</td><td class="n">+$5.00</td><td class="n">+$2.92</td><td class="n">+1.02%</td></tr>
+      <tr><td>Oct 27</td><td>EBAY</td><td>Option Put</td><td class="n">1</td><td class="n">$299.00</td><td class="n">$2.08</td><td class="n">+$5.00</td><td class="n">+$2.92</td><td class="n">+0.98%</td></tr>
+      <tr><td>Oct 30</td><td>MSFT</td><td>Option Put</td><td class="n">1</td><td class="n">$524.00</td><td class="n">$2.09</td><td class="n neg">−$2.00</td><td class="n neg">−$4.09</td><td class="n neg">−0.78%</td></tr>
+      <tr><td>Oct 31</td><td>PEP</td><td>Option Put</td><td class="n">1</td><td class="n">$243.00</td><td class="n">$2.08</td><td class="n">+$26.00</td><td class="n">+$23.92</td><td class="n">+9.84%</td></tr>
+      <tr><td>Oct 31</td><td>PEP</td><td>Option Put</td><td class="n">1</td><td class="n">$288.00</td><td class="n">$2.08</td><td class="n">+$4.00</td><td class="n">+$1.92</td><td class="n">+0.67%</td></tr>
+      <tr><td>Oct 31</td><td>PEP</td><td>Option Put</td><td class="n">1</td><td class="n">$111.00</td><td class="n">$2.08</td><td class="n neg">−$32.00</td><td class="n neg">−$34.08</td><td class="n neg">−30.70%</td></tr>
+      <tr><td>Oct 31</td><td>PEP</td><td>Option Put</td><td class="n">1</td><td class="n">$93.00</td><td class="n">$2.08</td><td class="n neg">−$14.00</td><td class="n neg">−$16.08</td><td class="n neg">−17.29%</td></tr>
+      <tr><td>Nov 1</td><td>RTX</td><td>Option Put</td><td class="n">1</td><td class="n">$328.00</td><td class="n">$2.08</td><td class="n">+$28.00</td><td class="n">+$25.92</td><td class="n">+7.90%</td></tr>
+      <tr><td>Nov 1</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$129.00</td><td class="n">$2.08</td><td class="n">+$20.00</td><td class="n">+$17.92</td><td class="n">+13.89%</td></tr>
+      <tr><td>Nov 1</td><td>RTX</td><td>Option Put</td><td class="n">1</td><td class="n">$197.00</td><td class="n">$2.08</td><td class="n neg">−$18.00</td><td class="n neg">−$20.08</td><td class="n neg">−10.19%</td></tr>
+      <tr><td>Nov 2</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$263.00</td><td class="n">$2.51</td><td class="n">+$16.00</td><td class="n">+$13.49</td><td class="n">+5.13%</td></tr>
+      <tr><td>Nov 2</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$270.00</td><td class="n">$2.28</td><td class="n">+$4.00</td><td class="n">+$1.72</td><td class="n">+0.64%</td></tr>
+      <tr><td>Nov 2</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$362.00</td><td class="n">$2.64</td><td class="n neg">−$25.00</td><td class="n neg">−$27.64</td><td class="n neg">−7.64%</td></tr>
+      <tr><td>Nov 6</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$306.00</td><td class="n">$2.51</td><td class="n">+$8.00</td><td class="n">+$5.49</td><td class="n">+1.79%</td></tr>
+      <tr><td>Nov 6</td><td>QQQ</td><td>Option Put</td><td class="n">1</td><td class="n">$242.00</td><td class="n">$2.08</td><td class="n neg">−$11.00</td><td class="n neg">−$13.08</td><td class="n neg">−5.40%</td></tr>
+      <tr><td>Nov 7</td><td>EBAY</td><td>Option Put</td><td class="n">1</td><td class="n">$160.00</td><td class="n">$2.08</td><td class="n">+$7.00</td><td class="n">+$4.92</td><td class="n">+3.08%</td></tr>
+      <tr><td>Nov 7</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$240.00</td><td class="n">$2.94</td><td class="n">+$13.00</td><td class="n">+$10.06</td><td class="n">+4.19%</td></tr>
+      <tr><td>Nov 7</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$226.00</td><td class="n">$2.40</td><td class="n">+$10.00</td><td class="n">+$7.60</td><td class="n">+3.36%</td></tr>
+      <tr><td>Nov 7</td><td>MSFT</td><td>Option Put</td><td class="n">1</td><td class="n">$182.00</td><td class="n">$2.08</td><td class="n neg">−$14.00</td><td class="n neg">−$16.08</td><td class="n neg">−8.84%</td></tr>
+      <tr><td>Nov 9</td><td>PEP</td><td>Option Put</td><td class="n">1</td><td class="n">$130.00</td><td class="n">$2.08</td><td class="n neg">−$4.00</td><td class="n neg">−$6.08</td><td class="n neg">−4.68%</td></tr>
+      <tr><td>Nov 10</td><td>A</td><td>Option Call</td><td class="n">1</td><td class="n">$387.00</td><td class="n">$2.08</td><td class="n">+$5.00</td><td class="n">+$2.92</td><td class="n">+0.75%</td></tr>
+      <tr><td>Nov 10</td><td>A</td><td>Option Call</td><td class="n">1</td><td class="n">$389.00</td><td class="n">$2.08</td><td class="n neg">−$26.00</td><td class="n neg">−$28.08</td><td class="n neg">−7.22%</td></tr>
+      <tr><td>Nov 13</td><td>A</td><td>Option Put</td><td class="n">1</td><td class="n">$298.00</td><td class="n">$2.08</td><td class="n neg">−$24.00</td><td class="n neg">−$26.08</td><td class="n neg">−8.75%</td></tr>
+      <tr><td>Nov 13</td><td>A</td><td>Option Put</td><td class="n">1</td><td class="n">$283.00</td><td class="n">$2.08</td><td class="n neg">−$8.00</td><td class="n neg">−$10.08</td><td class="n neg">−3.56%</td></tr>
+      <tr><td>Nov 14</td><td>MSFT</td><td>Option Call</td><td class="n">1</td><td class="n">$328.00</td><td class="n">$2.08</td><td class="n">+$25.00</td><td class="n">+$22.92</td><td class="n">+6.99%</td></tr>
+      <tr><td>Nov 14</td><td>AMD</td><td>Stock Long</td><td class="n">3</td><td class="n">$360.00</td><td class="n">$4.00</td><td class="n">+$0.00</td><td class="n neg">−$4.00</td><td class="n neg">−1.11%</td></tr>
+      <tr><td>Nov 15</td><td>AAPL</td><td>Option Call</td><td class="n">1</td><td class="n">$157.00</td><td class="n">$2.08</td><td class="n">+$3.00</td><td class="n">+$0.92</td><td class="n">+0.59%</td></tr>
+      <tr><td>Nov 15</td><td>A</td><td>Option Call</td><td class="n">1</td><td class="n">$70.00</td><td class="n">$2.08</td><td class="n neg">−$4.00</td><td class="n neg">−$6.08</td><td class="n neg">−8.69%</td></tr>
+      <tr><td>Nov 15</td><td>AMZN</td><td>Option Call</td><td class="n">1</td><td class="n">$217.00</td><td class="n">$2.08</td><td class="n">+$12.00</td><td class="n">+$9.92</td><td class="n">+4.57%</td></tr>
+      <tr><td>Nov 16</td><td>YUM</td><td>Option Put</td><td class="n">3</td><td class="n">$723.00</td><td class="n">$6.24</td><td class="n neg">−$3.00</td><td class="n neg">−$9.24</td><td class="n neg">−1.28%</td></tr>
+      <tr><td>Nov 17</td><td>MSFT</td><td>Option Put</td><td class="n">2</td><td class="n">$812.00</td><td class="n">$4.17</td><td class="n">+$52.00</td><td class="n">+$47.83</td><td class="n">+5.89%</td></tr>
+      <tr><td>Nov 20</td><td>AAPL</td><td>Option Put</td><td class="n">2</td><td class="n">$665.00</td><td class="n">$3.96</td><td class="n neg">−$6.00</td><td class="n neg">−$9.96</td><td class="n neg">−1.50%</td></tr>
+      <tr><td>Nov 21</td><td>AAPL</td><td>Option Put</td><td class="n">1</td><td class="n">$443.00</td><td class="n">$2.09</td><td class="n neg">−$2.00</td><td class="n neg">−$4.09</td><td class="n neg">−0.92%</td></tr>
+      <tr><td>Nov 21</td><td>AAPL</td><td>Option Call</td><td class="n">3</td><td class="n">$389.00</td><td class="n">$6.24</td><td class="n">+$8.00</td><td class="n">+$1.76</td><td class="n">+0.45%</td></tr>
+      <tr><td>Nov 22</td><td>MSFT</td><td>Option Call</td><td class="n">1</td><td class="n">$214.00</td><td class="n">$2.08</td><td class="n">+$23.00</td><td class="n">+$20.92</td><td class="n">+9.78%</td></tr>
+      <tr><td>Nov 22</td><td>GOOG</td><td>Option Call</td><td class="n">1</td><td class="n">$212.00</td><td class="n">$2.08</td><td class="n">+$9.00</td><td class="n">+$4.33</td><td class="n">+2.04%</td></tr>
+      <tr><td>Nov 22</td><td>MSFT</td><td>Option Call</td><td class="n">1</td><td class="n">$446.00</td><td class="n">$2.08</td><td class="n neg">−$34.00</td><td class="n neg">−$36.08</td><td class="n neg">−8.09%</td></tr>
+      <tr><td>Nov 24</td><td>MSFT</td><td>Option Put</td><td class="n">1</td><td class="n">$358.00</td><td class="n">$2.08</td><td class="n">+$12.00</td><td class="n">+$9.92</td><td class="n">+2.77%</td></tr>
+      <tr><td>Nov 24</td><td>PEP</td><td>Option Put</td><td class="n">2</td><td class="n">$430.00</td><td class="n">$4.16</td><td class="n">+$7.00</td><td class="n">+$2.84</td><td class="n">+0.66%</td></tr>
+      <tr><td>Nov 27</td><td>MSFT</td><td>Option Call</td><td class="n">2</td><td class="n">$778.00</td><td class="n">$4.16</td><td class="n">+$13.00</td><td class="n">+$8.84</td><td class="n">+1.14%</td></tr>
+      <tr><td>Nov 28</td><td>AMD</td><td>Option Put</td><td class="n">1</td><td class="n">$299.00</td><td class="n">$2.08</td><td class="n">+$5.00</td><td class="n">+$2.92</td><td class="n">+0.98%</td></tr>
+      <tr><td>Nov 30</td><td>AMZN</td><td>Option Put</td><td class="n">1</td><td class="n">$414.00</td><td class="n">$2.08</td><td class="n">+$2.00</td><td class="n neg">−$0.08</td><td class="n neg">−0.02%</td></tr>
+      <tr><td>Nov 30</td><td>DDOG</td><td>Option Call</td><td class="n">1</td><td class="n">$264.00</td><td class="n">$2.08</td><td class="n">+$9.00</td><td class="n">+$6.92</td><td class="n">+2.62%</td></tr>
+      <tr><td>Dec 1</td><td>SPY</td><td>Option Call</td><td class="n">1</td><td class="n">$305.00</td><td class="n">$2.08</td><td class="n">+$26.00</td><td class="n">+$23.92</td><td class="n">+7.84%</td></tr>
+      <tr><td>Dec 4</td><td>SPY</td><td>Option Call</td><td class="n">1</td><td class="n">$410.00</td><td class="n">$2.08</td><td class="n neg">−$1.00</td><td class="n neg">−$3.08</td><td class="n neg">−0.75%</td></tr>
+      <tr><td>Dec 5</td><td>AAPL</td><td>Option Call</td><td class="n">2</td><td class="n">$730.00</td><td class="n">$4.16</td><td class="n">+$18.00</td><td class="n">+$13.84</td><td class="n">+1.90%</td></tr>
+      <tr><td>Dec 6</td><td>PEP</td><td>Option Call</td><td class="n">1</td><td class="n">$500.00</td><td class="n">$2.09</td><td class="n">+$15.00</td><td class="n">+$12.91</td><td class="n">+2.58%</td></tr>
+      <tr><td>Dec 8</td><td>SPY</td><td>Option Call</td><td class="n">1</td><td class="n">$254.00</td><td class="n">$2.08</td><td class="n">+$23.00</td><td class="n">+$20.92</td><td class="n">+8.24%</td></tr>
+      <tr><td>Dec 13</td><td>NVDA</td><td>Option Call</td><td class="n">1</td><td class="n">$409.00</td><td class="n">$2.08</td><td class="n neg">−$62.00</td><td class="n neg">−$64.08</td><td class="n neg">−15.67%</td></tr>
+      <tr><td>Dec 13</td><td>SPY</td><td>Option Put</td><td class="n">2</td><td class="n">$805.00</td><td class="n">$4.16</td><td class="n">+$12.00</td><td class="n">+$7.84</td><td class="n">+0.97%</td></tr>
+      <tr><td>Dec 15</td><td>MSFT</td><td>Option Put</td><td class="n">2</td><td class="n">$889.00</td><td class="n">$4.18</td><td class="n">+$2.00</td><td class="n neg">−$2.18</td><td class="n neg">−0.25%</td></tr>
+      <tr><td>Jan 4</td><td>MSFT</td><td>Option Call</td><td class="n">1</td><td class="n">$355.00</td><td class="n">$2.10</td><td class="n">+$8.00</td><td class="n">+$5.90</td><td class="n">+1.66%</td></tr>
+      <tr><td>Jan 4</td><td>SPY</td><td>Option Call</td><td class="n">1</td><td class="n">$230.00</td><td class="n">$2.10</td><td class="n">+$15.00</td><td class="n">+$12.90</td><td class="n">+5.61%</td></tr>
+      <tr><td>Jan 5</td><td>MSFT</td><td>Option Put</td><td class="n">1</td><td class="n">$518.00</td><td class="n">$2.10</td><td class="n neg">−$10.00</td><td class="n neg">−$12.10</td><td class="n neg">−2.34%</td></tr>
+      <tr><td>Jan 8</td><td>SPY</td><td>Option Put</td><td class="n">1</td><td class="n">$435.00</td><td class="n">$2.10</td><td class="n neg">−$63.00</td><td class="n neg">−$65.10</td><td class="n neg">−14.97%</td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="5">Total</td><td class="n">$154.44</td><td class="n">+$288.00</td><td class="n">+$130.97</td><td class="n">+18.11%</td></tr></tfoot>
+</table></div>
+<p class="foot">Revenue is the result of each trade before fees; profit is after fees. Returns are as recorded in the log. The model is described on <a href="../#quant">the main page</a>; the code is on <a href="https://github.com/eberhart441/BuyOut">GitHub</a>.</p>
+</div>
+</body>
+</html>

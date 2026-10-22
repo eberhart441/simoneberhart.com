@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=a499a4d3">
+<link rel="stylesheet" href="style.css?v=hunt1">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- Decide liquid glass before the first paint, so the card never shows the CSS or Hyalite glass first (liquid.mjs
      confirms it, and undoes this if WebGL2 turns out to be unavailable). Hyalite (the CSS refraction) is only fetched
@@ -38,34 +38,33 @@
 <div class="view"><div class="content">
   <header>
     <h1>Simon Eberhart</h1>
-    <p>Engineering student at Olin College of Engineering, class of 2030. Most of what I make is robot hardware.
-      Right now that is a six-axis arm driven by a single motor, and the electronics for Olin's Baja SAE car.</p>
-    <p class="contact"><a href="mailto:seberhart@olin.edu">seberhart@olin.edu</a><a href="https://github.com/eberhart441">GitHub</a><a href="https://www.linkedin.com/in/simon-eberhart">LinkedIn</a></p>
+    <p>Engineering student at Olin College, class of 2030. I build robot hardware, the electronics that run it, and the software
+      around it. Right now that's a one-motor transmission I'm turning into an end effector for Universal Robots arms, and the
+      sensor boards for Olin's Baja SAE car. Before Olin I machined parts for SpaceX, NASA and GE.</p>
+    <p class="contact"><a href="mailto:seberhart@olin.edu">seberhart@olin.edu</a><a href="https://github.com/eberhart441">GitHub</a><a href="https://www.linkedin.com/in/simon-eberhart">LinkedIn</a><a href="resume/">Résumé</a></p>
   </header>
 
   <section aria-labelledby="projects">
     <h2 id="projects">Projects</h2>
     <article data-item="arm">
-      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Single-motor robot arm</button> <span>since 2024</span></h3>
-      <p>Six joints, one motor. Electromagnetic clutches in the base pick which joint the motor drives, and cables
-        carry the motion up the arm. Four provisional patents. <a href="https://www.youtube.com/watch?v=OJFuRm17yMc">Transmission video</a></p>
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Single-motor robot arm drive</button> <span>since 2024</span></h3>
+      <p>One motor, several joints. Clutches pick which joint it moves. Next: an end effector for Universal Robots arms. <a href="https://www.youtube.com/watch?v=OJFuRm17yMc">Transmission video</a></p>
     </article>
     <article data-item="baja-sensor">
       <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Baja SAE fuel sensor</button> <span>2026</span></h3>
-      <p>Measures fuel level from shifts in the tank's resonant frequency. Custom PCB and FFT firmware.</p>
+      <p>Fuel level from how the tank rattles: two accelerometer boards on a CAN bus, and an FFT on the difference.</p>
     </article>
     <article data-item="recycler">
-      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Filament recycler</button></h3>
-      <p>Turns failed 3D prints back into filament, using hall-effect feedback to hold the diameter.</p>
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Filament winder</button> <span>August 2025</span></h3>
+      <p>A winder that holds recycled filament's diameter steady with a hall-effect sensor. 150+ downloads on Printables.</p>
     </article>
     <article data-item="foundry">
-      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Backyard foundry</button> <span>since 2024</span></h3>
-      <p>A furnace built from an oil drum that reaches 1200&nbsp;°C, for aluminium and copper castings.</p>
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Backyard foundry</button> <span>2025</span></h3>
+      <p>An oil-barrel furnace that melts bronze. Cast sculptures of cityscapes pulled from Google Maps.</p>
     </article>
     <article data-item="quant">
-      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Statistical arbitrage model</button> <span>2022–2024</span></h3>
-      <p>A trading model running on a 20-node cluster I built from old computers. Traded live for three months.
-        <a href="https://github.com/eberhart441/BuyIn-Build/tree/main/build-dayTrade">Code</a>, <a href="https://www.youtube.com/watch?v=cE_erRPIcsw">demo</a></p>
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">BuyIn: statistical arbitrage model</button> <span>2022–2025</span></h3>
+      <p>Nearest-neighbour forecasting on intraday price and volume. Traded live for three months: +18.11% after fees. <a href="trading-log/">Trading log</a>, <a href="https://github.com/eberhart441/BuyOut">code</a>, <a href="https://www.youtube.com/watch?v=cE_erRPIcsw">demo</a></p>
     </article>
   </section>
 
@@ -73,21 +72,19 @@
     <h2 id="experience">Experience</h2>
     <article data-item="hygrade">
       <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Hygrade Precision Technologies</button> <span>2025–2026</span></h3>
-      <p>Engineering intern, then junior engineering technician. Machined aerospace parts for SpaceX, Lockheed
-        Martin, Boeing and GE to micron tolerances.</p>
+      <p>Machined and inspected parts for SpaceX Starlink, NASA Artemis, jet engines and Navy turbines to micron tolerances.</p>
     </article>
     <article data-item="baja">
       <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Olin Baja SAE</button> <span>since 2026</span></h3>
-      <p>Electrical engineer.</p>
+      <p>Electrical engineer. Designed the fuel-sensor boards and helped assemble the new car.</p>
     </article>
     <article data-item="da-design">
       <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">D.A. Design LLC</button> <span>since 2025</span></h3>
-      <p>Founder. A small company that holds my robotics and manufacturing projects and their patents.</p>
+      <p>Founder. A small robotics company turning my projects into products. 4 provisional patents.</p>
     </article>
     <article data-item="dragonfly">
-      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Dragonfly Engineering</button> <span>2024</span></h3>
-      <p>Robotics intern. Programmed KUKA industrial arms, reverse engineered robots from Google X, and converted a
-        manual mill to CNC.</p>
+      <h3><button class="open" type="button" aria-expanded="false" aria-controls="bubble">Dragonfly Engineering</button> <span>summer 2024</span></h3>
+      <p>Reverse engineered Google X robot arms, programmed KUKA robots, and converted a manual mill to CNC.</p>
     </article>
   </section>
 
@@ -123,8 +120,8 @@
 <!-- The static scene count lets the glass frame size scrolling before media loads. -->
 <script src="frame.js?v=hunt1"></script>
 <script type="module" src="study-player.mjs?v=fast1"></script>
-<script type="module" src="liquid.mjs?v=3188293e"></script>
-<script type="module" src="bubble.mjs?v=b373cf63"></script>
+<script type="module" src="liquid.mjs?v=hunt1"></script>
+<script type="module" src="bubble.mjs?v=hunt1"></script>
 <script>dispatchEvent(new Event('resize'))</script>
 </body>
 </html>
