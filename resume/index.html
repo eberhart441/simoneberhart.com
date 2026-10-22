@@ -24,6 +24,23 @@
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   @media print { nav { display: none; } body { background: #fff; } main { padding: 0; gap: 0; } .page { box-shadow: none; break-after: page; } }
 </style>
+<script data-goatcounter="https://simoneberhart.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+// analytics events: which row was opened, and which contact or outbound link was clicked (page views come from the tag above)
+addEventListener('click', e => {
+  const el = e.target.closest?.('a[href], button.open'); if (!el || !window.goatcounter?.count) return;
+  let name;
+  if (el.matches('button.open')) name = 'open ' + el.closest('[data-item]')?.dataset.item;
+  else {
+    const u = new URL(el.href, location.href);
+    if (u.protocol === 'mailto:') name = 'click email';
+    else if (/.pdf$/i.test(u.pathname)) name = 'click pdf ' + u.pathname.split('/').pop();
+    else if (u.origin !== location.origin) name = 'click ' + u.hostname.replace(/^www./, '') + (u.hostname.includes('github') || u.hostname.includes('youtube') || u.hostname.includes('printables') ? u.pathname : '');
+    else if (/resume/i.test(u.pathname)) name = 'click resume';
+  }
+  if (name) goatcounter.count({path: name, title: name, event: true});
+});
+</script>
 </head>
 <body>
 <nav><a href="/">← simoneberhart.com</a><a href="Simon_Eberhart_Resume.pdf" download>Download PDF</a></nav>
