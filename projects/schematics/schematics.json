@@ -1,0 +1,2098 @@
+{
+ "baja-sensor": [
+  {
+   "id": "mcu",
+   "title": "Microcontroller and accelerometer",
+   "regions": [
+    {
+     "label": "Microcontroller",
+     "box": [
+      6,
+      14,
+      106,
+      152
+     ]
+    },
+    {
+     "label": "Accelerometer",
+     "box": [
+      140,
+      14,
+      76,
+      90
+     ]
+    },
+    {
+     "label": "Programming and LED",
+     "box": [
+      10,
+      162,
+      140,
+      42
+     ]
+    }
+   ],
+   "src": "projects/schematics/mcu.svg",
+   "viewBox": [
+    2.982,
+    3.844,
+    216.616,
+    198.228
+   ],
+   "parts": {
+    "C311": {
+     "value": "100nF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "C305": {
+     "value": "0.1uf",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 13
+      }
+     },
+     "dnp": false
+    },
+    "C304": {
+     "value": "0.1uF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "R304": {
+     "value": "4.7kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 2
+      },
+      "2": {
+       "name": "",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "U302": {
+     "value": "MPU-6050",
+     "lib": "MPU-6050",
+     "desc": "InvenSense 6-Axis Motion Sensor, Gyroscope, Accelerometer, I2C",
+     "pins": {
+      "1": {
+       "name": "CLKIN",
+       "net": 14
+      },
+      "2": {
+       "name": "NC",
+       "net": 15
+      },
+      "3": {
+       "name": "NC",
+       "net": 16
+      },
+      "4": {
+       "name": "NC",
+       "net": 17
+      },
+      "5": {
+       "name": "NC",
+       "net": 18
+      },
+      "6": {
+       "name": "AUX_DA",
+       "net": 19
+      },
+      "7": {
+       "name": "AUX_CL",
+       "net": 20
+      },
+      "8": {
+       "name": "VLOGIC",
+       "net": 12
+      },
+      "9": {
+       "name": "AD0",
+       "net": 11
+      },
+      "10": {
+       "name": "REGOUT",
+       "net": 13
+      },
+      "11": {
+       "name": "FSYNC",
+       "net": 21
+      },
+      "12": {
+       "name": "INT",
+       "net": 4
+      },
+      "13": {
+       "name": "VDD",
+       "net": 12
+      },
+      "14": {
+       "name": "NC",
+       "net": 22
+      },
+      "15": {
+       "name": "NC",
+       "net": 23
+      },
+      "16": {
+       "name": "NC",
+       "net": 24
+      },
+      "17": {
+       "name": "NC",
+       "net": 25
+      },
+      "18": {
+       "name": "GND",
+       "net": 11
+      },
+      "19": {
+       "name": "RESV",
+       "net": 26
+      },
+      "20": {
+       "name": "CPOUT",
+       "net": 27
+      },
+      "21": {
+       "name": "RESV",
+       "net": 28
+      },
+      "22": {
+       "name": "RESV",
+       "net": 29
+      },
+      "23": {
+       "name": "SCL",
+       "net": 2
+      },
+      "24": {
+       "name": "SDA",
+       "net": 0
+      }
+     },
+     "dnp": false
+    },
+    "SW303": {
+     "value": "SW_Push",
+     "lib": "SW_Push",
+     "desc": "Push button switch, generic, two pins",
+     "pins": {
+      "1": {
+       "name": "1",
+       "net": 30
+      },
+      "2": {
+       "name": "2",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "C308": {
+     "value": "100nF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "U304": {
+     "value": "STM32F446RETx",
+     "lib": "STM32F446RETx",
+     "desc": "STMicroelectronics Arm Cortex-M4 MCU, 512KB flash, 128KB RAM, 180 MHz, 1.8-3.6V, 50 GPIO, LQFP64",
+     "pins": {
+      "1": {
+       "name": "VBAT",
+       "net": 12
+      },
+      "2": {
+       "name": "PC13",
+       "net": 31
+      },
+      "3": {
+       "name": "PC14",
+       "net": 32
+      },
+      "4": {
+       "name": "PC15",
+       "net": 33
+      },
+      "5": {
+       "name": "PH0",
+       "net": 34
+      },
+      "6": {
+       "name": "PH1",
+       "net": 35
+      },
+      "7": {
+       "name": "NRST",
+       "net": 3
+      },
+      "8": {
+       "name": "PC0",
+       "net": 36
+      },
+      "9": {
+       "name": "PC1",
+       "net": 37
+      },
+      "10": {
+       "name": "PC2",
+       "net": 38
+      },
+      "11": {
+       "name": "PC3",
+       "net": 39
+      },
+      "12": {
+       "name": "VSSA",
+       "net": 11
+      },
+      "13": {
+       "name": "VDDA",
+       "net": 12
+      },
+      "14": {
+       "name": "PA0",
+       "net": 40
+      },
+      "15": {
+       "name": "PA1",
+       "net": 41
+      },
+      "16": {
+       "name": "PA2",
+       "net": 42
+      },
+      "17": {
+       "name": "PA3",
+       "net": 43
+      },
+      "18": {
+       "name": "VSS",
+       "net": 11
+      },
+      "19": {
+       "name": "VDD",
+       "net": 12
+      },
+      "20": {
+       "name": "PA4",
+       "net": 44
+      },
+      "21": {
+       "name": "PA5",
+       "net": 45
+      },
+      "22": {
+       "name": "PA6",
+       "net": 46
+      },
+      "23": {
+       "name": "PA7",
+       "net": 47
+      },
+      "24": {
+       "name": "PC4",
+       "net": 48
+      },
+      "25": {
+       "name": "PC5",
+       "net": 49
+      },
+      "26": {
+       "name": "PB0",
+       "net": 4
+      },
+      "27": {
+       "name": "PB1",
+       "net": 50
+      },
+      "28": {
+       "name": "PB2",
+       "net": 51
+      },
+      "29": {
+       "name": "PB10",
+       "net": 52
+      },
+      "30": {
+       "name": "VCAP_1",
+       "net": 53
+      },
+      "31": {
+       "name": "VSS",
+       "net": 11
+      },
+      "32": {
+       "name": "VDD",
+       "net": 12
+      },
+      "33": {
+       "name": "PB12",
+       "net": 7
+      },
+      "34": {
+       "name": "PB13",
+       "net": 10
+      },
+      "35": {
+       "name": "PB14",
+       "net": 54
+      },
+      "36": {
+       "name": "PB15",
+       "net": 55
+      },
+      "37": {
+       "name": "PC6",
+       "net": 56
+      },
+      "38": {
+       "name": "PC7",
+       "net": 57
+      },
+      "39": {
+       "name": "PC8",
+       "net": 58
+      },
+      "40": {
+       "name": "PC9",
+       "net": 59
+      },
+      "41": {
+       "name": "PA8",
+       "net": 60
+      },
+      "42": {
+       "name": "PA9",
+       "net": 61
+      },
+      "43": {
+       "name": "PA10",
+       "net": 62
+      },
+      "44": {
+       "name": "PA11",
+       "net": 9
+      },
+      "45": {
+       "name": "PA12",
+       "net": 6
+      },
+      "46": {
+       "name": "PA13",
+       "net": 5
+      },
+      "47": {
+       "name": "VSS",
+       "net": 11
+      },
+      "48": {
+       "name": "VDD",
+       "net": 12
+      },
+      "49": {
+       "name": "PA14",
+       "net": 8
+      },
+      "50": {
+       "name": "PA15",
+       "net": 63
+      },
+      "51": {
+       "name": "PC10",
+       "net": 64
+      },
+      "52": {
+       "name": "PC11",
+       "net": 65
+      },
+      "53": {
+       "name": "PC12",
+       "net": 66
+      },
+      "54": {
+       "name": "PD2",
+       "net": 67
+      },
+      "55": {
+       "name": "PB3",
+       "net": 1
+      },
+      "56": {
+       "name": "PB4",
+       "net": 68
+      },
+      "57": {
+       "name": "PB5",
+       "net": 69
+      },
+      "58": {
+       "name": "PB6",
+       "net": 2
+      },
+      "59": {
+       "name": "PB7",
+       "net": 0
+      },
+      "60": {
+       "name": "BOOT0",
+       "net": 30
+      },
+      "61": {
+       "name": "PB8",
+       "net": 70
+      },
+      "62": {
+       "name": "PB9",
+       "net": 71
+      },
+      "63": {
+       "name": "VSS",
+       "net": 11
+      },
+      "64": {
+       "name": "VDD",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "J301": {
+     "value": "Conn_01x06_Socket",
+     "lib": "Conn_01x06_Socket",
+     "desc": "Generic connector, single row, 01x06, script generated",
+     "pins": {
+      "1": {
+       "name": "Pin_1",
+       "net": 12
+      },
+      "2": {
+       "name": "Pin_2",
+       "net": 11
+      },
+      "3": {
+       "name": "Pin_3",
+       "net": 5
+      },
+      "4": {
+       "name": "Pin_4",
+       "net": 8
+      },
+      "5": {
+       "name": "Pin_5",
+       "net": 3
+      },
+      "6": {
+       "name": "Pin_6",
+       "net": 1
+      }
+     },
+     "dnp": true
+    },
+    "D301": {
+     "value": "LED",
+     "lib": "LED",
+     "desc": "Light emitting diode",
+     "pins": {
+      "1": {
+       "name": "K",
+       "net": 11
+      },
+      "2": {
+       "name": "A",
+       "net": 72
+      }
+     },
+     "dnp": false
+    },
+    "C306": {
+     "value": "2.2nf",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 27
+      }
+     },
+     "dnp": false
+    },
+    "R303": {
+     "value": "10kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 30
+      }
+     },
+     "dnp": false
+    },
+    "C301": {
+     "value": "10pF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 34
+      }
+     },
+     "dnp": false
+    },
+    "C302": {
+     "value": "10pF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 35
+      }
+     },
+     "dnp": false
+    },
+    "R309": {
+     "value": "10kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 3
+      }
+     },
+     "dnp": false
+    },
+    "R305": {
+     "value": "4.7kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 0
+      },
+      "2": {
+       "name": "",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "SW305": {
+     "value": "SW_Push",
+     "lib": "SW_Push",
+     "desc": "Push button switch, generic, two pins",
+     "pins": {
+      "1": {
+       "name": "1",
+       "net": 3
+      },
+      "2": {
+       "name": "2",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "C312": {
+     "value": "4.7uF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 53
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "Y301": {
+     "value": "16MHz",
+     "lib": "Crystal_GND24",
+     "desc": "Four pin crystal, GND on pins 2 and 4",
+     "pins": {
+      "1": {
+       "name": "1",
+       "net": 34
+      },
+      "2": {
+       "name": "G",
+       "net": 11
+      },
+      "3": {
+       "name": "3",
+       "net": 35
+      },
+      "4": {
+       "name": "G",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "C310": {
+     "value": "10uF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "C309": {
+     "value": "100nF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "R306": {
+     "value": "1kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 72
+      }
+     },
+     "dnp": false
+    },
+    "R301": {
+     "value": "10kOHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 51
+      }
+     },
+     "dnp": false
+    },
+    "C307": {
+     "value": "10uF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    },
+    "C313": {
+     "value": "100nF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 11
+      },
+      "2": {
+       "name": "",
+       "net": 12
+      }
+     },
+     "dnp": false
+    },
+    "C303": {
+     "value": "100nF",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 12
+      },
+      "2": {
+       "name": "",
+       "net": 11
+      }
+     },
+     "dnp": false
+    }
+   },
+   "nets": {
+    "0": {
+     "name": "IMU_SDA",
+     "pins": [
+      "U302.24",
+      "U304.59",
+      "R305.1"
+     ]
+    },
+    "1": {
+     "name": "SWO",
+     "pins": [
+      "U304.55",
+      "J301.6"
+     ]
+    },
+    "2": {
+     "name": "IMU_SCL",
+     "pins": [
+      "R304.1",
+      "U302.23",
+      "U304.58"
+     ]
+    },
+    "3": {
+     "name": "NRST",
+     "pins": [
+      "U304.7",
+      "J301.5",
+      "R309.2",
+      "SW305.1"
+     ]
+    },
+    "4": {
+     "name": "INT",
+     "pins": [
+      "U302.12",
+      "U304.26"
+     ]
+    },
+    "5": {
+     "name": "SWDIO",
+     "pins": [
+      "U304.46",
+      "J301.3"
+     ]
+    },
+    "6": {
+     "name": "INTER_CAN_TX",
+     "pins": [
+      "U304.45"
+     ]
+    },
+    "7": {
+     "name": "EXT_CAN_RX",
+     "pins": [
+      "U304.33"
+     ]
+    },
+    "8": {
+     "name": "SWCLK",
+     "pins": [
+      "U304.49",
+      "J301.4"
+     ]
+    },
+    "9": {
+     "name": "INTER_CAN_RX",
+     "pins": [
+      "U304.44"
+     ]
+    },
+    "10": {
+     "name": "EXT_CAN_TX",
+     "pins": [
+      "U304.34"
+     ]
+    },
+    "11": {
+     "name": "GND",
+     "pins": [
+      "C311.2",
+      "C305.1",
+      "C304.2",
+      "U302.9",
+      "U302.18",
+      "C308.2",
+      "U304.12",
+      "U304.18",
+      "U304.31",
+      "U304.47",
+      "U304.63",
+      "J301.2",
+      "D301.1",
+      "C306.1",
+      "R303.1",
+      "C301.1",
+      "C302.1",
+      "SW305.2",
+      "C312.2",
+      "Y301.2",
+      "Y301.4",
+      "C310.1",
+      "C309.2",
+      "R301.1",
+      "C307.2",
+      "C313.1",
+      "C303.2"
+     ]
+    },
+    "12": {
+     "name": "+3V3",
+     "pins": [
+      "C311.1",
+      "C304.1",
+      "R304.2",
+      "U302.8",
+      "U302.13",
+      "SW303.2",
+      "C308.1",
+      "U304.1",
+      "U304.13",
+      "U304.19",
+      "U304.32",
+      "U304.48",
+      "U304.64",
+      "J301.1",
+      "R309.1",
+      "R305.2",
+      "C310.2",
+      "C309.1",
+      "R306.1",
+      "C307.1",
+      "C313.2",
+      "C303.1"
+     ]
+    },
+    "13": {
+     "name": "C305.2 – U302.10",
+     "pins": [
+      "C305.2",
+      "U302.10"
+     ]
+    },
+    "14": {
+     "name": "U302.1",
+     "pins": [
+      "U302.1"
+     ]
+    },
+    "15": {
+     "name": "U302.2",
+     "pins": [
+      "U302.2"
+     ]
+    },
+    "16": {
+     "name": "U302.3",
+     "pins": [
+      "U302.3"
+     ]
+    },
+    "17": {
+     "name": "U302.4",
+     "pins": [
+      "U302.4"
+     ]
+    },
+    "18": {
+     "name": "U302.5",
+     "pins": [
+      "U302.5"
+     ]
+    },
+    "19": {
+     "name": "U302.6",
+     "pins": [
+      "U302.6"
+     ]
+    },
+    "20": {
+     "name": "U302.7",
+     "pins": [
+      "U302.7"
+     ]
+    },
+    "21": {
+     "name": "U302.11",
+     "pins": [
+      "U302.11"
+     ]
+    },
+    "22": {
+     "name": "U302.14",
+     "pins": [
+      "U302.14"
+     ]
+    },
+    "23": {
+     "name": "U302.15",
+     "pins": [
+      "U302.15"
+     ]
+    },
+    "24": {
+     "name": "U302.16",
+     "pins": [
+      "U302.16"
+     ]
+    },
+    "25": {
+     "name": "U302.17",
+     "pins": [
+      "U302.17"
+     ]
+    },
+    "26": {
+     "name": "U302.19",
+     "pins": [
+      "U302.19"
+     ]
+    },
+    "27": {
+     "name": "U302.20 – C306.2",
+     "pins": [
+      "U302.20",
+      "C306.2"
+     ]
+    },
+    "28": {
+     "name": "U302.21",
+     "pins": [
+      "U302.21"
+     ]
+    },
+    "29": {
+     "name": "U302.22",
+     "pins": [
+      "U302.22"
+     ]
+    },
+    "30": {
+     "name": "SW303.1 – U304.60 – R303.2",
+     "pins": [
+      "SW303.1",
+      "U304.60",
+      "R303.2"
+     ]
+    },
+    "31": {
+     "name": "U304.2",
+     "pins": [
+      "U304.2"
+     ]
+    },
+    "32": {
+     "name": "U304.3",
+     "pins": [
+      "U304.3"
+     ]
+    },
+    "33": {
+     "name": "U304.4",
+     "pins": [
+      "U304.4"
+     ]
+    },
+    "34": {
+     "name": "U304.5 – C301.2 – Y301.1",
+     "pins": [
+      "U304.5",
+      "C301.2",
+      "Y301.1"
+     ]
+    },
+    "35": {
+     "name": "U304.6 – C302.2 – Y301.3",
+     "pins": [
+      "U304.6",
+      "C302.2",
+      "Y301.3"
+     ]
+    },
+    "36": {
+     "name": "U304.8",
+     "pins": [
+      "U304.8"
+     ]
+    },
+    "37": {
+     "name": "U304.9",
+     "pins": [
+      "U304.9"
+     ]
+    },
+    "38": {
+     "name": "U304.10",
+     "pins": [
+      "U304.10"
+     ]
+    },
+    "39": {
+     "name": "U304.11",
+     "pins": [
+      "U304.11"
+     ]
+    },
+    "40": {
+     "name": "U304.14",
+     "pins": [
+      "U304.14"
+     ]
+    },
+    "41": {
+     "name": "U304.15",
+     "pins": [
+      "U304.15"
+     ]
+    },
+    "42": {
+     "name": "U304.16",
+     "pins": [
+      "U304.16"
+     ]
+    },
+    "43": {
+     "name": "U304.17",
+     "pins": [
+      "U304.17"
+     ]
+    },
+    "44": {
+     "name": "U304.20",
+     "pins": [
+      "U304.20"
+     ]
+    },
+    "45": {
+     "name": "U304.21",
+     "pins": [
+      "U304.21"
+     ]
+    },
+    "46": {
+     "name": "U304.22",
+     "pins": [
+      "U304.22"
+     ]
+    },
+    "47": {
+     "name": "U304.23",
+     "pins": [
+      "U304.23"
+     ]
+    },
+    "48": {
+     "name": "U304.24",
+     "pins": [
+      "U304.24"
+     ]
+    },
+    "49": {
+     "name": "U304.25",
+     "pins": [
+      "U304.25"
+     ]
+    },
+    "50": {
+     "name": "U304.27",
+     "pins": [
+      "U304.27"
+     ]
+    },
+    "51": {
+     "name": "U304.28 – R301.2",
+     "pins": [
+      "U304.28",
+      "R301.2"
+     ]
+    },
+    "52": {
+     "name": "U304.29",
+     "pins": [
+      "U304.29"
+     ]
+    },
+    "53": {
+     "name": "U304.30 – C312.1",
+     "pins": [
+      "U304.30",
+      "C312.1"
+     ]
+    },
+    "54": {
+     "name": "U304.35",
+     "pins": [
+      "U304.35"
+     ]
+    },
+    "55": {
+     "name": "U304.36",
+     "pins": [
+      "U304.36"
+     ]
+    },
+    "56": {
+     "name": "U304.37",
+     "pins": [
+      "U304.37"
+     ]
+    },
+    "57": {
+     "name": "U304.38",
+     "pins": [
+      "U304.38"
+     ]
+    },
+    "58": {
+     "name": "U304.39",
+     "pins": [
+      "U304.39"
+     ]
+    },
+    "59": {
+     "name": "U304.40",
+     "pins": [
+      "U304.40"
+     ]
+    },
+    "60": {
+     "name": "U304.41",
+     "pins": [
+      "U304.41"
+     ]
+    },
+    "61": {
+     "name": "U304.42",
+     "pins": [
+      "U304.42"
+     ]
+    },
+    "62": {
+     "name": "U304.43",
+     "pins": [
+      "U304.43"
+     ]
+    },
+    "63": {
+     "name": "U304.50",
+     "pins": [
+      "U304.50"
+     ]
+    },
+    "64": {
+     "name": "U304.51",
+     "pins": [
+      "U304.51"
+     ]
+    },
+    "65": {
+     "name": "U304.52",
+     "pins": [
+      "U304.52"
+     ]
+    },
+    "66": {
+     "name": "U304.53",
+     "pins": [
+      "U304.53"
+     ]
+    },
+    "67": {
+     "name": "U304.54",
+     "pins": [
+      "U304.54"
+     ]
+    },
+    "68": {
+     "name": "U304.56",
+     "pins": [
+      "U304.56"
+     ]
+    },
+    "69": {
+     "name": "U304.57",
+     "pins": [
+      "U304.57"
+     ]
+    },
+    "70": {
+     "name": "U304.61",
+     "pins": [
+      "U304.61"
+     ]
+    },
+    "71": {
+     "name": "U304.62",
+     "pins": [
+      "U304.62"
+     ]
+    },
+    "72": {
+     "name": "D301.2 – R306.2",
+     "pins": [
+      "D301.2",
+      "R306.2"
+     ]
+    }
+   }
+  },
+  {
+   "id": "comms",
+   "title": "CAN interface",
+   "regions": [
+    {
+     "label": "Programming header",
+     "box": [
+      20,
+      15,
+      45,
+      40
+     ]
+    },
+    {
+     "label": "EXT CAN connector",
+     "box": [
+      76,
+      15,
+      76,
+      40
+     ]
+    },
+    {
+     "label": "INTER CAN connectors",
+     "box": [
+      158,
+      15,
+      106,
+      62
+     ]
+    },
+    {
+     "label": "Transceivers",
+     "box": [
+      20,
+      60,
+      125,
+      58
+     ]
+    },
+    {
+     "label": "Filters and protection",
+     "box": [
+      20,
+      114,
+      134,
+      78
+     ]
+    }
+   ],
+   "src": "projects/schematics/comms.svg",
+   "viewBox": [
+    16.698,
+    2.955,
+    246.867,
+    186.163
+   ],
+   "parts": {
+    "JP501": {
+     "value": "SolderJumper_2_Open",
+     "lib": "SolderJumper_2_Open",
+     "desc": "Solder Jumper, 2-pole, open",
+     "pins": {
+      "1": {
+       "name": "A",
+       "net": 19
+      },
+      "2": {
+       "name": "B",
+       "net": 3
+      }
+     },
+     "dnp": false
+    },
+    "JP503": {
+     "value": "JP_EXT_PWR",
+     "lib": "SolderJumper_2_Open",
+     "desc": "Solder Jumper, 2-pole, open",
+     "pins": {
+      "1": {
+       "name": "A",
+       "net": 20
+      },
+      "2": {
+       "name": "B",
+       "net": 8
+      }
+     },
+     "dnp": false
+    },
+    "C502": {
+     "value": "100nf",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 18
+      },
+      "2": {
+       "name": "",
+       "net": 17
+      }
+     },
+     "dnp": false
+    },
+    "R_CAN_TERM502": {
+     "value": "120 OHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 5
+      },
+      "2": {
+       "name": "",
+       "net": 21
+      }
+     },
+     "dnp": false
+    },
+    "C509": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 3
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "C504": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 4
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": true
+    },
+    "C508": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 0
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": true
+    },
+    "D502": {
+     "value": "NUP2105L",
+     "lib": "NUP2105L",
+     "desc": "Dual Line CAN Bus Protector, 24Vrwm",
+     "pins": {
+      "1": {
+       "name": "K",
+       "net": 3
+      },
+      "2": {
+       "name": "K",
+       "net": 2
+      },
+      "3": {
+       "name": "A",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "D501": {
+     "value": "NUP2105L",
+     "lib": "NUP2105L",
+     "desc": "Dual Line CAN Bus Protector, 24Vrwm",
+     "pins": {
+      "1": {
+       "name": "K",
+       "net": 7
+      },
+      "2": {
+       "name": "K",
+       "net": 5
+      },
+      "3": {
+       "name": "A",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "C505": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 7
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "C507": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 1
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": true
+    },
+    "JP502": {
+     "value": "SolderJumper_2_Open",
+     "lib": "SolderJumper_2_Open",
+     "desc": "Solder Jumper, 2-pole, open",
+     "pins": {
+      "1": {
+       "name": "A",
+       "net": 21
+      },
+      "2": {
+       "name": "B",
+       "net": 7
+      }
+     },
+     "dnp": false
+    },
+    "C506": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 5
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "U502": {
+     "value": "TCAN330",
+     "lib": "TCAN330",
+     "desc": "High-Speed CAN Transceiver, 1Mbps, 3.3V supply, silent mode, shutdown mode, SOT-23-8/SOIC-8",
+     "pins": {
+      "1": {
+       "name": "TXD",
+       "net": 12
+      },
+      "2": {
+       "name": "GND",
+       "net": 18
+      },
+      "3": {
+       "name": "VCC",
+       "net": 17
+      },
+      "4": {
+       "name": "RXD",
+       "net": 10
+      },
+      "5": {
+       "name": "SHDN",
+       "net": 18
+      },
+      "6": {
+       "name": "CANL",
+       "net": 1
+      },
+      "7": {
+       "name": "CANH",
+       "net": 0
+      },
+      "8": {
+       "name": "S",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "FL501": {
+     "value": "1812CAN-513NRC",
+     "lib": "Filter_EMI_LL_1423",
+     "desc": "EMI 2-inductor filter, pin-connections 1-4 and 2-3",
+     "pins": {
+      "1": {
+       "name": "1",
+       "net": 4
+      },
+      "2": {
+       "name": "2",
+       "net": 6
+      },
+      "3": {
+       "name": "3",
+       "net": 5
+      },
+      "4": {
+       "name": "4",
+       "net": 7
+      }
+     },
+     "dnp": false
+    },
+    "J503": {
+     "value": "Conn_01x04_Pin",
+     "lib": "Conn_01x04_Pin",
+     "desc": "Generic connector, single row, 01x04, script generated",
+     "pins": {
+      "1": {
+       "name": "Pin_1",
+       "net": 20
+      },
+      "2": {
+       "name": "Pin_2",
+       "net": 18
+      },
+      "3": {
+       "name": "Pin_3",
+       "net": 5
+      },
+      "4": {
+       "name": "Pin_4",
+       "net": 7
+      }
+     },
+     "dnp": false
+    },
+    "J501": {
+     "value": "Conn_01x06_Pin",
+     "lib": "Conn_01x06_Pin",
+     "desc": "Generic connector, single row, 01x06, script generated",
+     "pins": {
+      "1": {
+       "name": "Pin_1",
+       "net": 22
+      },
+      "2": {
+       "name": "Pin_2",
+       "net": 18
+      },
+      "3": {
+       "name": "Pin_3",
+       "net": 9
+      },
+      "4": {
+       "name": "Pin_4",
+       "net": 16
+      },
+      "5": {
+       "name": "Pin_5",
+       "net": 11
+      },
+      "6": {
+       "name": "Pin_6",
+       "net": 13
+      }
+     },
+     "dnp": false
+    },
+    "J504": {
+     "value": "Conn_01x04_Pin",
+     "lib": "Conn_01x04_Pin",
+     "desc": "Generic connector, single row, 01x04, script generated",
+     "pins": {
+      "1": {
+       "name": "Pin_1",
+       "net": 8
+      },
+      "2": {
+       "name": "Pin_2",
+       "net": 18
+      },
+      "3": {
+       "name": "Pin_3",
+       "net": 2
+      },
+      "4": {
+       "name": "Pin_4",
+       "net": 3
+      }
+     },
+     "dnp": false
+    },
+    "C503": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 6
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": true
+    },
+    "C510": {
+     "value": "47pF 50V",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 2
+      },
+      "2": {
+       "name": "",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "U501": {
+     "value": "TCAN330",
+     "lib": "TCAN330",
+     "desc": "High-Speed CAN Transceiver, 1Mbps, 3.3V supply, silent mode, shutdown mode, SOT-23-8/SOIC-8",
+     "pins": {
+      "1": {
+       "name": "TXD",
+       "net": 15
+      },
+      "2": {
+       "name": "GND",
+       "net": 18
+      },
+      "3": {
+       "name": "VCC",
+       "net": 17
+      },
+      "4": {
+       "name": "RXD",
+       "net": 14
+      },
+      "5": {
+       "name": "SHDN",
+       "net": 18
+      },
+      "6": {
+       "name": "CANL",
+       "net": 4
+      },
+      "7": {
+       "name": "CANH",
+       "net": 6
+      },
+      "8": {
+       "name": "S",
+       "net": 18
+      }
+     },
+     "dnp": false
+    },
+    "C501": {
+     "value": "100nf",
+     "lib": "C",
+     "desc": "Unpolarized capacitor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 18
+      },
+      "2": {
+       "name": "",
+       "net": 17
+      }
+     },
+     "dnp": false
+    },
+    "J502": {
+     "value": "Conn_01x04_Pin",
+     "lib": "Conn_01x04_Pin",
+     "desc": "Generic connector, single row, 01x04, script generated",
+     "pins": {
+      "1": {
+       "name": "Pin_1",
+       "net": 8
+      },
+      "2": {
+       "name": "Pin_2",
+       "net": 18
+      },
+      "3": {
+       "name": "Pin_3",
+       "net": 2
+      },
+      "4": {
+       "name": "Pin_4",
+       "net": 3
+      }
+     },
+     "dnp": false
+    },
+    "FL502": {
+     "value": "1812CAN-513NRC",
+     "lib": "Filter_EMI_LL_1423",
+     "desc": "EMI 2-inductor filter, pin-connections 1-4 and 2-3",
+     "pins": {
+      "1": {
+       "name": "1",
+       "net": 1
+      },
+      "2": {
+       "name": "2",
+       "net": 0
+      },
+      "3": {
+       "name": "3",
+       "net": 2
+      },
+      "4": {
+       "name": "4",
+       "net": 3
+      }
+     },
+     "dnp": false
+    },
+    "R_CAN_TERM501": {
+     "value": "120 OHM",
+     "lib": "R",
+     "desc": "Resistor",
+     "pins": {
+      "1": {
+       "name": "",
+       "net": 2
+      },
+      "2": {
+       "name": "",
+       "net": 19
+      }
+     },
+     "dnp": false
+    }
+   },
+   "nets": {
+    "0": {
+     "name": "INTER_CAN_H_IC",
+     "pins": [
+      "C508.1",
+      "U502.7",
+      "FL502.2"
+     ]
+    },
+    "1": {
+     "name": "INTER_CAN_L_IC",
+     "pins": [
+      "C507.1",
+      "U502.6",
+      "FL502.1"
+     ]
+    },
+    "2": {
+     "name": "INTER_CAN_H",
+     "pins": [
+      "D502.2",
+      "J504.3",
+      "C510.1",
+      "J502.3",
+      "FL502.3",
+      "R_CAN_TERM501.1"
+     ]
+    },
+    "3": {
+     "name": "INTER_CAN_L",
+     "pins": [
+      "JP501.2",
+      "C509.1",
+      "D502.1",
+      "J504.4",
+      "J502.4",
+      "FL502.4"
+     ]
+    },
+    "4": {
+     "name": "EXT_CAN_L_IC",
+     "pins": [
+      "C504.1",
+      "FL501.1",
+      "U501.6"
+     ]
+    },
+    "5": {
+     "name": "EXT_CAN_H",
+     "pins": [
+      "R_CAN_TERM502.1",
+      "D501.2",
+      "C506.1",
+      "FL501.3",
+      "J503.3"
+     ]
+    },
+    "6": {
+     "name": "EXT_CAN_H_IC",
+     "pins": [
+      "FL501.2",
+      "C503.1",
+      "U501.7"
+     ]
+    },
+    "7": {
+     "name": "EXT_CAN_L",
+     "pins": [
+      "D501.1",
+      "C505.1",
+      "JP502.2",
+      "FL501.4",
+      "J503.4"
+     ]
+    },
+    "8": {
+     "name": "EXT_5V_IN",
+     "pins": [
+      "JP503.2",
+      "J504.1",
+      "J502.1"
+     ]
+    },
+    "9": {
+     "name": "SWDIO",
+     "pins": [
+      "J501.3"
+     ]
+    },
+    "10": {
+     "name": "INTER_CAN_RX",
+     "pins": [
+      "U502.4"
+     ]
+    },
+    "11": {
+     "name": "NRST",
+     "pins": [
+      "J501.5"
+     ]
+    },
+    "12": {
+     "name": "INTER_CAN_TX",
+     "pins": [
+      "U502.1"
+     ]
+    },
+    "13": {
+     "name": "SWO",
+     "pins": [
+      "J501.6"
+     ]
+    },
+    "14": {
+     "name": "EXT_CAN_RX",
+     "pins": [
+      "U501.4"
+     ]
+    },
+    "15": {
+     "name": "EXT_CAN_TX",
+     "pins": [
+      "U501.1"
+     ]
+    },
+    "16": {
+     "name": "SWCLK",
+     "pins": [
+      "J501.4"
+     ]
+    },
+    "17": {
+     "name": "+3V3",
+     "pins": [
+      "C502.2",
+      "U502.3",
+      "U501.3",
+      "C501.2"
+     ]
+    },
+    "18": {
+     "name": "GND",
+     "pins": [
+      "C502.1",
+      "C509.2",
+      "C504.2",
+      "C508.2",
+      "D502.3",
+      "D501.3",
+      "C505.2",
+      "C507.2",
+      "C506.2",
+      "U502.2",
+      "U502.5",
+      "U502.8",
+      "J503.2",
+      "J501.2",
+      "J504.2",
+      "C503.2",
+      "C510.2",
+      "U501.2",
+      "U501.5",
+      "U501.8",
+      "C501.1",
+      "J502.2"
+     ]
+    },
+    "19": {
+     "name": "JP501.1 – R_CAN_TERM501.2",
+     "pins": [
+      "JP501.1",
+      "R_CAN_TERM501.2"
+     ]
+    },
+    "20": {
+     "name": "JP503.1 – J503.1",
+     "pins": [
+      "JP503.1",
+      "J503.1"
+     ]
+    },
+    "21": {
+     "name": "R_CAN_TERM502.2 – JP502.1",
+     "pins": [
+      "R_CAN_TERM502.2",
+      "JP502.1"
+     ]
+    },
+    "22": {
+     "name": "J501.1",
+     "pins": [
+      "J501.1"
+     ]
+    }
+   }
+  }
+ ]
+}

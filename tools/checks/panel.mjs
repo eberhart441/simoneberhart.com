@@ -135,7 +135,7 @@ export default async function ({baseUrl, launch}) {
     await scenario('the board viewer', {}, async (page, ok) => {
       await page.click('[data-item=arm] .open'); await panelSettled(page);
       const view = () => page.evaluate(() => { const v = document.querySelector('.pcb svg')?.getAttribute('viewBox'); return v && v.split(' ').map(Number); });
-      await until(page, () => document.querySelector('.pcb svg g[data-layer]'));
+      await until(page, () => document.querySelector('.bubble-report .pcb svg g[data-layer]'));   // (the report moves the viewer into its text when it arrives: wait for that)
       let s = await page.evaluate(() => ({shown: !document.querySelector('.pcb').hidden, boards: [...document.querySelectorAll('.pcb-boards button')].map(b => b.textContent), side: document.querySelector('.pcb svg').dataset.side}));
       ok(s.shown && s.boards.length === 2 && s.side === 'top', 'the arm should show two boards, top side first', s);
       const before = await view();
@@ -160,6 +160,29 @@ export default async function ({baseUrl, launch}) {
       const r = await page.evaluate(() => ({title: document.querySelector('#bubble-title').textContent, stats: document.querySelectorAll('.bubble-report .stat').length, charts: document.querySelectorAll('.bubble-report svg.chart').length, text: document.querySelector('.bubble-report').innerText, summaryHidden: document.querySelector('.bubble-summary').hidden}));
       ok(r.title === 'Statistical arbitrage model' && r.stats === 4 && r.charts === 2 && r.summaryHidden, 'the report should replace the summary, with its tiles and two charts', {title: r.title, stats: r.stats, charts: r.charts});
       ok(['+$130.97', '$154.44'].every(x => r.text.includes(x)), "the report's numbers should match the log");
+    });
+    await scenario('the schematic viewer lights up a net and names a part', {}, async (page, ok) => {
+      await page.click('[data-item=baja-sensor] .open'); await panelSettled(page);
+      await until(page, () => document.querySelector('.bubble-report svg.sch [data-ref=U302]'));
+      const sheets = await page.evaluate(() => [...document.querySelectorAll('.sch-sheets button')].map(b => b.textContent));
+      ok(sheets.length === 2, 'the board has two schematic sheets', sheets);
+      await page.click('.sch-places button:nth-child(3)');             // Accelerometer
+      const at = await page.evaluate(() => {
+        const svg = document.querySelector('svg.sch'), t = [...svg.querySelectorAll('text')].find(t => t.textContent === 'IMU_SDA');
+        const w = svg.querySelector(`.wire[data-net="${t.closest('[data-net]').dataset.net}"]`), p = w.getAttribute('points').split(' ').map(s => s.split(',').map(Number));
+        const q = new DOMPoint((p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2).matrixTransform(svg.getScreenCTM());
+        return [q.x, q.y];
+      });
+      await page.mouse.move(at[0], at[1]);
+      await until(page, () => document.querySelector('svg.sch.hot') && document.querySelector('.sch-info').textContent.includes('IMU_SDA'));
+      let s = await page.evaluate(() => ({text: document.querySelector('.sch-info').textContent, lit: document.querySelectorAll('svg.sch .on').length}));
+      ok(s.text.includes('U302 SDA') && s.text.includes('U304 PB7') && s.lit >= 3, 'pointing at the IMU_SDA wire should light the net and list its pins', s);
+      await page.mouse.move(10, 10);
+      const part = await page.evaluate(() => { const r = document.querySelector('svg.sch [data-ref=U302] .body').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
+      await page.mouse.click(part[0], part[1]);
+      await until(page, () => document.querySelector('.sch-info').textContent.includes('MPU-6050'));
+      s = await page.evaluate(() => ({text: document.querySelector('.sch-info').textContent, sel: !!document.querySelector('svg.sch .part.sel')}));
+      ok(s.sel && s.text.includes('SDA → IMU_SDA'), 'clicking the accelerometer should select it and say what it connects to', s);
     });
     await scenario('a project without boards hides the viewer', {}, async (page, ok) => {
       await page.click('[data-item=foundry] .open'); await panelSettled(page); await settle(page);

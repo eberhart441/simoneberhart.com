@@ -10,7 +10,7 @@ const wideQuery = matchMedia('(min-width: 1040px)');
 const reduceQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const $ = sel => bubble.querySelector(sel);
 
-let items = {}, gallery = {}, boards = {};
+let items = {}, gallery = {}, boards = {}, schematics = {};
 let openId = null, busy = null, pushed = false, photo = 0, closing = false, replace = false, dragY = 0;
 // the sheet (narrow layout) dims the page behind it and stops it scrolling; the page keeps its place
 const lockPage = on => document.documentElement.classList.toggle('sheet-open', on && !wideQuery.matches);
@@ -27,9 +27,9 @@ let liquidPanel = null;
 let loaded = null;                                                // rows wait for the content (a click before it arrived)
 async function load() {
   const get = async url => { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; } };
-  const [list, pics, pcbs] = await Promise.all([get('projects/items.json'), get('projects/gallery.json'), get('projects/pcb/boards.json')]);
+  const [list, pics, pcbs, schs] = await Promise.all([get('projects/items.json'), get('projects/gallery.json'), get('projects/pcb/boards.json'), get('projects/schematics/schematics.json')]);
   for (const it of list || []) items[it.id] = it;
-  gallery = pics || {}; boards = pcbs || {};
+  gallery = pics || {}; boards = pcbs || {}; schematics = schs || {};
 }
 
 // ---- content --------------------------------------------------------------------------------------------------
@@ -54,6 +54,7 @@ function fill(id) {
 
 // a project's report (projects/reports/<id>.html, built by the script beside it): it replaces the summary and bullets
 const reports = new Map();
+let schematic = null;
 async function showReport(id) {
   const box = $('.bubble-report'), url = items[id].report, fig = $('.pcb');
   if (box.contains(fig)) box.before(fig);                           // the board viewer goes back out before the report is replaced
@@ -65,6 +66,8 @@ async function showReport(id) {
     if (openId === id) {
       box.innerHTML = html;
       box.querySelector('[data-pcb]')?.replaceWith(fig);              // a report can place the board viewer in its text
+      const slot = box.querySelector('[data-schematic]');             // and the schematic viewer
+      if (slot && schematics[id]) (schematic ||= import('./schematic.mjs?v=sch1')).then(m => { if (openId === id && slot.isConnected) m.mount(slot, schematics[id]); });
       requestAnimationFrame(scrolled);
     }
   } catch { reports.delete(id); }
@@ -75,7 +78,7 @@ let pcb = null;
 async function showBoards(id) {
   const list = boards[id] || [];
   if (!list.length && !pcb) { $('.pcb').hidden = true; return; }
-  pcb ||= import('./pcb.mjs?v=pcb1');
+  pcb ||= import('./pcb.mjs?v=pcb2');
   const {show} = await pcb;
   if (openId === id) { show(list); requestAnimationFrame(scrolled); }
 }

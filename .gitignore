@@ -13,6 +13,8 @@
 !/liquid.mjs
 !/bubble.mjs
 !/pcb.mjs
+!/panzoom.mjs
+!/schematic.mjs
 !/report.css
 !/palantir/
 !/resume/
@@ -37,6 +39,10 @@
 !/projects/*/captions.json
 !/projects/pcb/*.svg
 !/projects/pcb/boards.json
+!/projects/schematics/
+/projects/schematics/*
+!/projects/schematics/*.svg
+!/projects/schematics/schematics.json
 !/projects/reports/
 /projects/reports/*
 !/projects/reports/*.html

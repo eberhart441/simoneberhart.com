@@ -360,6 +360,32 @@ article[data-item].active::before { opacity: 1; transform: none; }
 .pcb svg[data-show~="in1"] .cu-in1, .pcb svg[data-show~="in2"] .cu-in2,
 .pcb svg[data-side="top"][data-show~="silk"] .silk-top, .pcb svg[data-side="bot"][data-show~="silk"] .silk-bot,
 .pcb svg[data-show~="holes"] .holes { display: inline; }
+/* the schematic viewer (schematic.mjs) shares the board viewer's frame and chips */
+.sch-fig { margin: 0; }
+.sch-frame { --ar: 1.2; }
+.pcb-bar .sch-sheets button[aria-pressed="false"] { font-size: 13px; }
+.sch-info { margin-top: var(--s3); min-height: 3.4em; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.sch-info b { color: var(--ink); font-weight: 500; } .sch-pins { display: block; margin-top: 2px; }
+.sch-hint { opacity: .7; }
+svg.sch { color: #161616; background: #fbfaf7; font-family: var(--mono); }
+.sch text { fill: currentColor; stroke: none; }
+.sch .wire { stroke: currentColor; stroke-width: 1.3px; vector-effect: non-scaling-stroke; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.sch .pin { stroke: currentColor; stroke-width: 1.1px; vector-effect: non-scaling-stroke; }
+.sch .hit { stroke: transparent; stroke-width: 12px; vector-effect: non-scaling-stroke; fill: none; pointer-events: stroke; }
+.sch .body { stroke: currentColor; stroke-width: 1.3px; vector-effect: non-scaling-stroke; fill: none; stroke-linejoin: round; }
+.sch .body.bg { fill: #16161608; } .sch .body.solid { fill: currentColor; }
+.sch .junction { fill: currentColor; stroke: none; }
+.sch .nc { stroke: #57544f; stroke-width: 1px; vector-effect: non-scaling-stroke; fill: none; }
+.sch .num { fill: #57544f; } .sch .pname { fill: #3f3c38; }
+.sch .field.val { fill: #3f3c38; }
+.sch .heading text { font-family: var(--serif); font-size: 3.4px; }
+.sch .label polygon { fill: #16161610; stroke: currentColor; stroke-width: 1.1px; vector-effect: non-scaling-stroke; }
+.sch .part:not(.power) { cursor: pointer; }
+.sch .part.sel .body { stroke: var(--accent); } .sch .part.sel .body.bg { fill: color-mix(in srgb, var(--accent) 9%, transparent); }
+.sch.hot [data-net] { opacity: .16; transition: opacity .12s; }
+.sch.hot [data-net].on { opacity: 1; color: var(--accent); }
+.sch.hot .wire.on, .sch.hot .pin.on { stroke-width: 2.4px; }
+.sch.hot .body, .sch.hot .field, .sch.hot .pname, .sch.hot .num, .sch.hot .heading { opacity: .35; }
 @media (prefers-reduced-motion: reduce) { .pcb-frame, .pcb-stage { transition: none; } }
 .bubble [hidden] { display: none !important; }
 

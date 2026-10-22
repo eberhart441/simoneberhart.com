@@ -42,7 +42,8 @@
       "FFT",
       "CAN"
     ],
-    "links": []
+    "links": [],
+    "report": "projects/reports/baja-sensor.html"
   },
   {
     "id": "recycler",
