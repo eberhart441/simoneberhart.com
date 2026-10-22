@@ -23,7 +23,11 @@ export default async function ({baseUrl, launch}) {
       await cdp.send('Input.dispatchTouchEvent', {type: cancel ? 'touchCancel' : 'touchEnd', touchPoints: []});
     } finally { await cdp.detach(); }
   };
-  const centre = (page, selector) => page.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, selector);
+  // the middle of an element, scrolled into view first: a longer page puts rows below the screen, where a tap lands nowhere
+  const centre = async (page, selector) => {
+    await page.locator(selector).first().scrollIntoViewIfNeeded();
+    return page.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, selector);
+  };
 
   const failures = [];
   async function scenario(name, run, {context: contextOptions = PHONE, setup, scrollbars = false} = {}) {
@@ -32,7 +36,7 @@ export default async function ({baseUrl, launch}) {
     page.on('dialog', d => d.dismiss());
     const ok = (cond, what, detail) => { if (!cond) throw new Error(`mobile check "${name}": ${what}${detail === undefined ? '' : ' ' + JSON.stringify(detail)}`); };
     try {
-      await page.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.abort());   // links to other sites go nowhere
+      await page.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.fulfill({contentType: 'text/html', body: '<!doctype html><title>outside</title>'}));   // other sites: an empty stub
       if (setup) await setup(page, context);
       await page.goto(baseUrl, {waitUntil: 'load'});
       // the text rises into place on load: a tap measured before it has settled lands somewhere else
@@ -59,13 +63,16 @@ export default async function ({baseUrl, launch}) {
       await page.touchscreen.tap(...at);
       await sheetShown(page);
       const s = await state(page);
-      ok(!s.hidden && /recycler/i.test(s.title), 'the row\'s sheet should open', s);
+      ok(!s.hidden && /winder/i.test(s.title), 'the row\'s sheet should open', s);
     });
 
-    await scenario('tapping a link inside a row does not open the sheet', async (page, ok) => {
-      const at = await centre(page, '[data-item=quant] a[href^="http"]');   // an outside link (the first link is now the same-site trading log)
-      await page.touchscreen.tap(...at); await page.waitForTimeout(900);
-      ok((await state(page)).hidden, 'the sheet should stay closed when a link is tapped');
+    await scenario('tapping a link inside a row follows the link, not the row', async (page, ok) => {
+      const at = await centre(page, '[data-item=arm] a');   // a lone outside link (links packed side by side get tap-snapped to each other)
+      await page.touchscreen.tap(...at);
+      const followed = await page.waitForURL(u => new URL(u).origin !== origin, {timeout: 5000}).then(() => true, () => false);
+      ok(followed, 'the link should be followed', {url: page.url()});
+      await page.goBack({waitUntil: 'load'}); await page.waitForTimeout(500);
+      ok((await state(page)).hidden, 'the sheet should not have opened');
     });
 
     await scenario('a link inside a sentence answers a touch only on its own text', async (page, ok) => {
