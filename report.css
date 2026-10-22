@@ -32,5 +32,8 @@ article.report th, article.report td { text-align: left; padding: 7px 12px 7px 0
 article.report th { font: 400 12px var(--mono); color: var(--muted); border-bottom-color: #16161640; }
 article.report td.n, article.report th.n { text-align: right; font: 400 13px var(--mono); padding: 7px 0 7px 12px; } article.report td.neg { color: var(--accent); }
 article.report table.kv td:first-child { color: var(--muted); } article.report table.kv td.n { font-size: 13px; }
-article.report .code { font: 400 13px/1.6 var(--mono); background: #1616160a; border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; white-space: pre; }
+article.report .code { font: 400 13px/1.6 var(--mono); background: #1616160a; border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; }
+article.report .code code { font: inherit; white-space: pre; }
+article.report .code i { font-style: normal; }
+article.report .code .c { color: var(--muted); font-style: italic; } article.report .code .k { color: var(--accent); } article.report .code .s { color: #57544f; }
 article.report .foot { color: var(--muted); font-size: 14px; margin-top: 40px; }
