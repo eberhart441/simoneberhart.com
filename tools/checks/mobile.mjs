@@ -63,7 +63,7 @@ export default async function ({baseUrl, launch}) {
     });
 
     await scenario('tapping a link inside a row does not open the sheet', async (page, ok) => {
-      const at = await centre(page, '[data-item=quant] a');
+      const at = await centre(page, '[data-item=quant] a[href^="http"]');   // an outside link (the first link is now the same-site trading log)
       await page.touchscreen.tap(...at); await page.waitForTimeout(900);
       ok((await state(page)).hidden, 'the sheet should stay closed when a link is tapped');
     });
