@@ -49,6 +49,7 @@
     "id": "recycler",
     "kind": "Project",
     "title": "Filament winder",
+    "report": "projects/reports/winder.html",
     "dates": "August 2025",
     "summary": "Keeps recycled filament a consistent width. Built to go with a Filabot EX2 extruder.",
     "points": [
