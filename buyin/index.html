@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BuyIn: method and live results – Simon Eberhart</title>
+<meta name="description" content="How BuyIn forecasts intraday prices by nearest-neighbour matching, and what 61 live trades did between Oct 20, 2023 and Jan 8, 2024.">
+<meta name="theme-color" content="#f6f5f1">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; --paper: #f6f5f1; --ink: #161616; --muted: #57544f; --line: #16161620; --accent: #c8102e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper) url('../paper-texture.png'); color: var(--ink); font: 400 16px/1.65 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 760px; margin: 0 auto; padding: 24px 16px 80px; }
+  nav { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 40px; font-size: 14px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: #16161640; text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent); }
+  h1 { font: 400 clamp(38px, 7vw, 54px)/1.02 'Instrument Serif', Georgia, serif; letter-spacing: -.025em; margin: 0 0 14px; }
+  .by { color: var(--muted); font-size: 14px; margin: 0 0 32px; }
+  h2 { font: 400 28px/1.1 'Instrument Serif', Georgia, serif; margin: 48px 0 12px; }
+  h2 span { font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; color: var(--muted); margin-right: 10px; vertical-align: 2px; }
+  h3 { font: 500 15px/1.4 'IBM Plex Sans', system-ui, sans-serif; margin: 24px 0 4px; }
+  p { margin: 0 0 14px; max-width: 66ch; }
+  .abstract { border-left: 2px solid var(--ink); padding: 2px 0 2px 18px; margin: 0 0 8px; max-width: 66ch; }
+  .abstract p { margin: 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 28px 0 0; }
+  .stat { border-top: 1px solid var(--line); padding-top: 10px; }
+  .stat b { display: block; font: 400 28px/1.1 'Instrument Serif', Georgia, serif; }
+  .stat span { color: var(--muted); font-size: 13px; line-height: 1.4; display: block; }
+  figure { margin: 22px 0 28px; }
+  figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; max-width: 66ch; }
+  .photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .photos img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); }
+  .chart { width: 100%; height: auto; display: block; }
+  .chart .g { stroke: var(--line); stroke-width: 1; } .chart .zero { stroke: #16161650; }
+  .chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; } .chart .net { stroke: var(--ink); } .chart .gross { stroke: #16161666; stroke-dasharray: 5 4; }
+  .chart .pos { fill: var(--ink); } .chart .neg { fill: var(--accent); }
+  .chart text { font: 400 12px 'DM Mono', ui-monospace, monospace; fill: var(--muted); }
+  @media (max-width: 640px) { .chart text { font-size: 20px; } }
+  .scroll { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0 8px; }
+  th, td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); }
+  th { font: 400 12px 'DM Mono', ui-monospace, monospace; color: var(--muted); border-bottom-color: #16161640; }
+  td.n, th.n { text-align: right; font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; padding-right: 0; padding-left: 12px; } td.neg { color: var(--accent); }
+  table.kv td:first-child { color: var(--muted); } table.kv td.n { font-size: 14px; }
+  .code { font: 400 13px/1.6 'DM Mono', ui-monospace, monospace; background: #1616160a; border-radius: 10px; padding: 12px 14px; overflow-x: auto; margin: 0 0 14px; white-space: pre; }
+  .foot { color: var(--muted); font-size: 14px; margin-top: 48px; }
+</style>
+</head>
+<body>
+<div class="page">
+<nav><a href="../">← simoneberhart.com</a><a href="../trading-log/">Trading log</a></nav>
+<h1>BuyIn: nearest-neighbour forecasting on intraday bars</h1>
+<p class="by">Simon Eberhart · live results Oct 20, 2023 to Jan 8, 2024</p>
+
+<div class="abstract"><p>BuyIn forecasts a stock's next few hours by finding the past stretches that looked most like the last few days and averaging what happened next. I traded its signals live for about three months: 61 trades, almost all single options contracts. The account ended +$130.97 after fees (+$288.00 before). Fees took 54% of the gross, the calls made money and the puts did not, and most of the profit came in the first weeks. This is a short account of how it works and what the log does and doesn't show.</p></div>
+<div class="stats">
+  <div class="stat"><b>+$131</b><span>net, +18.11% on the log's base</span></div>
+  <div class="stat"><b>37 / 61</b><span>winning trades (61%)</span></div>
+  <div class="stat"><b>$154</b><span>fees, over half the gross</span></div>
+  <div class="stat"><b>$117</b><span>deepest drop from a peak</span></div>
+</div>
+
+<h2><span>1</span>Method</h2>
+<h3>Matching</h3>
+<p>Prices come in as 5-minute bars. A window of recent bars (price and volume as two channels) is z-score normalized, so only its shape counts, then compared by Euclidean distance with every historical window that ends at the same time of day. The forecast is the average continuation of the 100 closest matches, rescaled to the current price.</p>
+<div class="code">forecast = mean( continuation(w) for w in nearest(window, history, k=100) ) × current_price</div>
+<p>The search is split across every core with multiprocessing. For the bigger runs I built a 20-node cluster out of old computers, with custom network protocols between them.</p>
+<figure><div class="photos"><div><img src="../projects/quant/01-app.webp" alt="The BuyIn app: a forecast curve over recent prices, and the trade log beside it" loading="lazy"></div><div><img src="../projects/quant/02-cluster.webp" alt="Part of the cluster" loading="lazy"></div></div>
+<figcaption>The app (a forecast against the recent price, with the auto-trader's log) and part of the cluster.</figcaption></figure>
+<h3>Trading</h3>
+<p>The auto-trader only enters when the 2-, 3- and 4-day windows all forecast the same direction past a z-score threshold. Position size comes from the Kelly criterion. Orders go through the Interactive Brokers API, and a position closes on a contrary signal or after four hours, whichever comes first.</p>
+
+<h2><span>2</span>The live test</h2>
+<p>61 trades from Oct 20, 2023 to Jan 8, 2024: 27 calls, 33 puts and one stock purchase that was an accident. Each trade cost $70 to $889 (about $358 on average), because the account was small. That matters more than anything else below: a typical trade earned about $4.72 before fees and paid $2.53 in them.</p>
+
+<h2><span>3</span>Results</h2>
+<figure><svg class="chart" viewBox="0 0 860 300" role="img" aria-labelledby="f1t f1d"><title id="f1t">Running profit by trade</title><desc id="f1d">Profit after fees climbs to $248 by the end of October, then drifts; it ends at $130.97. Before fees it ends at $288.00.</desc>
+  <line class="g" x1="52" x2="844" y1="270.0" y2="270.0"/><text x="44" y="274.0" text-anchor="end">−$50</text><line class="g zero" x1="52" x2="844" y1="241.6" y2="241.6"/><text x="44" y="245.6" text-anchor="end">$0</text><line class="g" x1="52" x2="844" y1="213.1" y2="213.1"/><text x="44" y="217.1" text-anchor="end">$50</text><line class="g" x1="52" x2="844" y1="184.7" y2="184.7"/><text x="44" y="188.7" text-anchor="end">$100</text><line class="g" x1="52" x2="844" y1="156.2" y2="156.2"/><text x="44" y="160.2" text-anchor="end">$150</text><line class="g" x1="52" x2="844" y1="127.8" y2="127.8"/><text x="44" y="131.8" text-anchor="end">$200</text><line class="g" x1="52" x2="844" y1="99.3" y2="99.3"/><text x="44" y="103.3" text-anchor="end">$250</text><line class="g" x1="52" x2="844" y1="70.9" y2="70.9"/><text x="44" y="74.9" text-anchor="end">$300</text><line class="g" x1="52" x2="844" y1="42.4" y2="42.4"/><text x="44" y="46.4" text-anchor="end">$350</text><line class="g" x1="52" x2="844" y1="14.0" y2="14.0"/><text x="44" y="18.0" text-anchor="end">$400</text><line class="g" x1="52.0" x2="52.0" y1="270" y2="275"/><text x="52.0" y="292">Oct 23</text><line class="g" x1="223.6" x2="223.6" y1="270" y2="275"/><text x="223.6" y="292">Nov 23</text><line class="g" x1="698.8" x2="698.8" y1="270" y2="275"/><text x="698.8" y="292">Dec 23</text><line class="g" x1="804.4" x2="804.4" y1="270" y2="275"/><text x="804.4" y="292">Jan 24</text><path class="line gross" d="M52.0 250.1 L65.2 156.2 L78.4 152.2 L91.6 142.6 L104.8 138.0 L118.0 127.2 L131.2 124.4 L144.4 121.5 L157.6 122.7 L170.8 107.9 L184.0 105.6 L197.2 123.8 L210.4 131.8 L223.6 115.8 L236.8 104.5 L250.0 114.7 L263.2 105.6 L276.4 103.3 L289.6 117.5 L302.8 113.0 L316.0 119.2 L329.2 115.3 L342.4 107.9 L355.6 102.2 L368.8 110.1 L382.0 112.4 L395.2 109.6 L408.4 124.4 L421.6 138.0 L434.8 142.6 L448.0 128.3 L461.2 128.3 L474.4 126.6 L487.6 128.9 L500.8 122.1 L514.0 123.8 L527.2 94.2 L540.4 97.6 L553.6 98.8 L566.8 94.2 L580.0 81.1 L593.2 76.0 L606.4 95.4 L619.6 88.5 L632.8 84.5 L646.0 77.1 L659.2 74.3 L672.4 73.2 L685.6 68.0 L698.8 53.3 L712.0 53.8 L725.2 43.6 L738.4 35.0 L751.6 22.0 L764.8 57.2 L778.0 50.4 L791.2 49.3 L804.4 44.7 L817.6 36.2 L830.8 41.9 L844.0 77.7"/><path class="line net" d="M52.0 251.3 L65.2 158.6 L78.4 155.8 L91.6 147.3 L104.8 143.9 L118.0 134.3 L131.2 132.7 L144.4 131.0 L157.6 133.3 L170.8 119.7 L184.0 118.6 L197.2 138.0 L210.4 147.2 L223.6 132.4 L236.8 122.2 L250.0 133.6 L263.2 126.0 L276.4 125.0 L289.6 140.7 L302.8 137.6 L316.0 145.0 L329.2 142.2 L342.4 136.5 L355.6 132.2 L368.8 141.3 L382.0 144.8 L395.2 143.1 L408.4 159.1 L421.6 173.9 L434.8 179.7 L448.0 166.6 L461.2 168.9 L474.4 168.4 L487.6 171.8 L500.8 166.2 L514.0 171.5 L527.2 144.3 L540.4 149.9 L553.6 152.2 L566.8 151.2 L580.0 139.3 L593.2 136.9 L606.4 157.4 L619.6 151.8 L632.8 150.1 L646.0 145.1 L659.2 143.5 L672.4 143.5 L685.6 139.6 L698.8 126.0 L712.0 127.7 L725.2 119.8 L738.4 112.5 L751.6 100.6 L764.8 137.0 L778.0 132.6 L791.2 133.8 L804.4 130.5 L817.6 123.1 L830.8 130.0 L844.0 167.0"/></svg><figcaption><b>Figure 1.</b> Running profit by trade: solid after fees, dashed before. It rises fast in October and is roughly flat after that.</figcaption></figure>
+<div class="scroll"><table class="kv">
+  <tr><td>Net profit / before fees</td><td class="n">+$130.97 / +$288.00</td></tr>
+  <tr><td>Fees</td><td class="n">$154.44 (53.6% of the gross)</td></tr>
+  <tr><td>Average win / average loss (after fees)</td><td class="n">+$15.29 / −$18.11</td></tr>
+  <tr><td>Best / worst trade</td><td class="n">+$162.91 (MSFT) / −$65.10 (SPY)</td></tr>
+  <tr><td>Return per trade, mean and standard deviation</td><td class="n">−0.04% and 7.9%</td></tr>
+  <tr><td>Deepest drop from a running peak</td><td class="n">−$116.82</td></tr>
+</table></div>
+<figure><svg class="chart" viewBox="0 0 860 170" role="img" aria-labelledby="f2t f2d"><title id="f2t">Profit of each trade</title><desc id="f2d">37 gains and 24 losses, most within $50 either way. The largest is $162.91 on MSFT.</desc>
+  <line class="g zero" x1="52" x2="844" y1="85" y2="85"/><text x="44" y="89" text-anchor="end">$0</text>
+  <text x="44" y="20" text-anchor="end">+$200</text><text x="44" y="160" text-anchor="end">−$200</text><rect class="neg" x="53.6" width="9.9" y="85.0" height="6.4"/><rect class="pos" x="66.5" width="9.9" y="23.9" height="61.1"/><rect class="pos" x="79.5" width="9.9" y="83.2" height="1.8"/><rect class="pos" x="92.5" width="9.9" y="79.4" height="5.6"/><rect class="pos" x="105.5" width="9.9" y="82.8" height="2.2"/><rect class="pos" x="118.5" width="9.9" y="78.7" height="6.3"/><rect class="pos" x="131.5" width="9.9" y="83.9" height="1.1"/><rect class="pos" x="144.4" width="9.9" y="83.9" height="1.1"/><rect class="neg" x="157.4" width="9.9" y="85.0" height="1.5"/><rect class="pos" x="170.4" width="9.9" y="76.0" height="9.0"/><rect class="pos" x="183.4" width="9.9" y="84.3" height="0.8"/><rect class="neg" x="196.4" width="9.9" y="85.0" height="12.8"/><rect class="neg" x="209.4" width="9.9" y="85.0" height="6.0"/><rect class="pos" x="222.3" width="9.9" y="75.3" height="9.7"/><rect class="pos" x="235.3" width="9.9" y="78.3" height="6.7"/><rect class="neg" x="248.3" width="9.9" y="85.0" height="7.5"/><rect class="pos" x="261.3" width="9.9" y="79.9" height="5.1"/><rect class="pos" x="274.3" width="9.9" y="84.4" height="0.8"/><rect class="neg" x="287.3" width="9.9" y="85.0" height="10.4"/><rect class="pos" x="300.2" width="9.9" y="82.9" height="2.1"/><rect class="neg" x="313.2" width="9.9" y="85.0" height="4.9"/><rect class="pos" x="326.2" width="9.9" y="83.2" height="1.8"/><rect class="pos" x="339.2" width="9.9" y="81.2" height="3.8"/><rect class="pos" x="352.2" width="9.9" y="82.1" height="2.9"/><rect class="neg" x="365.2" width="9.9" y="85.0" height="6.0"/><rect class="neg" x="378.1" width="9.9" y="85.0" height="2.3"/><rect class="pos" x="391.1" width="9.9" y="83.9" height="1.1"/><rect class="neg" x="404.1" width="9.9" y="85.0" height="10.5"/><rect class="neg" x="417.1" width="9.9" y="85.0" height="9.8"/><rect class="neg" x="430.1" width="9.9" y="85.0" height="3.8"/><rect class="pos" x="443.1" width="9.9" y="76.4" height="8.6"/><rect class="neg" x="456.0" width="9.9" y="85.0" height="1.5"/><rect class="pos" x="469.0" width="9.9" y="84.7" height="0.8"/><rect class="neg" x="482.0" width="9.9" y="85.0" height="2.3"/><rect class="pos" x="495.0" width="9.9" y="81.3" height="3.7"/><rect class="neg" x="508.0" width="9.9" y="85.0" height="3.5"/><rect class="pos" x="521.0" width="9.9" y="67.1" height="17.9"/><rect class="neg" x="534.0" width="9.9" y="85.0" height="3.7"/><rect class="neg" x="546.9" width="9.9" y="85.0" height="1.5"/><rect class="pos" x="559.9" width="9.9" y="84.3" height="0.8"/><rect class="pos" x="572.9" width="9.9" y="77.2" height="7.8"/><rect class="pos" x="585.9" width="9.9" y="83.4" height="1.6"/><rect class="neg" x="598.9" width="9.9" y="85.0" height="13.5"/><rect class="pos" x="611.9" width="9.9" y="81.3" height="3.7"/><rect class="pos" x="624.8" width="9.9" y="83.9" height="1.1"/><rect class="pos" x="637.8" width="9.9" y="81.7" height="3.3"/><rect class="pos" x="650.8" width="9.9" y="83.9" height="1.1"/><rect class="neg" x="663.8" width="9.9" y="85.0" height="0.8"/><rect class="pos" x="676.8" width="9.9" y="82.4" height="2.6"/><rect class="pos" x="689.8" width="9.9" y="76.0" height="9.0"/><rect class="neg" x="702.7" width="9.9" y="85.0" height="1.2"/><rect class="pos" x="715.7" width="9.9" y="79.8" height="5.2"/><rect class="pos" x="728.7" width="9.9" y="80.2" height="4.8"/><rect class="pos" x="741.7" width="9.9" y="77.2" height="7.8"/><rect class="neg" x="754.7" width="9.9" y="85.0" height="24.0"/><rect class="pos" x="767.7" width="9.9" y="82.1" height="2.9"/><rect class="neg" x="780.6" width="9.9" y="85.0" height="0.8"/><rect class="pos" x="793.6" width="9.9" y="82.8" height="2.2"/><rect class="pos" x="806.6" width="9.9" y="80.2" height="4.8"/><rect class="neg" x="819.6" width="9.9" y="85.0" height="4.5"/><rect class="neg" x="832.6" width="9.9" y="85.0" height="24.4"/></svg><figcaption><b>Figure 2.</b> Profit of each trade, in order, after fees. Black is a gain, red a loss.</figcaption></figure>
+<div class="scroll"><table>
+  <thead><tr><th></th><th class="n">Trades</th><th class="n">Wins</th><th class="n">Fees</th><th class="n">Net</th></tr></thead>
+  <tbody><tr><td>Calls</td><td class="n">27</td><td class="n">21</td><td class="n">$64.55</td><td class="n">+$224.86</td></tr><tr><td>Puts</td><td class="n">33</td><td class="n">16</td><td class="n">$85.89</td><td class="n neg">−$89.89</td></tr><tr><td>Stock (one accidental purchase)</td><td class="n">1</td><td class="n">0</td><td class="n">$4.00</td><td class="n neg">−$4.00</td></tr></tbody>
+</table></div>
+<div class="scroll"><table>
+  <thead><tr><th></th><th class="n">Trades</th><th class="n">Wins</th><th class="n">Fees</th><th class="n">Net</th></tr></thead>
+  <tbody><tr><td>October 2023</td><td class="n">13</td><td class="n">9</td><td class="n">$27.07</td><td class="n">+$165.93</td></tr><tr><td>November 2023</td><td class="n">36</td><td class="n">21</td><td class="n">$96.06</td><td class="n">+$13.35</td></tr><tr><td>December 2023</td><td class="n">8</td><td class="n">5</td><td class="n">$22.91</td><td class="n">+$10.09</td></tr><tr><td>January 2024</td><td class="n">4</td><td class="n">2</td><td class="n">$8.40</td><td class="n neg">−$58.40</td></tr></tbody>
+</table></div>
+
+<h2><span>4</span>What it shows, and what it doesn't</h2>
+<p><b>Fees were the story.</b> The signal made $288.00 gross and the account paid $154.44 to collect it. Fees were about $2 a trade whatever the size, so a bigger account would pay a much smaller share. This one kept 45% of the gross.</p>
+<p><b>The profit is lumpy.</b> The average trade returned −0.04% after fees, with a standard deviation of 7.9%. The dollar profit came from a few larger winners: MSFT alone (12 trades) made +$209, more than the whole account. 61% of trades won, but the average loss was a little bigger than the average win.</p>
+<p><b>Calls worked and puts didn't.</b> Calls won 21 of 27 and made +$225; puts won 16 of 33 and lost $90. I can't tell from 61 trades whether the model is worse at calling drops or the market just didn't drop much.</p>
+<p><b>It's the model plus me.</b> 26 of the 61 trades have a note, and many of them are about me: selling late, trading on thin evidence, ignoring the signal. The log measures the model and my discretion together. It isn't a clean test of the model alone.</p>
+<p><b>It's small and short.</b> 61 trades, one regime, about eleven weeks, no benchmark. It shows the system worked end to end, from forecast to filled order. It isn't enough to put a number on the edge.</p>
+
+<p class="foot">Numbers are computed from <a href="../trading-log/">the trading log</a> (<a href="../trading-log/BuyIn-trading-log.pdf">original PDF</a>). Code: <a href="https://github.com/eberhart441/BuyOut">github.com/eberhart441/BuyOut</a> · <a href="https://www.youtube.com/watch?v=cE_erRPIcsw">demo</a>.</p>
+</div>
+</body>
+</html>

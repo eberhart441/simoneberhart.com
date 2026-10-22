@@ -105,6 +105,10 @@
     ],
     "links": [
       {
+        "label": "Write-up",
+        "href": "buyin/"
+      },
+      {
         "label": "Trading log",
         "href": "trading-log/"
       },

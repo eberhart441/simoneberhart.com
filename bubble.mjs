@@ -46,7 +46,7 @@ function fill(id) {
   tools.replaceChildren(...(it.tools || []).map(t => Object.assign(document.createElement('span'), {textContent: t})));
   const links = $('.bubble-links');
   links.hidden = !it.links?.length;
-  links.replaceChildren(...(it.links || []).map(l => Object.assign(document.createElement('a'), {href: l.href, textContent: l.label + ' ↗', target: '_blank', rel: 'noopener'})));
+  links.replaceChildren(...(it.links || []).map(l => Object.assign(document.createElement('a'), /^https?:/.test(l.href) ? {href: l.href, textContent: l.label + ' ↗', target: '_blank', rel: 'noopener'} : {href: l.href, textContent: l.label})));
   photo = 0; showGallery(id); showBoards(id);
   body.scrollTop = 0; scrolled();
 }
