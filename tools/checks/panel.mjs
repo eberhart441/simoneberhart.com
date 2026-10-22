@@ -154,6 +154,13 @@ export default async function ({baseUrl, launch}) {
       await page.click('.pcb-boards button:nth-child(2)'); await until(page, () => document.querySelector('.pcb-boards button[aria-pressed=true]')?.textContent === 'Graphite');
       await page.close();
     });
+    await scenario('a project with a report shows it in the panel', {}, async (page, ok) => {
+      await page.click('[data-item=quant] .open'); await panelSettled(page);
+      await until(page, () => document.querySelector('.bubble-report article.report .stat'));
+      const r = await page.evaluate(() => ({title: document.querySelector('#bubble-title').textContent, stats: document.querySelectorAll('.bubble-report .stat').length, charts: document.querySelectorAll('.bubble-report svg.chart').length, text: document.querySelector('.bubble-report').innerText, summaryHidden: document.querySelector('.bubble-summary').hidden}));
+      ok(r.title === 'Statistical arbitrage model' && r.stats === 4 && r.charts === 2 && r.summaryHidden, 'the report should replace the summary, with its tiles and two charts', {title: r.title, stats: r.stats, charts: r.charts});
+      ok(['+$130.97', '$154.44'].every(x => r.text.includes(x)), "the report's numbers should match the log");
+    });
     await scenario('a project without boards hides the viewer', {}, async (page, ok) => {
       await page.click('[data-item=foundry] .open'); await panelSettled(page); await settle(page);
       ok(await page.evaluate(() => document.querySelector('.pcb').hidden), 'foundry has no boards, so no viewer');

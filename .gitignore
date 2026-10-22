@@ -13,6 +13,7 @@
 !/liquid.mjs
 !/bubble.mjs
 !/pcb.mjs
+!/report.css
 !/palantir/
 !/resume/
 !/trading-log/
@@ -36,6 +37,9 @@
 !/projects/*/captions.json
 !/projects/pcb/*.svg
 !/projects/pcb/boards.json
+!/projects/reports/
+/projects/reports/*
+!/projects/reports/*.html
 !/studies/
 /studies/*
 !/studies/assets/
