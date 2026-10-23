@@ -1,5 +1,5 @@
 <article class="report">
-<div class="abstract"><p>At 15, I started wondering whether short stretches of market data repeat often enough to be useful for predicting the next few hours. I wrote a nearest-neighbor model that looks for similar historical price and volume patterns, then averages what happened afterward. Eventually I connected it to an automated options trader. I ran it with real money for about three months: 61 trades, mostly single options contracts. The log shows +$130.97 after fees and +$288.00 before. Fees consumed 54% of the gross profit. The calls worked out better than the puts, and most of the money was made early. I stopped developing it afterward for a fairly mundane reason: data costs.</p></div>
+<div class="abstract"><p>At 15, I started wondering whether short stretches of market data repeat often enough to be useful for predicting the next few hours. I wrote a nearest-neighbor model that looks for similar historical price and volume patterns, then averages what happened afterward. Eventually I connected it to an automated options trader. I ran it with real money for about three months: 61 trades, mostly single options contracts. The log shows +$130.97 after fees and +$288.00 before. Fees consumed 54% of the gross profit. The calls worked out better than the puts, and most of the money was made early. The results were promising: the signal made money before fees, and I think the model had real alpha. I stopped developing it when my data source stopped working.</p></div>
 <div class="stats">
   <div class="stat"><b>+$131</b><span>net return on starting balance: +18.11%</span></div>
   <div class="stat"><b>37 / 61</b><span>winning trades (61%)</span></div>
@@ -27,7 +27,7 @@ segment = np.column_stack([z, v])</code></pre>
 <p>A nearest-neighbor search is cheap until you start comparing every five-minute window against years of overlapping history, across several symbols and lookback lengths. I tried parallelizing it on one machine. It was still slow.</p>
 <pre class="code"><code><i class="k">with</i> mp.Pool(processes=mp.cpu_count()) <i class="k">as</i> pool:
     ...</code></pre>
-<p>So I put 20 old computers in my closet and wired them together. I wrote a network protocol to split up the historical search and collect the results. This was probably an unreasonable amount of hardware for a trading model, but it worked, and building it was half the fun.</p>
+<p>So I put 20 old computers in my closet and wired them together. I wrote a network protocol to split up the historical search and collect the results. It worked, and building the cluster was a ton of fun. My room would get up to 80 degrees in the dead of winter, I had ducting running out of my closet, and I had to pull power from 3 different rooms to not blow a fuse.</p>
 <figure><img src="projects/quant/02-cluster.webp" alt="Part of the cluster: small computers and a tower on a shelf, with Ethernet cables running to them" loading="lazy"><figcaption>Part of the 20-node closet cluster.</figcaption></figure>
 
 <h2><span>3</span>Live test</h2>
@@ -58,7 +58,7 @@ segment = np.column_stack([z, v])</code></pre>
 
 <h2><span>5</span>Analysis</h2>
 <h3>Fees</h3>
-<p>The trades made $288.00 before fees, and the broker took $154.44. At roughly $2 in fees per trade, commissions were a ridiculous fraction of the return on such small positions. I kept 45% of the gross profit.</p>
+<p>The trades made $288.00 before fees, and the broker took $154.44. At roughly $2 in fees per trade, commissions were a large fraction of the return on such small positions. I kept 45% of the gross profit.</p>
 <h3>Outliers</h3>
 <p>The average trade returned −0.04% after fees, with a standard deviation of 7.9%. Most of the dollars came from a few large winners. MSFT alone contributed +$209 across 12 trades, more than the total net profit. 61% of positions made money, but losses were larger on average than wins.</p>
 <h3>Calls / puts</h3>
@@ -71,6 +71,6 @@ segment = np.column_stack([z, v])</code></pre>
 <h2><span>6</span>Data</h2>
 <p>All the historical price data came through yfinance, which gets it from Yahoo Finance.</p>
 <pre class="code"><code>yf.download(ticker, period=duration, interval=<i class="s">"5m"</i>)</code></pre>
-<p>That's fine for a personal project, but Yahoo's terms limit how its data can be used. I couldn't reasonably commercialize a system built on that feed. Licensed five-minute historical data at the coverage I needed would have been around $500 a month. That was more than I could justify for an account this small, so I stopped there.</p>
+<p>The free Yahoo data I relied on stopped working, and it was never something I could build a company on. Licensed five-minute historical data at the coverage I needed would have been around $500 a month, so I stopped there.</p>
 <p class="foot">The figures come directly from the original trading log. Code: <a href="https://github.com/eberhart441/BuyOut">github.com/eberhart441/BuyOut</a>. A provisional patent application covers the model.</p>
 </article>

@@ -125,7 +125,7 @@
     "points": [
       "Worked on hardware for SpaceX Starlink, NASA Artemis, F135 and other jet engines, and GE naval turbines.",
       "Ran CNC lathes and a manual plunge grinder. Inspected parts on CMMs and with height, bore, and ring gauges, micrometers, and gauge blocks.",
-      "Ground overspray off a GE turbine bushing that was holding up an assembly line. I was told damage to the part could have caused roughly $20M in delay penalties. That made for an unusually tense afternoon.",
+      "Ground overspray off a GE turbine bushing that was holding up an assembly line. Damaging it could have cost roughly $20M in delay penalties. I ground it back to spec.",
       "Helped diagnose machining and grinding problems across the shop."
     ],
     "tools": [
@@ -170,7 +170,7 @@
     "title": "Dragonfly Engineering",
     "dates": "summer 2024",
     "role": "Robotics intern · Santa Clara, CA",
-    "summary": "I spent a summer at a robotics shop in Santa Clara, mostly figuring out how unfamiliar machines worked and getting them usable again. It was a pretty good introduction to how much engineering sits between a robot's brochure and its actual wiring.",
+    "summary": "I spent a summer at a robotics shop in Santa Clara, mostly figuring out how unfamiliar machines worked and getting them usable again. I reverse engineered robots down to the wiring and recovered the software running them.",
     "points": [
       "Reverse engineered six-axis robots with proprietary vision systems acquired from Google X. Traced wiring and Ethernet connections, identified the computers running the vision stack, and recovered software.",
       "Programmed KUKA industrial arms in KRL for an assembly line.",
