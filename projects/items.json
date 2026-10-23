@@ -121,11 +121,11 @@
     "title": "Hygrade Precision Technologies",
     "dates": "2025–2026",
     "role": "Engineering intern, then junior engineering technician · Plainville, CT",
-    "summary": "I worked in a precision machine shop doing CNC work and inspecting aerospace parts. Some dimensions had tolerances down to a few microns, so there wasn't much room for guessing.",
+    "summary": "I spent two summers in a precision machine shop doing CNC work and inspecting aerospace parts. Some dimensions had tolerances down to a few microns, so there wasn't much room for guessing.",
     "points": [
       "Worked on hardware for SpaceX Starlink, NASA Artemis, F135 and other jet engines, and GE naval turbines.",
       "Ran CNC lathes and a manual plunge grinder. Inspected parts on CMMs and with height, bore, and ring gauges, micrometers, and gauge blocks.",
-      "Ground overspray off a GE turbine bushing that was holding up an assembly line. I was told damage to the part could have caused roughly $20M in delay penalties.",
+      "Ground overspray off a GE turbine bushing that was holding up an assembly line. I was told damage to the part could have caused roughly $20M in delay penalties. That made for an unusually tense afternoon.",
       "Helped diagnose machining and grinding problems across the shop."
     ],
     "tools": [
@@ -172,9 +172,9 @@
     "role": "Robotics intern · Santa Clara, CA",
     "summary": "I spent a summer at a robotics shop in Santa Clara, mostly figuring out how unfamiliar machines worked and getting them usable again. It was a pretty good introduction to how much engineering sits between a robot's brochure and its actual wiring.",
     "points": [
-      "Reverse engineered six-axis robot arms with built-in vision systems bought from Google X. Traced wiring and Ethernet connections, identified the computers running the vision stack, and recovered software.",
+      "Reverse engineered six-axis robots with proprietary vision systems acquired from Google X. Traced wiring and Ethernet connections, identified the computers running the vision stack, and recovered software.",
       "Programmed KUKA industrial arms in KRL for an assembly line.",
-      "Converted a manual mill to CNC using custom electronics and milled brackets.",
+      "Converted a three-axis manual mill to CNC using custom electronics and milled brackets.",
       "Worked on CAD design and sourcing parts from suppliers with manufacturability in mind."
     ],
     "tools": [

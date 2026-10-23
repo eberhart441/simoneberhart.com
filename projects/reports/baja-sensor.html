@@ -1,5 +1,5 @@
 <article class="report">
-<div class="abstract"><p>I'm trying to make a fuel gauge for Olin's Baja car without putting anything inside the fuel tank. The tank sits on rubber mounts and vibrates when the car gets knocked around. As fuel is used, its effective mass changes, so its resonant frequency should shift. The idea is to measure that shift and infer the fuel level. I've designed the boards and firmware. They're being fabricated now. Whether the signal is clean enough on a moving Baja car remains to be seen.</p></div>
+<div class="abstract"><p>I'm trying to make a fuel gauge for Olin's Baja car without putting anything inside the fuel tank. The tank sits on rubber mounts and vibrates when the car gets knocked around. As fuel is used, its effective mass changes, so its resonant frequency should shift. The idea is to measure that shift and infer the fuel level. I've designed the boards and firmware; they're being fabricated now. Whether the signal is clean enough on a moving Baja car remains to be seen.</p></div>
 
 <h2><span>1</span>Method</h2>
 <p>One accelerometer goes near the tank. The other goes on the chassis, about six inches away. Both measure the car shaking, but only the first should pick up much of the tank's motion relative to its mounts. I subtract the chassis measurement from the tank measurement and run an FFT on the residual to look for a resonance peak. With calibration at known fuel levels, the peak frequency might give me a usable fuel estimate.</p>
@@ -25,7 +25,7 @@
     <rect class="part on" x="414" y="222" width="94" height="44"/><text class="lab inv" x="461" y="249" text-anchor="middle">fuel level</text>
   </g>
 </svg><figcaption>The chassis measurement is subtracted before looking for the tank resonance.</figcaption></figure>
-<p>The sensor boards share an internal CAN bus. One acts as the master and sends the processed fuel estimate to the car's logger over a separate CAN interface.</p>
+<p>The sensor boards share an internal CAN bus. One acts as the master and sends the processed fuel estimate to the car's logger over a separate CAN interface. I wanted to use the same board design at both locations rather than make a special version for each sensor.</p>
 
 <h2><span>2</span>PCB</h2>
 <p>The board is four layers and 59 × 48 mm. This viewer uses the actual fabrication files, so you can look at the copper, silkscreen, and the opposite side instead of a rendered mockup.</p>

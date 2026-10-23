@@ -1,5 +1,5 @@
 <article class="report">
-<div class="abstract"><p>I built this for a Filabot EX2 plastic extruder. The extruder makes filament out of recycled plastic, but the diameter is sensitive to how fast the take-up spool pulls it. I wanted the winder to correct that on its own rather than needing someone to adjust it constantly. I designed the printed frame, sensor, motor drive, and Arduino code. I've since put the files on Printables. They've been downloaded more than 150 times.</p></div>
+<div class="abstract"><p>I built this for a Filabot EX2 plastic extruder. The extruder makes filament out of recycled plastic, but the diameter is sensitive to how fast the take-up spool pulls it. I wanted the winder to correct that on its own rather than needing someone to adjust it constantly. I designed the printed frame, sensor, motor drive, and Arduino code. I've since put the files on Printables; they've been downloaded more than 150 times.</p></div>
 
 <h2><span>1</span>Control</h2>
 <p>The filament runs through a little mechanical gauge between a magnet and a Hall-effect sensor. A thicker strand moves the sensor farther from the magnet, changing the analog reading. I use that as a rough diameter measurement. The Arduino changes the winding speed in response: pull faster to stretch the still-soft filament thinner, or slow down to let it stay thicker.</p>
@@ -18,7 +18,7 @@
 <i class="k">const</i> <i class="k">int</i> filamentDiameter = 600;  <i class="c">// 1.75mm</i></code></pre>
 
 <h2><span>2</span>Firmware</h2>
-<p>The sketch is roughly 60 lines of Arduino C++. It samples the Hall sensor 10 times a second and nudges the motor PWM up or down depending on the error. Thin filament means less pull. Thick filament means more.</p>
+<p>The sketch is roughly 60 lines of Arduino C++. It samples the Hall sensor 10 times a second and nudges the motor PWM up or down depending on the error. Thin filament means less pull; thick filament means more. I kept the controller deliberately simple because the process responds slowly and the sensor isn't particularly clean.</p>
 <pre class="code"><code><i class="k">if</i> (sensorValue &gt;= filamentDiameter + 10) {
   motorSpeed = motorSpeed - 5;   <i class="c">// too thin</i>
 } <i class="k">else</i> <i class="k">if</i> (sensorValue &lt;= filamentDiameter - 10) {
@@ -29,7 +29,7 @@ analogWrite(pwmPinMotor, motorSpeed);</code></pre>
 <p>In my tests I got the diameter to stay around ±0.05 mm.</p>
 
 <h2><span>3</span>Assembly</h2>
-<p>I modeled and 3D printed the frame, made the gauge, and wired the motor control. It's a fairly small machine.</p>
+<p>I modeled and 3D printed the frame, made the filament guide and gauge, and wired the motor control. It's a fairly small machine.</p>
 <figure><img src="projects/recycler/01-winder.webp" alt="The filament winder: a spool of clear filament on a printed frame with a motor and gears" loading="lazy"><figcaption>Winder with a spool fitted.</figcaption></figure>
 
 <h2><span>4</span>Files</h2>
