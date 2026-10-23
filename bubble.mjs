@@ -52,20 +52,23 @@ function fill(id) {
   body.scrollTop = 0; scrolled();
 }
 
-// a project's videos: a poster for each, linking to YouTube (videos in a row, shorts in a smaller one)
+// a project's videos: a poster for each, linking to YouTube, in one strip that scrolls sideways
 function showVideos(id) {
   const box = $('.bubble-videos'), list = videos[id] || [];
   box.hidden = !list.length;
   const tile = v => {
     const a = Object.assign(document.createElement('a'), {className: 'vid', href: v.href, target: '_blank', rel: 'noopener'});
-    a.setAttribute('aria-label', `${v.title} (video on YouTube)`);
+    a.classList.add(v.kind === 'short' ? 'short' : 'wide'); a.setAttribute('aria-label', `${v.title} (video on YouTube)`);
     a.append(Object.assign(document.createElement('img'), {src: v.poster, alt: '', loading: 'lazy', decoding: 'async'}),
       Object.assign(document.createElement('span'), {className: 'vid-title', textContent: v.title}));
     if (v.length) a.append(Object.assign(document.createElement('span'), {className: 'vid-len', textContent: v.length}));
     return a;
   };
-  const row = (kind, cls) => { const vs = list.filter(v => v.kind === kind); return vs.length ? [Object.assign(document.createElement('div'), {className: cls})].map(d => (d.append(...vs.map(tile)), d))[0] : null; };
-  box.replaceChildren(Object.assign(document.createElement('p'), {className: 'bubble-kind', textContent: 'Videos'}), ...[row('video', 'vids wide'), row('short', 'vids short')].filter(Boolean));
+  // one strip to scroll through: the videos first, then the shorts
+  const strip = Object.assign(document.createElement('div'), {className: 'vids'});
+  strip.append(...[...list.filter(v => v.kind === 'video'), ...list.filter(v => v.kind === 'short')].map(tile));
+  strip.tabIndex = 0; strip.setAttribute('role', 'group'); strip.setAttribute('aria-label', 'Videos: scroll sideways for more');
+  box.replaceChildren(Object.assign(document.createElement('p'), {className: 'bubble-kind', textContent: 'Videos'}), strip);
   requestAnimationFrame(scrolled);
 }
 
