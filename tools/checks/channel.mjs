@@ -64,7 +64,7 @@ export default async function ({baseUrl, launch}) {
       ok(s.all === 0 && s.reach <= BASE_REACH, 'the beads should be gone and the merge reach back to normal', s);
     });
 
-    await scenario('narrowing the window while a panel opens leaves the merge reach normal', async (page, ok) => {
+    await scenario('narrowing the window while a panel opens does not leave the merge reach raised', async (page, ok) => {
       await page.click('[data-item=arm] .open');
       // the opening has begun (its glass body exists) and not finished (the title has no focus yet): narrow the window now
       await until(page, () => Liquid.debug().some(d => d.frost === 1) && document.activeElement?.id !== 'bubble-title');
@@ -73,9 +73,13 @@ export default async function ({baseUrl, launch}) {
       await until(page, () => document.activeElement?.id === 'bubble-title');   // the opening has run to its end
       await page.setViewportSize({width: 1440, height: 900});
       await until(page, () => window.Liquid?.active);
-      await page.waitForTimeout(2500);                                 // long enough for any wrongly raised reach to ease up
+      // the panel is still open (widening brings its glass back), so the long reach is right while it is: what must not happen is the
+      // long reach outliving the panel. Close it, and the reach must come back to normal.
+      await page.keyboard.press('Escape');
+      await until(page, () => document.querySelector('#bubble').hidden);
+      await until(page, () => Liquid.reach() <= 40).catch(() => {});     // (it eases back; the assertion below reports what was seen)
       const s = await channel(page);
-      ok(s.reach <= BASE_REACH, 'with no panel open, glass should merge at the ordinary reach', s);
+      ok(s.reach <= BASE_REACH, 'once the panel is closed, glass should merge at the ordinary reach', s);
     });
   } finally { await browser.close(); }
   if (failures.length) throw new Error(failures.join('; '));
