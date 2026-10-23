@@ -4,23 +4,24 @@
 <h2><span>1</span>How it works</h2>
 <p>Two small accelerometer boards do the listening. One sits right under the tank and the other sits on the frame about 6 inches away. The frame board only feels the car. The tank board feels the car plus the tank ringing. Subtract one from the other and the car cancels out, which leaves the tank. An FFT then finds the frequency it's ringing at, and that tells you how much fuel is left.</p>
 <figure><svg class="diagram" viewBox="0 0 520 290" role="img" aria-label="A fuel tank sits on two rubber mounts on the car's frame. One accelerometer board is right under the tank and one is on the frame about six inches away. Subtracting the frame's vibration from the tank's leaves the tank's own ringing, and an FFT turns that into a frequency, which gives the fuel level.">
+  <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#161616" stroke-width="1"/></pattern></defs>
   <line class="shaft" x1="30" y1="132" x2="490" y2="132"/>
-  <rect class="part tank" x="120" y="42" width="280" height="62" rx="12"/>
-  <rect class="fuel" x="122" y="68" width="276" height="34" rx="10"/><line class="level" x1="124" y1="68" x2="396" y2="68"/>
+  <rect class="part tank" x="120" y="42" width="280" height="62"/>
+  <rect class="fuel" x="122" y="68" width="276" height="34"/><line class="level" x1="124" y1="68" x2="396" y2="68"/>
   <path class="spring" d="M168 104 l-6 4 l12 4 l-12 4 l12 4 l-6 4"/><path class="spring" d="M352 104 l-6 4 l12 4 l-12 4 l12 4 l-6 4"/>
   <path class="ring" d="M98 58 q-9 11 0 22 q9 11 0 22 M80 64 q-8 8 0 16 q8 8 0 16"/><path class="ring" d="M422 58 q9 11 0 22 q-9 11 0 22 M440 64 q8 8 0 16 q-8 8 0 16"/>
-  <rect class="chip" x="252" y="104" width="16" height="12" rx="2"/><circle class="tag" cx="260" cy="148" r="10"/><text class="lab strong" x="260" y="152" text-anchor="middle">A</text>
-  <rect class="chip" x="442" y="122" width="16" height="10" rx="2"/><circle class="tag" cx="450" cy="160" r="10"/><text class="lab strong" x="450" y="164" text-anchor="middle">B</text>
+  <rect class="chip" x="252" y="104" width="16" height="12"/><circle class="tag" cx="260" cy="148" r="10"/><text class="lab strong" x="260" y="152" text-anchor="middle">A</text>
+  <rect class="chip" x="442" y="122" width="16" height="10"/><circle class="tag" cx="450" cy="160" r="10"/><text class="lab strong" x="450" y="164" text-anchor="middle">B</text>
   <text class="lab" x="260" y="30" text-anchor="middle">tank on rubber mounts</text>
   <text class="lab" x="260" y="182" text-anchor="middle">under the tank</text><text class="lab" x="450" y="182" text-anchor="middle">on the frame</text>
   <g class="chain">
-    <rect class="part" x="14" y="222" width="104" height="44" rx="8"/><text class="lab strong" x="66" y="249" text-anchor="middle">A − B</text>
+    <rect class="part" x="14" y="222" width="104" height="44"/><text class="lab strong" x="66" y="249" text-anchor="middle">A − B</text>
     <line class="link" x1="118" y1="244" x2="146" y2="244"/><path class="head" d="M140 239 l6 5 l-6 5"/>
-    <rect class="part" x="148" y="222" width="82" height="44" rx="8"/><text class="lab strong" x="189" y="249" text-anchor="middle">FFT</text>
+    <rect class="part" x="148" y="222" width="82" height="44"/><text class="lab strong" x="189" y="249" text-anchor="middle">FFT</text>
     <line class="link" x1="230" y1="244" x2="258" y2="244"/><path class="head" d="M252 239 l6 5 l-6 5"/>
-    <rect class="part" x="260" y="222" width="124" height="44" rx="8"/><text class="lab strong" x="322" y="249" text-anchor="middle">tank frequency</text>
+    <rect class="part" x="260" y="222" width="124" height="44"/><text class="lab strong" x="322" y="249" text-anchor="middle">tank frequency</text>
     <line class="link" x1="384" y1="244" x2="412" y2="244"/><path class="head" d="M406 239 l6 5 l-6 5"/>
-    <rect class="part on" x="414" y="222" width="94" height="44" rx="8"/><text class="lab inv" x="461" y="249" text-anchor="middle">fuel level</text>
+    <rect class="part on" x="414" y="222" width="94" height="44"/><text class="lab inv" x="461" y="249" text-anchor="middle">fuel level</text>
   </g>
 </svg><figcaption>Subtract the frame from the tank and you're left with the tank ringing.</figcaption></figure>
 <p>The boards talk over CAN, so you can add as many as you like. One of them is the master and passes everything on to the car's logging computer.</p>

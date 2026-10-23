@@ -4,12 +4,12 @@
 <h2><span>1</span>How it works</h2>
 <p>Most robot arms stick a motor in every joint. Mine has one motor and every joint gets a clutch. Engage a clutch and that joint moves. Let go, engage a different one, and the motor moves that joint instead.</p>
 <figure><svg class="diagram" viewBox="0 0 520 220" role="img" aria-label="One motor on the left turns a shaft that runs past three clutches. The middle clutch is engaged, so only its joint moves. The other two clutches are open and their joints stay still.">
-  <line class="chain" x1="100" y1="62" x2="498" y2="62"/><rect class="base" x="86" y="46" width="14" height="32" rx="2"/>
-  <rect class="part" x="14" y="110" width="76" height="64" rx="8"/><text class="lab strong" x="52" y="147" text-anchor="middle">motor</text>
+  <line class="chain" x1="100" y1="62" x2="498" y2="62"/><rect class="base" x="86" y="46" width="14" height="32"/>
+  <rect class="part" x="14" y="110" width="76" height="64"/><text class="lab strong" x="52" y="147" text-anchor="middle">motor</text>
   <line class="shaft" x1="90" y1="142" x2="500" y2="142"/>
-  <g><line class="link off" x1="190" y1="128" x2="190" y2="84"/><rect class="part" x="174" y="128" width="32" height="28" rx="4"/><circle class="part joint" cx="190" cy="62" r="20"/><text class="lab" x="190" y="26" text-anchor="middle">still</text><text class="lab" x="190" y="186" text-anchor="middle">open</text></g>
-  <g><line class="link on" x1="320" y1="128" x2="320" y2="84"/><rect class="part on" x="304" y="128" width="32" height="28" rx="4"/><circle class="part joint on" cx="320" cy="62" r="20"/><text class="lab strong" x="320" y="22" text-anchor="middle">moves</text><text class="lab strong" x="320" y="186" text-anchor="middle">engaged</text></g>
-  <g><line class="link off" x1="450" y1="128" x2="450" y2="84"/><rect class="part" x="434" y="128" width="32" height="28" rx="4"/><circle class="part joint" cx="450" cy="62" r="20"/><text class="lab" x="450" y="26" text-anchor="middle">still</text><text class="lab" x="450" y="186" text-anchor="middle">open</text></g>
+  <g><line class="link off" x1="190" y1="128" x2="190" y2="84"/><rect class="part" x="174" y="128" width="32" height="28"/><circle class="part joint" cx="190" cy="62" r="20"/><text class="lab" x="190" y="26" text-anchor="middle">still</text><text class="lab" x="190" y="186" text-anchor="middle">open</text></g>
+  <g><line class="link on" x1="320" y1="128" x2="320" y2="84"/><rect class="part on" x="304" y="128" width="32" height="28"/><circle class="part joint on" cx="320" cy="62" r="20"/><text class="lab strong" x="320" y="22" text-anchor="middle">moves</text><text class="lab strong" x="320" y="186" text-anchor="middle">engaged</text></g>
+  <g><line class="link off" x1="450" y1="128" x2="450" y2="84"/><rect class="part" x="434" y="128" width="32" height="28"/><circle class="part joint" cx="450" cy="62" r="20"/><text class="lab" x="450" y="26" text-anchor="middle">still</text><text class="lab" x="450" y="186" text-anchor="middle">open</text></g>
   <text class="lab" x="14" y="26">joints</text><text class="lab" x="14" y="206">clutches</text>
 </svg><figcaption>Rough idea. One motor spins the shaft and only the engaged clutch hands it to its joint.</figcaption></figure>
 <p>Fewer motors should mean a simpler arm. The tricky part is the clutches, since the whole thing depends on them grabbing and letting go cleanly.</p>
