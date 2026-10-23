@@ -142,8 +142,10 @@ export default async function ({baseUrl, launch}) {
       await page.click('.pcb-zoom [data-z=in]');
       const zoomed = await view();
       ok(zoomed[2] < before[2], 'the zoom button should narrow the view', {before, zoomed});
-      const frame = await page.locator('.pcb-frame').boundingBox();
-      await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height / 2); await page.mouse.down(); await page.mouse.move(frame.x + frame.width / 2 - 80, frame.y + frame.height / 2); await page.mouse.up();
+      // the viewer can still be settling (the report moves it into its text): drag only once it has stopped moving
+      let frame = await page.locator('.pcb-frame').boundingBox();
+      for (let i = 0; i < 20; i++) { await page.waitForTimeout(150); const next = await page.locator('.pcb-frame').boundingBox(); const still = next.x === frame.x && next.y === frame.y && next.width === frame.width && next.height === frame.height; frame = next; if (still) break; }
+      await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height / 2); await page.mouse.down(); await page.mouse.move(frame.x + frame.width / 2 - 80, frame.y + frame.height / 2, {steps: 5}); await page.mouse.up();
       const moved = await view();
       ok(moved[0] > zoomed[0], 'dragging left should move the view right along the board', {zoomed, moved});
       await page.click('.pcb-zoom [data-z=fit]');

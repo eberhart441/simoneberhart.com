@@ -328,7 +328,7 @@ article[data-item].active::before { opacity: 1; transform: none; }
 /* the PCB viewer (pcb.mjs): a board drawn as ink on paper */
 .pcb { margin: var(--s6) 0 0; }
 .gallery + .pcb { margin-top: var(--s5); }
-.pcb-frame { --ar: 1.333; position: relative; aspect-ratio: var(--ar); border-radius: 14px; overflow: hidden; background: rgba(22, 22, 22, .045); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 2px; transition: aspect-ratio .3s ease; }
+.pcb-frame { --ar: 1.333; position: relative; aspect-ratio: var(--ar); border-radius: 14px; overflow: hidden; background: rgba(22, 22, 22, .045); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 2px; }
 .pcb-frame.grabbing { cursor: grabbing; }
 .pcb-frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(22, 22, 22, .1); pointer-events: none; }
 .pcb-frame.loading .pcb-stage { opacity: 0; }
