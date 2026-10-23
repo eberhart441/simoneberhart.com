@@ -18,12 +18,6 @@
       "Fusion 360",
       "Onshape",
       "JavaScript"
-    ],
-    "links": [
-      {
-        "label": "Transmission video",
-        "href": "https://www.youtube.com/watch?v=OJFuRm17yMc"
-      }
     ]
   },
   {
@@ -42,7 +36,6 @@
       "FFT",
       "CAN"
     ],
-    "links": [],
     "report": "projects/reports/baja-sensor.html"
   },
   {
@@ -86,8 +79,7 @@
       "Mold making",
       "Python",
       "RenderDoc"
-    ],
-    "links": []
+    ]
   },
   {
     "id": "quant",
@@ -120,10 +112,6 @@
       {
         "label": "Code",
         "href": "https://github.com/eberhart441/BuyOut"
-      },
-      {
-        "label": "Demo",
-        "href": "https://www.youtube.com/watch?v=cE_erRPIcsw"
       }
     ]
   },
@@ -144,8 +132,7 @@
       "CMM",
       "CNC",
       "Precision grinding"
-    ],
-    "links": []
+    ]
   },
   {
     "id": "baja",
@@ -161,8 +148,7 @@
     "tools": [
       "PCB design",
       "FFT"
-    ],
-    "links": []
+    ]
   },
   {
     "id": "da-design",
@@ -175,8 +161,7 @@
       "4 provisional patents filed: the solenoid design, its magnet arrangement, slip-based limit finding and arm detection for the end effector, and the trading model.",
       "Now turning the single-motor arm drive into a product for Universal Robots arms."
     ],
-    "tools": [],
-    "links": []
+    "tools": []
   },
   {
     "id": "dragonfly",
@@ -195,7 +180,6 @@
       "KUKA KRL",
       "CNC",
       "DFM"
-    ],
-    "links": []
+    ]
   }
 ]
