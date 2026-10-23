@@ -140,7 +140,7 @@
     "title": "Olin Baja SAE",
     "dates": "since 2026",
     "role": "Electrical engineer · Needham, MA",
-    "summary": "Electrical engineering on the Baja SAE team, mostly the fuel sensor and its CAN-connected boards.",
+    "summary": "Electrical engineer on the Baja SAE team.",
     "points": [
       "Designed an STM32 sensor board with an MPU-6050, dual CAN transceivers, power regulation, and transient protection.",
       "Worked on the fuel-estimation firmware and FFT analysis.",
