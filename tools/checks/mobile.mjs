@@ -67,7 +67,7 @@ export default async function ({baseUrl, launch}) {
     });
 
     await scenario('tapping a link inside a row follows the link, not the row', async (page, ok) => {
-      const at = await centre(page, '[data-item=arm] a');   // a lone outside link (links packed side by side get tap-snapped to each other)
+      const at = await centre(page, '[data-item=quant] a[href^="https://github.com"]');   // an outside link (the one row that still has links)
       await page.touchscreen.tap(...at);
       const followed = await page.waitForURL(u => new URL(u).origin !== origin, {timeout: 5000}).then(() => true, () => false);
       ok(followed, 'the link should be followed', {url: page.url()});
@@ -78,7 +78,8 @@ export default async function ({baseUrl, launch}) {
     await scenario('a link inside a sentence answers a touch only on its own text', async (page, ok) => {
       // measured on the link's text, not its box (the box includes any padding): the lines around it belong to the row
       const hit = await page.evaluate(() => {
-        const a = document.querySelector('[data-item=arm] p a'), range = document.createRange(); range.selectNodeContents(a);
+        const a = document.querySelector('[data-item=quant] p a[href^="https://github.com"]'), range = document.createRange(); range.selectNodeContents(a);
+        a.scrollIntoView({block: 'center'});                              // (this row is further down the page than the first)
         const r = range.getBoundingClientRect(), x = r.left + 20;
         return {above: [-14, -10, -6].filter(dy => document.elementFromPoint(x, r.top + dy) === a), below: [6, 10, 14].filter(dy => document.elementFromPoint(x, r.bottom + dy) === a), x, y: r.top - 20};
       });
@@ -86,7 +87,7 @@ export default async function ({baseUrl, launch}) {
       await page.touchscreen.tap(hit.x, hit.y);                          // the line above it: a tap there opens the row
       await sheetShown(page);
       const s = await state(page);
-      ok(!s.hidden && /single-motor/i.test(s.title), 'a tap on the line above the link should open the row\'s sheet', s);
+      ok(!s.hidden && /arbitrage/i.test(s.title), 'a tap on the line above the link should open the row\'s sheet', s);
     });
 
     await scenario('the sheet dims and locks the page', async (page, ok) => {
