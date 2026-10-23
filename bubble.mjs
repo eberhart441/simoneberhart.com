@@ -68,7 +68,17 @@ function showVideos(id) {
   const strip = Object.assign(document.createElement('div'), {className: 'vids'});
   strip.append(...[...list.filter(v => v.kind === 'video'), ...list.filter(v => v.kind === 'short')].map(tile));
   strip.tabIndex = 0; strip.setAttribute('role', 'group'); strip.setAttribute('aria-label', 'Videos: scroll sideways for more');
-  box.replaceChildren(Object.assign(document.createElement('p'), {className: 'bubble-kind', textContent: 'Videos'}), strip);
+  // ← → buttons beside the heading page through the strip (a swipe or trackpad still works); each is off at its end
+  const mk = (label, text, dir) => Object.assign(document.createElement('button'), {type: 'button', className: 'vids-' + (dir < 0 ? 'prev' : 'next'), textContent: text, ariaLabel: label, onclick: () => strip.scrollBy({left: dir * strip.clientWidth * .8, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'})});
+  const prev = mk('Earlier videos', '←', -1), next = mk('More videos', '→', 1);
+  const ends = () => { prev.disabled = strip.scrollLeft < 6; next.disabled = strip.scrollLeft > strip.scrollWidth - strip.clientWidth - 6; box.classList.toggle('one-page', strip.scrollWidth <= strip.clientWidth + 2); };
+  strip.addEventListener('scroll', ends, {passive: true});
+  new ResizeObserver(ends).observe(strip);                          // (the panel may not have its size yet, or may change it)
+  const head = Object.assign(document.createElement('div'), {className: 'vids-head'});
+  head.append(Object.assign(document.createElement('p'), {className: 'bubble-kind', textContent: 'Videos'}), prev, next);
+  box.replaceChildren(head, strip);
+  requestAnimationFrame(() => { ends(); scrolled(); });
+  return;
   requestAnimationFrame(scrolled);
 }
 
