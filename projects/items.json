@@ -74,6 +74,7 @@
     "id": "foundry",
     "kind": "Project",
     "title": "Backyard foundry",
+    "report": "projects/reports/foundry.html",
     "dates": "2025",
     "summary": "A furnace made from an oil barrel, ceramic wool, refractory cement and a weed burner. Melts bronze (about 950 °C).",
     "points": [
