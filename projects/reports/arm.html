@@ -1,8 +1,9 @@
 <article class="report">
-<div class="abstract"><p>One motor runs the whole arm. Clutches pick which joint it moves. It's been my main side project for a bit over two years and it's still a work in progress. No performance numbers yet. I'm planning to raise money for it at some point.</p></div>
+<div class="abstract"><p>I've spent a bit over two years trying to drive a robot arm with one motor. I'm still building it. I don't have torque or cycle-time figures worth publishing yet. I'm planning to raise money for it at some point.</p></div>
 
-<h2><span>1</span>How it works</h2>
-<p>Most robot arms stick a motor in every joint. Mine has one motor and every joint gets a clutch. Engage a clutch and that joint moves. Let go, engage a different one, and the motor moves that joint instead.</p>
+<h2><span>1</span>Mechanism</h2>
+<p>A conventional robot arm puts a motor at each joint. I put one motor on a shared drive shaft, then use clutches to connect that shaft to whichever joint needs to move. Engage a clutch, drive the motor, disengage it, and select another axis.</p>
+<p>The joints can be addressed separately, but they can't all demand independent torque at the same time. Motion has to be scheduled around the one motor. That's a substantial limitation, although for some kinds of manipulation it may be worth trading simultaneous motion for fewer actuators.</p>
 <figure><svg class="diagram" viewBox="0 0 520 220" role="img" aria-label="One motor on the left turns a shaft that runs past three clutches. The middle clutch is engaged, so only its joint moves. The other two clutches are open and their joints stay still.">
   <line class="chain" x1="100" y1="62" x2="498" y2="62"/><rect class="base" x="86" y="46" width="14" height="32"/>
   <rect class="part" x="14" y="110" width="76" height="64"/><text class="lab strong" x="52" y="147" text-anchor="middle">motor</text>
@@ -11,24 +12,24 @@
   <g><line class="link on" x1="320" y1="128" x2="320" y2="84"/><rect class="part on" x="304" y="128" width="32" height="28"/><circle class="part joint on" cx="320" cy="62" r="20"/><text class="lab strong" x="320" y="22" text-anchor="middle">moves</text><text class="lab strong" x="320" y="186" text-anchor="middle">engaged</text></g>
   <g><line class="link off" x1="450" y1="128" x2="450" y2="84"/><rect class="part" x="434" y="128" width="32" height="28"/><circle class="part joint" cx="450" cy="62" r="20"/><text class="lab" x="450" y="26" text-anchor="middle">still</text><text class="lab" x="450" y="186" text-anchor="middle">open</text></g>
   <text class="lab" x="14" y="26">joints</text><text class="lab" x="14" y="206">clutches</text>
-</svg><figcaption>Rough idea. One motor spins the shaft and only the engaged clutch hands it to its joint.</figcaption></figure>
-<p>Fewer motors should mean a simpler arm. The tricky part is the clutches, since the whole thing depends on them grabbing and letting go cleanly.</p>
+</svg><figcaption>One drive shaft, a clutch for each joint. Torque goes to whichever joint is engaged.</figcaption></figure>
+<p>I initially thought having one motor would make the arm much simpler. In practice, I just moved most of the difficulty into the clutches, which have to engage and release cleanly every time.</p>
 
-<h2><span>2</span>Three versions</h2>
-<p>I've done the clutches three ways. First with servos to engage them. Then with solenoids I designed myself. Now with off-the-shelf solenoids. A few provisional patents came out of all that.</p>
+<h2><span>2</span>Clutches</h2>
+<p>The first design used hobby servos to slide the clutches into place. It was a good way to test the idea. Next I designed my own solenoids, including the coil and magnet arrangement. I learned a lot about electromagnets. The newer versions use off-the-shelf solenoids to engage the clutches. Some of this work led to provisional patent filings.</p>
 <div class="photos">
-<figure><img src="projects/arm/01-transmission.webp" alt="The transmission, in CAD" loading="lazy"><figcaption>The transmission, in CAD</figcaption></figure>
-<figure><img src="projects/arm/02-clutches.webp" alt="The clutches, in CAD" loading="lazy"><figcaption>The clutches, in CAD</figcaption></figure>
-<figure><img src="projects/arm/03-prototype.webp" alt="A prototype" loading="lazy"><figcaption>A prototype</figcaption></figure>
-<figure><img src="projects/arm/04-clutch-print.webp" alt="A printed clutch up close" loading="lazy"><figcaption>A printed clutch up close</figcaption></figure>
+<figure><img src="projects/arm/01-transmission.webp" alt="Transmission" loading="lazy"><figcaption>Transmission</figcaption></figure>
+<figure><img src="projects/arm/02-clutches.webp" alt="Clutches" loading="lazy"><figcaption>Clutches</figcaption></figure>
+<figure><img src="projects/arm/03-prototype.webp" alt="Prototype" loading="lazy"><figcaption>Prototype</figcaption></figure>
+<figure><img src="projects/arm/04-clutch-print.webp" alt="Printed clutch detail" loading="lazy"><figcaption>Printed clutch detail</figcaption></figure>
 </div>
 
-<h2><span>3</span>The electronics</h2>
-<p>I designed the board that drives the solenoids and wrote the firmware for it. Here are two of them. Drag to move, zoom in, flip them over.</p>
+<h2><span>3</span>Electronics</h2>
+<p>I made the solenoid driver PCB and wrote its firmware. Two of the boards are below. You can drag them around, zoom in, flip them over and switch layers.</p>
 <div data-pcb></div>
 <p>The control software is partly done.</p>
 
-<h2><span>4</span>What's next</h2>
-<p>I started off building a whole arm as its own platform. Now I'm turning it into an end effector for Universal Robots arms instead, so I don't have to build the arm too.</p>
-<p>I'm planning to raise money at some point. I don't have performance numbers yet so I'm not going to make any up.</p>
+<h2><span>4</span>Next</h2>
+<p>Originally I was designing the whole arm around this transmission. That meant building a robot just to test one mechanism, which got old. I'm now turning it into an end effector for Universal Robots arms instead. The robot handles positioning and my drive sits on the end of it.</p>
+<p>I'm planning to raise money for it at some point. I don't have performance numbers yet, so I'm not going to make any up.</p>
 </article>

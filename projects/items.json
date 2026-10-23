@@ -2,9 +2,9 @@
   {
     "id": "arm",
     "kind": "Project",
-    "title": "Single-motor robot arm drive",
+    "title": "Single-motor robot arm",
     "report": "projects/reports/arm.html",
-    "dates": "since 2024",
+    "dates": "2024–present",
     "summary": "One motor, several joints. Clutches pick which joint the motor moves.",
     "points": [
       "Designed the clutches and got them working together as one transmission.",
@@ -121,12 +121,12 @@
     "title": "Hygrade Precision Technologies",
     "dates": "2025–2026",
     "role": "Engineering intern, then junior engineering technician · Plainville, CT",
-    "summary": "Machined and inspected aerospace and defence parts to micron tolerances.",
+    "summary": "I worked in a precision machine shop doing CNC work and inspecting aerospace parts. Some dimensions had tolerances down to a few microns, so there wasn't much room for guessing.",
     "points": [
-      "Parts for SpaceX Starlink, NASA Artemis, the F135 and other jet engines, and GE turbines for Navy destroyers.",
-      "Ran a CNC lathe and a manual plunge grinder, and did inspection on CMMs and with height, bore and ring gauges, calipers, micrometers and gauge blocks.",
-      "Ground the overspray off a GE destroyer-turbine bushing, back to spec, when it was holding up their line. Damaging it would have cost them about $20M in delay penalties.",
-      "Helped track down manufacturing issues across the shop's CNCs and grinders."
+      "Worked on hardware for SpaceX Starlink, NASA Artemis, F135 and other jet engines, and GE naval turbines.",
+      "Ran CNC lathes and a manual plunge grinder. Inspected parts on CMMs and with height, bore, and ring gauges, micrometers, and gauge blocks.",
+      "Ground overspray off a GE turbine bushing that was holding up an assembly line. I was told damage to the part could have caused roughly $20M in delay penalties.",
+      "Helped diagnose machining and grinding problems across the shop."
     ],
     "tools": [
       "CMM",
@@ -140,10 +140,11 @@
     "title": "Olin Baja SAE",
     "dates": "since 2026",
     "role": "Electrical engineer · Needham, MA",
-    "summary": "Electrical engineer on Olin's Baja SAE team.",
+    "summary": "Electrical engineering on the Baja SAE team, mostly the fuel sensor and its CAN-connected boards.",
     "points": [
-      "Designed the fuel-level sensing boards (see Baja SAE fuel sensor).",
-      "Helped assemble the new car."
+      "Designed an STM32 sensor board with an MPU-6050, dual CAN transceivers, power regulation, and transient protection.",
+      "Worked on the fuel-estimation firmware and FFT analysis.",
+      "Helped assemble the car."
     ],
     "tools": [
       "PCB design",
@@ -156,10 +157,10 @@
     "title": "D.A. Design LLC",
     "dates": "since 2025",
     "role": "Founder · Woodbridge, CT",
-    "summary": "A small robotics and manufacturing company I started to turn my own projects into products.",
+    "summary": "I started D.A. Design to have a company behind the projects I was already building. Right now it's mainly robotics mechanisms and prototypes, with the goal of turning some of them into products.",
     "points": [
-      "4 provisional patents filed: the solenoid design, its magnet arrangement, slip-based limit finding and arm detection for the end effector, and the trading model.",
-      "Now turning the single-motor arm drive into a product for Universal Robots arms."
+      "Filed four provisional patent applications covering solenoid designs, magnet arrangements, slip-based limit detection and end-effector identification, and the trading model.",
+      "Developing the shared-actuation transmission as a modular tool for Universal Robots arms."
     ],
     "tools": []
   },
@@ -169,12 +170,12 @@
     "title": "Dragonfly Engineering",
     "dates": "summer 2024",
     "role": "Robotics intern · Santa Clara, CA",
-    "summary": "Reverse engineered robot arms, programmed KUKA robots, and turned a manual mill into a CNC.",
+    "summary": "I spent a summer at a robotics shop in Santa Clara, mostly figuring out how unfamiliar machines worked and getting them usable again. It was a pretty good introduction to how much engineering sits between a robot's brochure and its actual wiring.",
     "points": [
-      "Reverse engineered six-axis robot arms with built-in vision systems, purchased from Google X: traced the wiring and Ethernet network, worked out which computers ran the vision system, and recovered its software.",
-      "Programmed KUKA industrial robots in KRL for the assembly line.",
-      "Converted a manual mill to CNC, with custom electronics and milled brackets.",
-      "Designed products with manufacturing in mind and worked with suppliers to source parts."
+      "Reverse engineered six-axis robot arms with built-in vision systems bought from Google X. Traced wiring and Ethernet connections, identified the computers running the vision stack, and recovered software.",
+      "Programmed KUKA industrial arms in KRL for an assembly line.",
+      "Converted a manual mill to CNC using custom electronics and milled brackets.",
+      "Worked on CAD design and sourcing parts from suppliers with manufacturability in mind."
     ],
     "tools": [
       "KUKA KRL",
