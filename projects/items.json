@@ -4,7 +4,7 @@
     "kind": "Project",
     "title": "Single-motor robot arm",
     "report": "projects/reports/arm.html",
-    "dates": "2024–present",
+    "dates": "since 2024",
     "summary": "One motor, several joints. Clutches pick which joint the motor moves.",
     "points": [
       "Designed the clutches and got them working together as one transmission.",
